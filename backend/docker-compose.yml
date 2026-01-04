@@ -1,0 +1,122 @@
+services:
+  # ============================================
+  # ORCHESTRATOR: Analysis Engine
+  # ============================================
+  orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile.orchestrator
+    container_name: pixely_orchestrator
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL}
+      - ORCHESTRATOR_USER=${ORCHESTRATOR_USER}
+      - ORCHESTRATOR_PASSWORD=${ORCHESTRATOR_PASSWORD}
+      - PIXELY_OUTPUTS_DIR=/app/orchestrator/outputs
+      # Multi-Client Configuration
+      - API_BASE_URL=http://api:8000
+      - ORCHESTRATOR_INPUTS_DIR=/app/orchestrator/inputs
+    volumes:
+      - ./orchestrator/outputs:/app/orchestrator/outputs
+      - ./credentials.json:/app/credentials.json:ro
+    networks:
+      - pixely_network
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ============================================
+  # API: FastAPI Analytics Server (Auto-Init DB)
+  # ============================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: pixely_api
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - ORCHESTRATOR_USER=${ORCHESTRATOR_USER}
+      - ORCHESTRATOR_PASSWORD=${ORCHESTRATOR_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER:-pixely_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-secret_password_123}
+      - POSTGRES_DB=${POSTGRES_DB:-pixely_db}
+      - DATABASE_URL=${DATABASE_URL}
+    networks:
+      - pixely_network
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ============================================
+  # DATABASE: PostgreSQL
+  # ============================================
+  db:
+    image: postgres:15-alpine
+    container_name: pixely_db
+    expose:
+      - "5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-pixely_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-secret_password_123}
+      - POSTGRES_DB=${POSTGRES_DB:-pixely_db}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pixely_user} -d ${POSTGRES_DB:-pixely_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pixely_network
+
+  # ============================================
+  # ADMINER: Database Management Tool
+  # ============================================
+  adminer:
+    image: adminer:latest
+    container_name: pixely_adminer
+    ports:
+      - "8080:8080"
+    environment:
+      - ADMINER_DEFAULT_SERVER=db
+      - ADMINER_DESIGN=pepa-linha
+    networks:
+      - pixely_network
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ============================================
+  # NGINX: Reverse Proxy (DESHABILITADO)
+  # ============================================
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: pixely_nginx
+  #   ports:
+  #     - "80:80"
+  #     - "8501:8501"  # Frontend directo
+  #     - "8000:8000"  # API directo
+  #     - "8080:8080"  # Adminer directo
+  #   volumes:
+  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./nginx/conf.d:/etc/nginx/conf.d:ro
+  #   depends_on:
+  #     - frontend
+  #     - api
+  #     - adminer
+  #   networks:
+  #     - pixely_network
+  #   restart: unless-stopped
+
+networks:
+  pixely_network:
+    driver: bridge
+
+volumes:
+  db_data:
