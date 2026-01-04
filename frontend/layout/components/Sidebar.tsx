@@ -1,6 +1,6 @@
 import React from 'react';
 import { LayoutGrid, Users, Layers, FileText, BookOpen, Power, Hexagon, Shield } from 'lucide-react';
-import pixelyLogo from '../assets/logo.png';
+import pixelyLogo from '../src/assets/logo.png';
 import { useAuth } from '../contexts/AuthContext';
 
 interface SidebarProps {
@@ -137,8 +137,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon: Icon, label, viewId, is
     <button
         onClick={() => onClick(viewId)}
         className={`w-full flex items-center h-12 rounded-[18px] transition-all duration-200 relative group/item overflow-hidden ${isActive
-                ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30'
+            : 'text-gray-400 hover:text-white hover:bg-white/5'
             }`}>
         {/* Icon container */}
         <div className="w-[64px] flex items-center justify-center shrink-0">

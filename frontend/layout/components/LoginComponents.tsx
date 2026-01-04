@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Mail, Lock, ArrowRight, Check, User, Send, RefreshCw, Eye, EyeOff, Loader2, AlertCircle, Database, Brain, Target, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import pixelyLogo from '../assets/logo.png';
+import pixelyLogo from '../src/assets/logo.png';
 
 // --- 1. Interactive Workflow Card ---
 export const WorkflowVisual: React.FC = () => {

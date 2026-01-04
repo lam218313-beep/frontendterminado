@@ -1,5 +1,5 @@
 import React from 'react';
-import pixelyLogo from '../assets/logo.png';
+import pixelyLogo from '../src/assets/logo.png';
 
 // Simple SVG placeholders for logos to avoid external image dependencies
 const PixelyLogo = () => (
