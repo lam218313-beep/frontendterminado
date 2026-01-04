@@ -1,0 +1,5 @@
+{
+  "name": "Pixely Partners - Dashboard",
+  "description": "Dashboard de análisis semántico Q1-Q10 de redes sociales con integración Gemini Context Caching.",
+  "requestFramePermissions": []
+}
