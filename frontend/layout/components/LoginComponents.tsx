@@ -1,94 +1,94 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Mail, Lock, ArrowRight, Check, User, Send, RefreshCw, Eye, EyeOff, Loader2, AlertCircle, Database, Brain, Target, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import pixelyLogo from '../../assets/logo.png';
+import pixelyLogo from '../assets/logo.png';
 
 // --- 1. Interactive Workflow Card ---
 export const WorkflowVisual: React.FC = () => {
-  const [rotation, setRotation] = useState({ x: 0, y: 0 });
-  const cardRef = useRef<HTMLDivElement>(null);
+    const [rotation, setRotation] = useState({ x: 0, y: 0 });
+    const cardRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    
-    // Calculate tilt
-    const rotateX = ((y - centerY) / centerY) * -8;
-    const rotateY = ((x - centerX) / centerX) * 8;
-    setRotation({ x: rotateX, y: rotateY });
-  }, []);
+    const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        if (!cardRef.current) return;
+        const rect = cardRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
 
-  const handleMouseLeave = () => setRotation({ x: 0, y: 0 });
+        // Calculate tilt
+        const rotateX = ((y - centerY) / centerY) * -8;
+        const rotateY = ((x - centerX) / centerX) * 8;
+        setRotation({ x: rotateX, y: rotateY });
+    }, []);
 
-  return (
-    <div 
-        className="w-full max-w-md aspect-square [perspective:1000px]"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-    >
-        <div 
-            ref={cardRef}
-            className="w-full h-full relative transition-all duration-200 ease-out [transform-style:preserve-3d]"
-            style={{ transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)` }}
+    const handleMouseLeave = () => setRotation({ x: 0, y: 0 });
+
+    return (
+        <div
+            className="w-full max-w-md aspect-square [perspective:1000px]"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
         >
-            {/* Base Card */}
-            <div className="absolute inset-0 bg-white/40 backdrop-blur-md rounded-[40px] border border-white/50 shadow-xl [transform:translateZ(0px)]"></div>
-            
-            {/* Decorative Grid Background inside card */}
-            <div className="absolute inset-4 rounded-[32px] overflow-hidden opacity-30">
-                 <div className="w-full h-full" style={{ 
-                     backgroundImage: 'radial-gradient(#F20F79 1px, transparent 1px)', 
-                     backgroundSize: '20px 20px' 
-                 }}></div>
-            </div>
+            <div
+                ref={cardRef}
+                className="w-full h-full relative transition-all duration-200 ease-out [transform-style:preserve-3d]"
+                style={{ transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)` }}
+            >
+                {/* Base Card */}
+                <div className="absolute inset-0 bg-white/40 backdrop-blur-md rounded-[40px] border border-white/50 shadow-xl [transform:translateZ(0px)]"></div>
 
-            {/* Node 1: Data Ingestion */}
-            <div className="absolute top-1/4 left-1/4 bg-white p-4 rounded-2xl shadow-lg border border-gray-100 flex items-center gap-3 [transform:translateZ(40px)] transition-transform duration-500">
-                <div className="p-2 bg-gray-50 rounded-xl text-gray-500"><Database size={20} /></div>
-                <div>
-                    <div className="h-2 w-16 bg-gray-200 rounded-full mb-1"></div>
-                    <div className="h-1.5 w-10 bg-gray-100 rounded-full"></div>
+                {/* Decorative Grid Background inside card */}
+                <div className="absolute inset-4 rounded-[32px] overflow-hidden opacity-30">
+                    <div className="w-full h-full" style={{
+                        backgroundImage: 'radial-gradient(#F20F79 1px, transparent 1px)',
+                        backgroundSize: '20px 20px'
+                    }}></div>
                 </div>
-            </div>
 
-            {/* Connecting Line 1 (SVG) */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none [transform:translateZ(20px)]">
-                <path d="M 160 140 C 160 180, 240 180, 240 220" fill="none" stroke="#F20F79" strokeWidth="2" strokeDasharray="6 4" className="opacity-40" />
-            </svg>
-
-            {/* Node 2: AI Analysis (Center) */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-4 rounded-2xl shadow-xl shadow-primary-500/20 border border-primary-100 flex items-center gap-3 [transform:translateZ(60px)] z-10">
-                <div className="p-2 bg-primary-50 rounded-xl text-primary-500"><Brain size={20} /></div>
-                <div>
-                    <span className="text-xs font-bold text-gray-800 block">Análisis Semántico</span>
-                    <span className="text-[10px] text-primary-500 font-medium">Processing</span>
+                {/* Node 1: Data Ingestion */}
+                <div className="absolute top-1/4 left-1/4 bg-white p-4 rounded-2xl shadow-lg border border-gray-100 flex items-center gap-3 [transform:translateZ(40px)] transition-transform duration-500">
+                    <div className="p-2 bg-gray-50 rounded-xl text-gray-500"><Database size={20} /></div>
+                    <div>
+                        <div className="h-2 w-16 bg-gray-200 rounded-full mb-1"></div>
+                        <div className="h-1.5 w-10 bg-gray-100 rounded-full"></div>
+                    </div>
                 </div>
+
+                {/* Connecting Line 1 (SVG) */}
+                <svg className="absolute inset-0 w-full h-full pointer-events-none [transform:translateZ(20px)]">
+                    <path d="M 160 140 C 160 180, 240 180, 240 220" fill="none" stroke="#F20F79" strokeWidth="2" strokeDasharray="6 4" className="opacity-40" />
+                </svg>
+
+                {/* Node 2: AI Analysis (Center) */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-4 rounded-2xl shadow-xl shadow-primary-500/20 border border-primary-100 flex items-center gap-3 [transform:translateZ(60px)] z-10">
+                    <div className="p-2 bg-primary-50 rounded-xl text-primary-500"><Brain size={20} /></div>
+                    <div>
+                        <span className="text-xs font-bold text-gray-800 block">Análisis Semántico</span>
+                        <span className="text-[10px] text-primary-500 font-medium">Processing</span>
+                    </div>
+                </div>
+
+                {/* Connecting Line 2 */}
+                <svg className="absolute inset-0 w-full h-full pointer-events-none [transform:translateZ(20px)]">
+                    <path d="M 240 280 C 240 320, 140 320, 140 360" fill="none" stroke="#F20F79" strokeWidth="2" strokeDasharray="6 4" className="opacity-40" />
+                    <path d="M 240 280 C 240 320, 340 320, 340 360" fill="none" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="6 4" className="opacity-40" />
+                </svg>
+
+                {/* Node 3: Strategy */}
+                <div className="absolute bottom-1/4 left-[15%] bg-white p-3 rounded-2xl shadow-lg border border-green-100 flex items-center gap-3 [transform:translateZ(40px)]">
+                    <div className="p-2 bg-green-50 rounded-xl text-green-500"><Target size={18} /></div>
+                    <div className="text-xs font-bold text-gray-600">Estrategia</div>
+                </div>
+
+                {/* Node 4: Insights */}
+                <div className="absolute bottom-1/4 right-[15%] bg-white p-3 rounded-2xl shadow-sm border border-gray-100 opacity-60 flex items-center gap-3 [transform:translateZ(30px)]">
+                    <div className="p-2 bg-gray-50 rounded-xl text-gray-400"><Sparkles size={18} /></div>
+                </div>
+
             </div>
-
-            {/* Connecting Line 2 */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none [transform:translateZ(20px)]">
-                <path d="M 240 280 C 240 320, 140 320, 140 360" fill="none" stroke="#F20F79" strokeWidth="2" strokeDasharray="6 4" className="opacity-40" />
-                <path d="M 240 280 C 240 320, 340 320, 340 360" fill="none" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="6 4" className="opacity-40" />
-            </svg>
-
-            {/* Node 3: Strategy */}
-            <div className="absolute bottom-1/4 left-[15%] bg-white p-3 rounded-2xl shadow-lg border border-green-100 flex items-center gap-3 [transform:translateZ(40px)]">
-                <div className="p-2 bg-green-50 rounded-xl text-green-500"><Target size={18} /></div>
-                <div className="text-xs font-bold text-gray-600">Estrategia</div>
-            </div>
-
-             {/* Node 4: Insights */}
-             <div className="absolute bottom-1/4 right-[15%] bg-white p-3 rounded-2xl shadow-sm border border-gray-100 opacity-60 flex items-center gap-3 [transform:translateZ(30px)]">
-                <div className="p-2 bg-gray-50 rounded-xl text-gray-400"><Sparkles size={18} /></div>
-            </div>
-
         </div>
-    </div>
-  );
+    );
 };
 
 // --- 2. Login Form with Progress Bar ---
@@ -126,11 +126,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
 
         try {
             await login(email, password);
-            
+
             // Complete progress animation
             clearInterval(progressInterval);
             setProgress(100);
-            
+
             // Delay for visual feedback then call onLogin
             setTimeout(() => {
                 onLogin(email.split('@')[0]);
@@ -169,36 +169,36 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
                     <label className="text-xs font-bold text-gray-700 ml-1">Email</label>
                     <div className="relative group">
                         <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary-500 transition-colors" size={18} />
-                        <input 
-                            type="email" 
+                        <input
+                            type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             className={`w-full bg-gray-50 border text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-primary-100 focus:border-primary-500 block w-full pl-11 p-3.5 outline-none transition-all ${displayError ? 'border-red-300' : 'border-gray-100'}`}
-                            placeholder="tu@email.com" 
-                            required 
+                            placeholder="tu@email.com"
+                            required
                             disabled={isLoading}
                         />
                     </div>
                 </div>
 
                 <div className="space-y-1.5">
-                     <div className="flex justify-between items-center ml-1">
+                    <div className="flex justify-between items-center ml-1">
                         <label className="text-xs font-bold text-gray-700">Contraseña</label>
                         <a href="#" className="text-xs text-primary-500 hover:text-primary-600 font-bold">¿Olvidaste?</a>
                     </div>
                     <div className="relative group">
                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary-500 transition-colors" size={18} />
-                        <input 
+                        <input
                             type={showPass ? "text" : "password"}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className={`w-full bg-gray-50 border text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-primary-100 focus:border-primary-500 block w-full pl-11 pr-11 p-3.5 outline-none transition-all ${displayError ? 'border-red-300' : 'border-gray-100'}`}
-                            placeholder="••••••••" 
-                            required 
+                            placeholder="••••••••"
+                            required
                             disabled={isLoading}
                         />
-                        <button 
-                            type="button" 
+                        <button
+                            type="button"
                             onClick={() => setShowPass(!showPass)}
                             className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                         >
@@ -213,17 +213,17 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
                 </div>
 
                 {/* Progress Button */}
-                <button 
-                    type="submit" 
+                <button
+                    type="submit"
                     disabled={isLoading}
                     className="relative w-full h-[56px] overflow-hidden rounded-xl bg-gray-900 text-white font-bold text-sm shadow-xl shadow-gray-900/10 transition-all hover:scale-[1.01] active:scale-[0.99] disabled:cursor-wait"
                 >
                     {/* Background Progress Fill */}
-                    <div 
+                    <div
                         className="absolute inset-0 bg-primary-500 transition-all ease-linear"
                         style={{ width: `${progress}%` }}
                     ></div>
-                    
+
                     {/* Content Layer */}
                     <div className="relative z-10 flex items-center justify-center gap-2 w-full h-full">
                         {isLoading ? (
@@ -250,13 +250,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
 
                 <div className="mt-6 grid grid-cols-2 gap-3">
                     <button type="button" disabled className="flex items-center justify-center gap-2 bg-white border border-gray-100 rounded-xl py-2.5 text-sm font-bold text-gray-400 cursor-not-allowed opacity-50">
-                       <span className="text-lg">G</span> Google
+                        <span className="text-lg">G</span> Google
                     </button>
                     <button type="button" disabled className="flex items-center justify-center gap-2 bg-white border border-gray-100 rounded-xl py-2.5 text-sm font-bold text-gray-400 cursor-not-allowed opacity-50">
-                       <span className="text-lg"></span> Apple
+                        <span className="text-lg"></span> Apple
                     </button>
                 </div>
-                
+
                 <p className="mt-8 text-center text-sm text-gray-400">
                     ¿No tienes cuenta? <a href="https://wa.me/51949268607" target="_blank" rel="noopener noreferrer" className="font-bold text-primary-500 hover:underline">Contacta a Pixely</a>
                 </p>
@@ -268,34 +268,33 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
 // --- 3. Success Animation with Solid Background and Spinning Check ---
 export const SuccessAnimation: React.FC<{ username: string; isExiting: boolean }> = ({ username, isExiting }) => {
     return (
-        <div 
-            className={`fixed inset-0 z-50 flex items-center justify-center overflow-hidden transition-all duration-1000 ease-in-out bg-primary-600 ${
-                isExiting ? 'opacity-0 scale-105 filter blur-sm' : 'opacity-100 scale-100'
-            }`}
+        <div
+            className={`fixed inset-0 z-50 flex items-center justify-center overflow-hidden transition-all duration-1000 ease-in-out bg-primary-600 ${isExiting ? 'opacity-0 scale-105 filter blur-sm' : 'opacity-100 scale-100'
+                }`}
         >
             {/* Background is handled by the container class 'bg-primary-600' */}
-            
+
             {/* Radial Vignette for slight depth */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.15)_100%)]"></div>
 
             {/* Content Container */}
             <div className="relative z-10 text-center flex flex-col items-center justify-center p-8">
-                
+
                 {/* Large Spinning Check Icon Container (Circle) */}
                 <div className="mb-12 relative">
-                     <div className="absolute inset-0 bg-white blur-[80px] opacity-20 rounded-full animate-pulse"></div>
-                     {/* Increased size w-56 h-56 and rounded-full */}
-                     <div className="relative w-56 h-56 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center shadow-2xl animate-rotate-in">
-                         <svg className="w-28 h-28 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                             <path 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round" 
-                                strokeWidth={3} 
-                                d="M5 13l4 4L19 7" 
+                    <div className="absolute inset-0 bg-white blur-[80px] opacity-20 rounded-full animate-pulse"></div>
+                    {/* Increased size w-56 h-56 and rounded-full */}
+                    <div className="relative w-56 h-56 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center shadow-2xl animate-rotate-in">
+                        <svg className="w-28 h-28 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={3}
+                                d="M5 13l4 4L19 7"
                                 className="animate-draw"
-                             />
-                         </svg>
-                     </div>
+                            />
+                        </svg>
+                    </div>
                 </div>
 
                 {/* Typography */}
@@ -306,7 +305,7 @@ export const SuccessAnimation: React.FC<{ username: string; isExiting: boolean }
                     <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter animate-[fade-in_0.8s_ease-out_0.4s_both] drop-shadow-sm">
                         Pixely Partners
                     </h2>
-                     <div className="h-1.5 w-24 bg-white/30 rounded-full mx-auto my-6 animate-[scale-up-center_0.8s_ease-out_0.6s_both]"></div>
+                    <div className="h-1.5 w-24 bg-white/30 rounded-full mx-auto my-6 animate-[scale-up-center_0.8s_ease-out_0.6s_both]"></div>
                     <p className="text-3xl md:text-4xl text-white font-light tracking-wide animate-[fade-in_0.8s_ease-out_0.8s_both]">
                         @{username}
                     </p>

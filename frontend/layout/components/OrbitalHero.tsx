@@ -1,10 +1,10 @@
 import React from 'react';
-import pixelyLogo from '../../assets/logo.png';
+import pixelyLogo from '../assets/logo.png';
 
 // Simple SVG placeholders for logos to avoid external image dependencies
 const PixelyLogo = () => (
   <div className="w-[100px] h-[100px] rounded-full flex items-center justify-center overflow-hidden bg-white shadow-2xl p-2">
-      <img src={pixelyLogo} alt="Pixely Logo" className="w-full h-full object-contain" />
+    <img src={pixelyLogo} alt="Pixely Logo" className="w-full h-full object-contain" />
   </div>
 );
 
@@ -19,7 +19,7 @@ const PartnerLogo = ({ label, color = "#6B7280" }: { label: string; color?: stri
 const OrbitalHero: React.FC = () => {
   return (
     <div className="relative w-full h-[600px] md:h-[750px] flex items-center justify-center overflow-visible bg-brand-bg">
-      
+
       {/* Central Hub */}
       <div className="absolute z-30 flex flex-col items-center justify-center">
         <PixelyLogo />
@@ -30,64 +30,64 @@ const OrbitalHero: React.FC = () => {
         {/* Items on Orbit 1 */}
         {/* Top (12 o'clock) */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
-           <div className="animate-reverse-orbit-slow">
-             <PartnerLogo label="Google" color="#EA4335"/>
-           </div>
+          <div className="animate-reverse-orbit-slow">
+            <PartnerLogo label="Google" color="#EA4335" />
+          </div>
         </div>
         {/* Bottom (6 o'clock) */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 pointer-events-auto">
-           <div className="animate-reverse-orbit-slow">
-             <PartnerLogo label="Meta" color="#0668E1"/>
-           </div>
+          <div className="animate-reverse-orbit-slow">
+            <PartnerLogo label="Meta" color="#0668E1" />
+          </div>
         </div>
       </div>
 
       {/* Orbit 2 (Middle) - Equilateral Triangle Layout */}
       <div className="absolute w-[500px] h-[500px] md:w-[600px] md:h-[600px] border border-primary-500/20 rounded-full animate-orbit-medium pointer-events-none">
-         
-         {/* Item 1: Top Left (300 degrees / 10 o'clock position) */}
+
+        {/* Item 1: Top Left (300 degrees / 10 o'clock position) */}
         <div className="absolute top-[25%] left-[6.7%] -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
-           <div className="animate-reverse-orbit-medium">
-             <PartnerLogo label="Intel" color="#0068B5"/>
-           </div>
+          <div className="animate-reverse-orbit-medium">
+            <PartnerLogo label="Intel" color="#0068B5" />
+          </div>
         </div>
 
         {/* Item 2: Top Right (60 degrees / 2 o'clock position) */}
         <div className="absolute top-[25%] right-[6.7%] translate-x-1/2 -translate-y-1/2 pointer-events-auto">
-           <div className="animate-reverse-orbit-medium">
-             <PartnerLogo label="AWS" color="#FF9900"/>
-           </div>
+          <div className="animate-reverse-orbit-medium">
+            <PartnerLogo label="AWS" color="#FF9900" />
+          </div>
         </div>
 
         {/* Item 3: Bottom Center (180 degrees / 6 o'clock position) */}
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 pointer-events-auto">
-           <div className="animate-reverse-orbit-medium">
-             <PartnerLogo label="Microsoft" color="#737373"/>
-           </div>
+          <div className="animate-reverse-orbit-medium">
+            <PartnerLogo label="Microsoft" color="#737373" />
+          </div>
         </div>
       </div>
 
       {/* Orbit 3 (Outer) - Square Layout */}
       <div className="absolute w-[700px] h-[700px] md:w-[850px] md:h-[850px] border border-primary-500/20 rounded-full animate-orbit-fast pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
-           <div className="animate-reverse-orbit-fast">
-             <PartnerLogo label="OpenAI" color="#10A37F"/>
-           </div>
+          <div className="animate-reverse-orbit-fast">
+            <PartnerLogo label="OpenAI" color="#10A37F" />
+          </div>
         </div>
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 pointer-events-auto">
-           <div className="animate-reverse-orbit-fast">
-             <PartnerLogo label="Nvidia" color="#76B900"/>
-           </div>
+          <div className="animate-reverse-orbit-fast">
+            <PartnerLogo label="Nvidia" color="#76B900" />
+          </div>
         </div>
         <div className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
-           <div className="animate-reverse-orbit-fast">
-             <PartnerLogo label="IBM" color="#006699"/>
-           </div>
+          <div className="animate-reverse-orbit-fast">
+            <PartnerLogo label="IBM" color="#006699" />
+          </div>
         </div>
         <div className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 pointer-events-auto">
-           <div className="animate-reverse-orbit-fast">
-             <PartnerLogo label="Oracle" color="#C74634"/>
-           </div>
+          <div className="animate-reverse-orbit-fast">
+            <PartnerLogo label="Oracle" color="#C74634" />
+          </div>
         </div>
       </div>
 
