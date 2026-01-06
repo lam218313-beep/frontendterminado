@@ -65,7 +65,7 @@ export const CardLabs_SemanticDistribution: React.FC<CardLabs_SemanticDistributi
                     </div>
                 </div>
                 <div className="text-gray-300">
-                    <Layers size={compact ? 12 : 16} /> {/* Using Layers as placeholder for arrow icon, using same icon for now or ArrowUpRight if available in imports? Layers was imported, let's check if ArrowUpRight is needed. User image shows an arrow. */}
+                    <ArrowUpRight size={compact ? 12 : 16} />
                 </div>
             </div>
 

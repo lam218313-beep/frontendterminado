@@ -8,7 +8,7 @@ import { DashboardView } from './components/DashboardView.tsx';
 import WikiView from './components/WikiView.tsx';
 import PartnersView from './components/PartnersView.tsx';
 import { AdminView } from './components/AdminView.tsx';
-import { Layout, AlertCircle, Calendar } from 'lucide-react';
+import { AlertCircle, Calendar } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext.tsx';
 import { AnalysisProvider } from './hooks/useAnalysis.tsx';
 import { TasksProvider } from './hooks/useTasks.tsx';
