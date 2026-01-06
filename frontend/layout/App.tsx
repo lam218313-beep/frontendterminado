@@ -8,7 +8,7 @@ import { DashboardView } from './components/DashboardView.tsx';
 import WikiView from './components/WikiView.tsx';
 import PartnersView from './components/PartnersView.tsx';
 import { AdminView } from './components/AdminView.tsx';
-import { Layout, AlertCircle } from 'lucide-react';
+import { Layout, AlertCircle, Calendar } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext.tsx';
 import { AnalysisProvider } from './hooks/useAnalysis.tsx';
 import { TasksProvider } from './hooks/useTasks.tsx';
@@ -72,6 +72,9 @@ const AppContent: React.FC = () => {
 
   // State to track sidebar hover/expansion
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
+
+  // State for Right Sidebar (Mobile/Tablet)
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
 
   // State to track active page view
   const [activeView, setActiveView] = useState<string>('partners');
@@ -222,11 +225,20 @@ const AppContent: React.FC = () => {
             <main className="flex-1 flex flex-col relative h-full overflow-hidden py-4 pr-4">
 
               {/* Header Section (Redesigned) */}
-              <div className="flex items-center justify-end mb-6 shrink-0 pt-4 px-6 gap-4">
-                <h1 className="text-2xl md:text-3xl font-black text-brand-dark tracking-tight">
+              <div className="flex items-center justify-end xl:mb-6 mb-2 shrink-0 xl:pt-4 pt-2 px-6 gap-4">
+
+                {/* Right Sidebar Toggle (Visible only < XL) */}
+                <button
+                  onClick={() => setRightSidebarOpen(true)}
+                  className="min-[1920px]:hidden w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-brand-dark hover:text-primary-500 transition-colors"
+                >
+                  <Calendar size={20} />
+                </button>
+
+                <h1 className="hidden xl:block text-2xl md:text-3xl font-black text-brand-dark tracking-tight">
                   Buenos días, {displayUser || 'Usuario'}!
                 </h1>
-                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm shrink-0">
+                <div className="hidden xl:block w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm shrink-0">
                   {authUser?.logoUrl ? (
                     <img
                       src={authUser.logoUrl}
@@ -267,7 +279,14 @@ const AppContent: React.FC = () => {
             </main>
 
             {/* Sidebar Right (Floating Card) */}
-            <RightSidebar onNavigateToTasks={() => setActiveView('work')} />
+            <RightSidebar
+              onNavigateToTasks={() => {
+                setActiveView('work');
+                setRightSidebarOpen(false); // Close sidebar on navigation
+              }}
+              isOpen={rightSidebarOpen}
+              onClose={() => setRightSidebarOpen(false)}
+            />
           </div>
         </div>
       )}

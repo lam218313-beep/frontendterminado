@@ -18,7 +18,8 @@ import {
   CardLabsQ5_InfluencerRanking,
   CardLabsQ6_OpportunitiesMatrix,
   CardLabsQ7_SentimentBars,
-  CardLabsQ8_TemporalEvolution
+  CardLabsQ8_TemporalEvolution,
+  CardLabs_SemanticDistribution
 } from './lab';
 
 export const LabView: React.FC = () => {
@@ -60,67 +61,69 @@ export const LabView: React.FC = () => {
     <div className="min-h-screen bg-brand-bg font-sans">
       <main className="w-full p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
-            
-            {/* Header Lab Card with Canvas Animation */}
-            <CardLabsHeader />
 
-            {/* Grid Layout */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-8">
-                
-                {/* 1. TOP TOPICS SECTION */}
-                <div className="col-span-12 md:col-span-8">
-                    <CardLabsQ3_TopTopics data={data.Q3!} />
+          {/* Header Lab Card with Canvas Animation */}
+          <CardLabsHeader />
+
+          {/* Grid Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-8">
+
+            {/* 1. TOP TOPICS SECTION */}
+            <div className="col-span-12 md:col-span-8">
+              <CardLabsQ3_TopTopics data={data.Q3!} />
+            </div>
+
+            {/* 2. CONCLUSION GAUGE */}
+            <div className="col-span-12 md:col-span-4">
+              <CardLabsQ3_ConclusionGauge data={data.Q3!} />
+            </div>
+
+            {/* 3. Main Content Area (Left col-8) */}
+            <div className="col-span-12 md:col-span-8 flex flex-col gap-6">
+
+              {/* Radar Charts (Side by Side) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="h-[450px]">
+                  <CardLabsQ1_Emotions data={data.Q1!} />
                 </div>
-
-                {/* 2. CONCLUSION GAUGE */}
-                <div className="col-span-12 md:col-span-4">
-                    <CardLabsQ3_ConclusionGauge data={data.Q3!} />
+                <div className="h-[450px]">
+                  <CardLabsQ2_Personality data={data.Q2!} />
                 </div>
+              </div>
 
-                {/* 3. Main Content Area (Left col-8) */}
-                <div className="col-span-12 md:col-span-8 flex flex-col gap-6">
-                    
-                    {/* Radar Charts (Side by Side) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="h-[450px]">
-                            <CardLabsQ1_Emotions data={data.Q1!} />
-                        </div>
-                        <div className="h-[450px]">
-                            <CardLabsQ2_Personality data={data.Q2!} />
-                        </div>
-                    </div>
+              {/* Opportunities Matrix */}
+              <div className="h-[380px]">
+                <CardLabsQ6_OpportunitiesMatrix data={data.Q6!} />
+              </div>
 
-                    {/* Opportunities Matrix */}
-                    <div className="h-[380px]">
-                        <CardLabsQ6_OpportunitiesMatrix data={data.Q6!} />
-                    </div>
-                    
-                    {/* Temporal Evolution */}
-                    <div className="h-[480px]">
-                        <CardLabsQ8_TemporalEvolution data={data.Q8!} />
-                    </div>
-                </div>
+              {/* Temporal Evolution */}
+              <div className="h-[480px]">
+                <CardLabsQ8_TemporalEvolution data={data.Q8!} />
+              </div>
+            </div>
 
-                {/* 4. Right Sidebar (Right col-4) */}
-                <div className="col-span-12 md:col-span-4 flex flex-col gap-6">
-                    
-                    {/* Narrative Frames */}
-                    <div className="h-[360px]">
-                        <CardLabsQ4_NarrativeFrames data={data.Q4!} />
-                    </div>
-                    
-                    {/* Influencer Ranking */}
-                    <div className="h-[480px]">
-                        <CardLabsQ5_InfluencerRanking data={data.Q5!} />
-                    </div>
+            {/* 4. Right Sidebar (Right col-4) */}
+            <div className="col-span-12 md:col-span-4 flex flex-col gap-6">
 
-                    {/* Sentiment Bars */}
-                    <div className="h-[450px]">
-                         <CardLabsQ7_SentimentBars data={data.Q7!} />
-                    </div>
-                </div>
+              {/* Narrative Frames */}
+              <div className="h-[360px]">
+                <CardLabsQ4_NarrativeFrames data={data.Q4!} />
+              </div>
+
+              {/* Influencer Ranking */}
+              <div className="h-[480px]">
+                <CardLabsQ5_InfluencerRanking data={data.Q5!} />
+              </div>
+
+              {/* Sentiment Bars */}
+              <div className="h-[450px]">
+                <CardLabsQ7_SentimentBars data={data.Q7!} />
+              </div>
+
 
             </div>
+
+          </div>
         </div>
       </main>
     </div>

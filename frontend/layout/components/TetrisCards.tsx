@@ -108,38 +108,35 @@ const TetrisCards: React.FC = () => {
                 ${isBlurred ? 'blur-[2px] opacity-60 scale-[0.98] grayscale-[0.2]' : ''}
               `}
             >
-               <div className="p-6 md:p-8 h-full flex flex-col relative z-20">
-                  {/* Header Section */}
-                  <div className="flex flex-col items-start space-y-4 mb-4">
-                    <div className={`
+              <div className="p-6 md:p-8 h-full flex flex-col relative z-20">
+                {/* Header Section */}
+                <div className="flex flex-col items-start space-y-4 mb-4">
+                  <div className={`
                       p-3 rounded-2xl bg-gray-50 transition-all duration-500 
                       origin-left
                       ${isHovered ? 'bg-primary-50 scale-105' : ''}
                     `}>
-                      {card.icon}
-                    </div>
-                    <h3 className={`
+                    {card.icon}
+                  </div>
+                  <h3 className={`
                       text-xl md:text-2xl font-bold text-gray-900 leading-tight transition-transform duration-500
                       ${isHovered ? 'translate-y-0' : ''}
                     `}>
-                      {card.title}
-                    </h3>
-                  </div>
+                    {card.title}
+                  </h3>
+                </div>
 
-                  {/* Content Section - Revealed nicely on expand */}
-                  <div className={`
+                {/* Content Section - Revealed nicely on expand */}
+                <div className={`
                     mt-auto flex flex-col space-y-4 transition-all duration-700 delay-100
                     ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
                   `}>
-                    <p className="text-gray-600 text-base leading-relaxed">
-                      {card.description}
-                    </p>
-                    <div className="flex items-center text-primary-600 font-bold text-sm">
-                      <span>EXPLORE SOLUTION</span>
-                      <ArrowRight className="w-5 h-5 ml-2" />
-                    </div>
-                  </div>
-               </div>
+                  <p className="text-gray-600 text-base leading-relaxed">
+                    {card.description}
+                  </p>
+
+                </div>
+              </div>
 
               {/* Background Decor - Only visible on hover */}
               <div className={`

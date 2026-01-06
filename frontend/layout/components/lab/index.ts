@@ -9,3 +9,4 @@ export { CardLabsQ5_InfluencerRanking } from './CardLabsQ5_InfluencerRanking';
 export { CardLabsQ6_OpportunitiesMatrix } from './CardLabsQ6_OpportunitiesMatrix';
 export { CardLabsQ7_SentimentBars } from './CardLabsQ7_SentimentBars';
 export { CardLabsQ8_TemporalEvolution } from './CardLabsQ8_TemporalEvolution';
+export { CardLabs_SemanticDistribution } from './CardLabs_SemanticDistribution';

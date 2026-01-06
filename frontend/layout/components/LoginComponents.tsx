@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Mail, Lock, ArrowRight, Check, User, Send, RefreshCw, Eye, EyeOff, Loader2, AlertCircle, Database, Brain, Target, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import pixelyLogo from '../src/assets/logo.png';
+import { CardLabs_SemanticDistribution } from './lab/CardLabs_SemanticDistribution';
 
 // --- 1. Interactive Workflow Card ---
 export const WorkflowVisual: React.FC = () => {
@@ -60,13 +61,9 @@ export const WorkflowVisual: React.FC = () => {
                     <path d="M 160 140 C 160 180, 240 180, 240 220" fill="none" stroke="#F20F79" strokeWidth="2" strokeDasharray="6 4" className="opacity-40" />
                 </svg>
 
-                {/* Node 2: AI Analysis (Center) */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-4 rounded-2xl shadow-xl shadow-primary-500/20 border border-primary-100 flex items-center gap-3 [transform:translateZ(60px)] z-10">
-                    <div className="p-2 bg-primary-50 rounded-xl text-primary-500"><Brain size={20} /></div>
-                    <div>
-                        <span className="text-xs font-bold text-gray-800 block">Análisis Semántico</span>
-                        <span className="text-[10px] text-primary-500 font-medium">Processing</span>
-                    </div>
+                {/* Node 2: AI Analysis (Center) -> Replaced with Semantic Card Mini */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 [transform:translateZ(60px)] z-10 w-48">
+                    <CardLabs_SemanticDistribution compact={true} className="!border-primary-100 !shadow-xl !shadow-primary-500/20" />
                 </div>
 
                 {/* Connecting Line 2 */}
@@ -147,9 +144,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
     const displayError = localError || authError;
 
     return (
-        <div className="w-full max-w-sm mx-auto animate-fade-in-up">
-            <div className="mb-10 text-left">
-                <div className="w-36 h-36 rounded-3xl flex items-center justify-center mb-6 overflow-hidden">
+        <div className="w-full max-w-sm mx-auto animate-fade-in-up scale-[0.85] origin-center flex flex-col justify-center min-h-[500px]">
+            <div className="mb-2 text-left">
+                <div className="w-32 h-32 rounded-3xl flex items-center justify-center mb-4 overflow-hidden">
                     <img src={pixelyLogo} alt="Pixely Logo" className="w-full h-full object-contain" />
                 </div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Bienvenido!</h1>
