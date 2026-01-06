@@ -202,10 +202,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task, onClick }) => {
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
-  };
+
 
   const config = getPriorityConfig(task.urgencia, task.prioridad);
   const Icon = config.icon;
