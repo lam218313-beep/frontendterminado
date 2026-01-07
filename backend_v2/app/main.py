@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
-from .routers import pipeline, clients, analysis, auth, users
+from .routers import pipeline, clients, analysis, auth, users, tasks
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -53,6 +53,7 @@ app.include_router(users.router)
 app.include_router(pipeline.router)
 app.include_router(clients.router)
 app.include_router(analysis.router)
+app.include_router(tasks.router)
 
 
 @app.get("/", tags=["Health"])
