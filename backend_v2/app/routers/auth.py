@@ -60,21 +60,17 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         })
         
         if auth_response.user:
-            # Get Role from Public Profile
+            # Get Role and Client from Public Profile
             user_profile = db.get_user_by_email(form_data.username)
-            role = user_profile["role"] if user_profile else "analyst"
-            
+            role = user_profile.get("role", "analyst") if user_profile else "analyst"
+            client_id = user_profile.get("client_id") if user_profile else None
+
             return {
-                "access_token": auth_response.session.access_token, # Use Real Supabase Token if available? 
-                # Actually, our frontend expects a custom struct. 
-                # For compatibility, we can perform a hybrid approach or just return what we have.
-                # Let's return a simple token for now as we don't fully use the JWT on backend yet.
-                # Or better: return the actual session access_token.
                 "access_token": auth_response.session.access_token, 
                 "token_type": "bearer",
                 "user_email": auth_response.user.email,
                 "tenant_id": "tenant-default",
-                "ficha_cliente_id": None,
+                "ficha_cliente_id": client_id,
                 "logo_url": None,
                 "role": role
             }
