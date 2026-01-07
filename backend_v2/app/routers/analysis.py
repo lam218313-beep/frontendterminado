@@ -1,7 +1,6 @@
 
 import logging
 from fastapi import APIRouter, HTTPException
-from ..models.schemas import AnalysisResult
 from ..services.database import db
 
 logger = logging.getLogger(__name__)
