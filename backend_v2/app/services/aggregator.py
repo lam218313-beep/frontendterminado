@@ -461,8 +461,8 @@ def generate_suggested_tasks(client_id: str, analysis_data: dict) -> list[dict]:
             "week": week,
             "area_estrategica": r["area"],
             "score_impacto": 9 if r["prioridad"] == "Alta" else 6,
-            "score_esfuerzo": random.randint(3, 8),
-            "created_at": "now()"
+            "score_esfuerzo": random.randint(3, 8)
+            # created_at handled by DB default
         })
 
     # 2. Fill with Opportunities if needed
@@ -484,8 +484,7 @@ def generate_suggested_tasks(client_id: str, analysis_data: dict) -> list[dict]:
             "week": random.randint(2, 4),
             "area_estrategica": op["oportunidad"],
             "score_impacto": int(op["gap_score"] / 10),
-            "score_esfuerzo": random.randint(4, 7),
-            "created_at": "now()"
+            "score_esfuerzo": random.randint(4, 7)
         })
         
     # 3. Fill with Generic if still < 16
@@ -509,8 +508,7 @@ def generate_suggested_tasks(client_id: str, analysis_data: dict) -> list[dict]:
             "week": 4,
             "area_estrategica": "Operativo",
             "score_impacto": 5,
-            "score_esfuerzo": 3,
-            "created_at": "now()"
+            "score_esfuerzo": 3
         })
         
     return tasks
