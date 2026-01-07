@@ -10,12 +10,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from typing import Optional
 
-from passlib.context import CryptContext
 from ..services.database import db
-
-router = APIRouter(tags=["Authentication"])
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class AuthResponse(BaseModel):
     access_token: str
@@ -35,8 +30,6 @@ class UserInfo(BaseModel):
     is_active: bool
     logo_url: Optional[str] = None
 
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
 
 @router.post("/token", response_model=AuthResponse)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -56,18 +49,36 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
             "role": "admin"
         }
     
-    # 2. Check Database
-    user = db.get_user_by_email(form_data.username)
-    if user and verify_password(form_data.password, user["hashed_password"]):
-        return {
-            "access_token": f"db-token-{user['id']}",
-            "token_type": "bearer",
-            "user_email": user["email"],
-            "tenant_id": "tenant-default",
-            "ficha_cliente_id": None,
-            "logo_url": None,
-            "role": user["role"]
-        }
+    # 2. Check Database via Supabase Auth
+    try:
+        # This returns a session if successful
+        auth_response = db.client.auth.sign_in_with_password({
+            "email": form_data.username,
+            "password": form_data.password
+        })
+        
+        if auth_response.user:
+            # Get Role from Public Profile
+            user_profile = db.get_user_by_email(form_data.username)
+            role = user_profile["role"] if user_profile else "analyst"
+            
+            return {
+                "access_token": auth_response.session.access_token, # Use Real Supabase Token if available? 
+                # Actually, our frontend expects a custom struct. 
+                # For compatibility, we can perform a hybrid approach or just return what we have.
+                # Let's return a simple token for now as we don't fully use the JWT on backend yet.
+                # Or better: return the actual session access_token.
+                "access_token": auth_response.session.access_token, 
+                "token_type": "bearer",
+                "user_email": auth_response.user.email,
+                "tenant_id": "tenant-default",
+                "ficha_cliente_id": None,
+                "logo_url": None,
+                "role": role
+            }
+    except Exception as e:
+        # Fallthrough to error
+        pass
     
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

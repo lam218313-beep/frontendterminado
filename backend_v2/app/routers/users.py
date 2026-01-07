@@ -62,34 +62,58 @@ async def list_users():
 
 @router.post("/", response_model=UserResponse)
 async def create_user(user: UserCreate):
-    """Create a new user."""
-    # Check if exists
-    existing = db.get_user_by_email(user.email)
-    if existing:
-        raise HTTPException(status_code=400, detail="Email already registered")
+    """Create a new user using Supabase Auth."""
+    
+    # 1. Register in Supabase Auth
+    try:
+        # Note: If email confirmation is enabled, user won't be able to login immediately
+        # unless we use the Admin API (service_role key). 
+        # Attempting standard sign_up.
+        auth_response = db.client.auth.sign_up({
+            "email": user.email,
+            "password": user.password,
+            "options": {
+                "data": {
+                    "full_name": user.full_name,
+                    "role": user.role
+                }
+            }
+        })
+        
+        # Check if user was created
+        if not auth_response.user or not auth_response.user.id:
+             raise HTTPException(status_code=400, detail="Supabase Auth failed to create user")
 
-    user_id = str(uuid.uuid4())
-    hashed_pw = get_password_hash(user.password)
-    
-    user_data = {
-        "id": user_id,
-        "email": user.email,
-        "hashed_password": hashed_pw,
-        "full_name": user.full_name,
-        "role": user.role,
-        "created_at": datetime.utcnow().isoformat()
-    }
-    
-    db.create_user(user_data)
-    
-    return {
-        "id": user_id,
-        "email": user.email,
-        "full_name": user.full_name,
-        "role": user.role,
-        "created_at": user_data["created_at"],
-        "is_active": True
-    }
+        user_id = auth_response.user.id
+        
+    except Exception as e:
+        # Handle specific Supabase errors if possible
+        raise HTTPException(status_code=400, detail=f"Auth Error: {str(e)}")
+
+    # 2. Create Public Profile
+    try:
+        user_data = {
+            "id": user_id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": user.role,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        db.create_user_profile(user_data)
+        
+        return {
+            "id": user_id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": user.role,
+            "created_at": user_data["created_at"],
+            "is_active": True
+        }
+    except Exception as e:
+        # If profile creation fails, we might want to cleanup the auth user?
+        # For now, just raise.
+        raise HTTPException(status_code=500, detail=f"Profile Error: {str(e)}")
 
 
 @router.delete("/{user_id}")

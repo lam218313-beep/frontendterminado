@@ -129,12 +129,19 @@ class SupabaseService:
             logger.error(f"DB Get User Error: {e}")
         return None
 
-    def create_user(self, user_data: dict):
+    def create_user_profile(self, user_data: dict):
         if not self.client: return
         try:
+            # Ensure no password is stored in public profile
+            if "password" in user_data:
+                del user_data["password"]
+            if "hashed_password" in user_data:
+                del user_data["hashed_password"]
+                
             self.client.table("users").insert(user_data).execute()
         except Exception as e:
-            logger.error(f"DB Create User Error: {e}")
+            logger.error(f"DB Create User Profile Error: {e}")
+            raise e
 
     def list_users(self) -> list[dict]:
         if not self.client: return []

@@ -62,8 +62,8 @@ export const AdminView: React.FC = () => {
           <button
             onClick={() => setActiveTab('users')}
             className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'users'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-400 hover:text-gray-600'
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-400 hover:text-gray-600'
               }`}
           >
             <span className="flex items-center gap-2"><Users size={16} /> Usuarios</span>
@@ -71,8 +71,8 @@ export const AdminView: React.FC = () => {
           <button
             onClick={() => setActiveTab('orchestrator')}
             className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'orchestrator'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-400 hover:text-gray-600'
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-400 hover:text-gray-600'
               }`}
           >
             <span className="flex items-center gap-2"><Activity size={16} /> Orquestador</span>
@@ -107,6 +107,7 @@ const UsersPanel: React.FC = () => {
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserPass, setNewUserPass] = useState('');
   const [newUserName, setNewUserName] = useState('');
+  const [newUserRole, setNewUserRole] = useState('analyst');
   const [createLoading, setCreateLoading] = useState(false);
 
   const loadUsers = async () => {
@@ -141,12 +142,13 @@ const UsersPanel: React.FC = () => {
         email: newUserEmail,
         password: newUserPass,
         full_name: newUserName,
-        role: 'admin' // Default to admin for simplicity in this MVP
+        role: newUserRole
       });
       setIsCreateModalOpen(false);
       setNewUserEmail('');
       setNewUserPass('');
       setNewUserName('');
+      setNewUserRole('analyst');
       loadUsers();
     } catch (error) {
       alert("Error al crear usuario");
@@ -238,6 +240,23 @@ const UsersPanel: React.FC = () => {
                 <div>
                   <label className="block text-xs font-bold text-gray-500 mb-1">Contraseña</label>
                   <input required type="password" className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-gray-900 transition-all font-medium" placeholder="••••••••" value={newUserPass} onChange={e => setNewUserPass(e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Rol</label>
+                  <div className="relative">
+                    <select
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-gray-900 transition-all font-medium appearance-none"
+                      value={newUserRole}
+                      onChange={e => setNewUserRole(e.target.value)}
+                    >
+                      <option value="analyst">Analista (Por defecto)</option>
+                      <option value="admin">Administrador</option>
+                      <option value="client">Cliente</option>
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                      <Users size={16} />
+                    </div>
+                  </div>
                 </div>
                 <div className="flex gap-3 pt-4">
                   <Button className="flex-1" onClick={() => setIsCreateModalOpen(false)}>Cancelar</Button>
