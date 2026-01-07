@@ -80,13 +80,12 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
             }
     except Exception as e:
         # Fallthrough to error
-        pass
-    
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Incorrect username or password",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+        print(f"Login Error: {e}") # Debug log
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Login failed: {str(e)}", # Reveal error to frontend
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 @router.get("/users/me", response_model=UserInfo)
 async def read_users_me(token: str = Depends(lambda: "mock")): # Simplify dependency
