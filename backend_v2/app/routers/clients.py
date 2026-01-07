@@ -2,15 +2,16 @@
 Clients Router
 ==============
 CRUD endpoints for client management.
-Uses Supabase for persistence (placeholder implementation).
+Uses Supabase for persistence.
 """
 
 import logging
-from typing import Optional
+from typing import Optional, Any
 from datetime import datetime
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from ..services.database import db
 
 logger = logging.getLogger(__name__)
 
@@ -33,22 +34,10 @@ class ClientResponse(BaseModel):
     nombre: str  # Frontend compatibility
     industry: Optional[str] = None
     is_active: bool = True
-    created_at: Optional[str] = None
-
-
-# ============================================================================
-# In-memory storage (replace with Supabase)
-# ============================================================================
-
-_clients: dict[str, dict] = {
-    "demo-client-1": {
-        "id": "demo-client-1",
-        "nombre": "Demo Brand",
-        "industry": "Tecnología",
-        "is_active": True,
-        "created_at": datetime.utcnow().isoformat()
-    }
-}
+    created_at: Optional[Any] = None  # Allow any for datetime serialization
+    
+    class Config:
+        from_attributes = True
 
 
 # ============================================================================
@@ -57,17 +46,18 @@ _clients: dict[str, dict] = {
 
 @router.get("", response_model=list[ClientResponse])
 async def list_clients():
-    """List all clients."""
-    return list(_clients.values())
+    """List all clients from Supabase."""
+    return db.list_clients()
 
 
 @router.post("", response_model=ClientResponse)
 async def create_client(request: ClientCreate):
-    """Create a new client."""
+    """Create a new client in Supabase."""
     import uuid
     client_id = str(uuid.uuid4())
     
-    client = {
+    # Prepare data for DB
+    client_data = {
         "id": client_id,
         "nombre": request.brand_name,
         "industry": request.industry,
@@ -75,16 +65,17 @@ async def create_client(request: ClientCreate):
         "created_at": datetime.utcnow().isoformat()
     }
     
-    _clients[client_id] = client
-    logger.info(f"✅ Created client: {request.brand_name}")
+    # Insert using service
+    db.create_client(client_data)
+    logger.info(f"✅ Created client persistent: {request.brand_name}")
     
-    return client
+    return client_data
 
 
 @router.get("/{client_id}", response_model=ClientResponse)
 async def get_client(client_id: str):
-    """Get a specific client."""
-    client = _clients.get(client_id)
+    """Get a specific client from Supabase."""
+    client = db.get_client(client_id)
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
     return client
@@ -92,11 +83,12 @@ async def get_client(client_id: str):
 
 @router.delete("/{client_id}")
 async def delete_client(client_id: str):
-    """Delete a client."""
-    if client_id not in _clients:
+    """Delete a client from Supabase."""
+    existing = db.get_client(client_id)
+    if not existing:
         raise HTTPException(status_code=404, detail="Client not found")
     
-    del _clients[client_id]
-    logger.info(f"🗑️ Deleted client: {client_id}")
+    db.delete_client(client_id)
+    logger.info(f"🗑️ Deleted client persistent: {client_id}")
     
     return {"message": "Client deleted successfully"}
