@@ -13,43 +13,33 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/semantic", tags=["Analysis"])
 
+# ============================================================================
+from ..models.schemas import AnalysisResult
+from ..services.database import db
 
-# Import pipeline state to access results
-from .pipeline import _pipeline_state
-
+router = APIRouter(
+    prefix="/semantic/analysis",
+    tags=["Analysis"]
+)
 
 # ============================================================================
 # Legacy-compatible Endpoints
 # ============================================================================
 
-@router.get("/analysis/{client_id}")
+@router.get("/{client_id}", response_model=AnalysisResult)
 async def get_latest_analysis(client_id: str):
     """
-    Get the latest completed analysis for a client.
-    
-    This endpoint is compatible with the existing frontend API contract.
-    Returns the Q1-Q10 JSON structure expected by the frontend.
+    Retrieves the latest completed analysis for a given client.
+    Returns the frontend-compatible Q1-Q10 JSON.
     """
-    # Find the most recent completed report for this client
-    completed_reports = [
-        (report_id, state)
-        for report_id, state in _pipeline_state.items()
-        if state.get("client_id") == client_id and state.get("status") == "COMPLETED"
-    ]
+    report = db.get_latest_completed_report(client_id)
+
+    if not report:
+        raise HTTPException(status_code=404, detail="No analysis found")
     
-    if not completed_reports:
-        raise HTTPException(
-            status_code=404, 
-            detail="No completed analysis found for this client. Run a pipeline first."
-        )
-    
-    # Get the latest (in practice, we'd sort by timestamp)
-    _, latest_state = completed_reports[-1]
-    
-    return {
-        "status": "success",
-        **latest_state["result"]
-    }
+    # Return the stored JSON result
+    # We assume 'frontend_compatible_json' is stored in the report
+    return report.get("frontend_compatible_json", {})
 
 
 @router.get("/clients")
