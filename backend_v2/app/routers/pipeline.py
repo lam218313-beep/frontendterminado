@@ -103,14 +103,29 @@ async def _run_full_pipeline(report_id: str, instagram_url: str, comments_limit:
 
         # PASO 3: AGREGACIÓN
         db.update_report_status(report_id, "AGGREGATING")
-        logger.info(f"📊 [{report_id}] Aggregating results...")
-        result_json = aggregator.build_frontend_compatible_json(raw_items)
+        if not raw_items: # Changed from classified_items to raw_items
+             # Fallback if classification failed but scraping worked?
+             # For now, we need items.
+             raise Exception("No items classified to aggregate")
+
+        result_json = aggregator.build_frontend_compatible_json(raw_items) # Changed from classified_items to raw_items
         
         # Guardar éxito en DB
         db.update_report_status(report_id, "COMPLETED", result=result_json)
+        
+        # GENERAR TAREAS SUGERIDAS (New Step)
+        try:
+            suggested_tasks = aggregator.generate_suggested_tasks(client_id, result_json)
+            db.create_tasks_batch(suggested_tasks)
+            logger.info(f"✅ Generated {len(suggested_tasks)} tasks for client {client_id}")
+        except Exception as e:
+            logger.error(f"⚠️ Task Generation Failed: {e}")
+            # Non-blocking error
+            
         logger.info(f"✅ [{report_id}] Pipeline FINISHED and saved.")
 
     except Exception as e:
         logger.error(f"❌ [{report_id}] Pipeline FAILED: {e}", exc_info=True)
         # Guardar error en DB
         db.update_report_status(report_id, "ERROR", error=str(e))
+```

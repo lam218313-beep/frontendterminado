@@ -188,4 +188,26 @@ class SupabaseService:
             logger.error(f"DB Update Password Error: {e}")
             raise e
 
+    # ============================================================================
+    # Tasks
+    # ============================================================================
+
+    def create_tasks_batch(self, tasks_list: list[dict]):
+        if not self.client or not tasks_list: return
+        try:
+            # Upsert not supported on batch insert easily, so we just insert
+            self.client.table("tasks").insert(tasks_list).execute()
+        except Exception as e:
+            logger.error(f"DB Batch Insert Error (Tasks): {e}")
+
+    def get_tasks(self, client_id: str) -> list[dict]:
+        if not self.client: return []
+        try:
+            response = self.client.table("tasks").select("*").eq("client_id", client_id).execute()
+            return response.data if response.data else []
+        except Exception as e:
+            logger.error(f"DB Get Tasks Error: {e}")
+            return []
+
 db = SupabaseService()
+```

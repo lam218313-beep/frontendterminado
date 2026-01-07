@@ -421,3 +421,96 @@ def build_frontend_compatible_json(raw_items: list[dict[str, Any]]) -> dict:
     
     logger.info("✅ Aggregation complete")
     return result
+
+
+def generate_suggested_tasks(client_id: str, analysis_data: dict) -> list[dict]:
+    """
+    Generate 16 strategic tasks based on the analysis.
+    Distributed across 4 weeks.
+    """
+    import uuid
+    import random
+    
+    tasks = []
+    
+    # Sources for tasks
+    recs = analysis_data.get("Q9", {}).get("results", {}).get("lista_recomendaciones", [])
+    opps = analysis_data.get("Q6", {}).get("results", {}).get("oportunidades", [])
+    
+    # 1. High Priority (Week 1)
+    week = 1
+    
+    # Add Critical Recs first
+    for r in recs:
+        if len(tasks) >= 16: break
+        
+        # Determine week based on priority
+        if r["prioridad"] == "Alta":
+            week = 1
+        else:
+            week = random.randint(2, 4)
+            
+        tasks.append({
+            "id": str(uuid.uuid4()),
+            "client_id": client_id,
+            "title": r["titulo"],
+            "description": f"{r['descripcion']} (Impacto: {r['impacto']})",
+            "status": "PENDIENTE",
+            "priority": r["prioridad"],
+            "urgency": "alta" if r["prioridad"] == "Alta" else "media",
+            "week": week,
+            "area_estrategica": r["area"],
+            "score_impacto": 9 if r["prioridad"] == "Alta" else 6,
+            "score_esfuerzo": random.randint(3, 8),
+            "created_at": "now()"
+        })
+
+    # 2. Fill with Opportunities if needed
+    for op in opps:
+        if len(tasks) >= 16: break
+        
+        # Avoid dupes by basic title check (simple)
+        if any(t["title"] == op["recomendacion_accion"] for t in tasks):
+            continue
+            
+        tasks.append({
+            "id": str(uuid.uuid4()),
+            "client_id": client_id,
+            "title": op["recomendacion_accion"],
+            "description": f"Oportunidad detectada: {op['detalle']}",
+            "status": "PENDIENTE",
+            "priority": "Media",
+            "urgency": "media",
+            "week": random.randint(2, 4),
+            "area_estrategica": op["oportunidad"],
+            "score_impacto": int(op["gap_score"] / 10),
+            "score_esfuerzo": random.randint(4, 7),
+            "created_at": "now()"
+        })
+        
+    # 3. Fill with Generic if still < 16
+    generics = [
+        "Revisar KPIs mensuales", "Actualizar calendario de contenidos", 
+        "Validar tono de comunicación", "Análisis de competidores clave",
+        "Optimizar bio de Instagram", "Responder comentarios pendientes",
+        "Planificar campaña de engagement", "Revisar hashtags utilizados"
+    ]
+    
+    for g_title in generics:
+        if len(tasks) >= 16: break
+        tasks.append({
+            "id": str(uuid.uuid4()),
+            "client_id": client_id,
+            "title": g_title,
+            "description": "Tarea de mantenimiento sugerida por el sistema.",
+            "status": "PENDIENTE",
+            "priority": "Baja",
+            "urgency": "baja",
+            "week": 4,
+            "area_estrategica": "Operativo",
+            "score_impacto": 5,
+            "score_esfuerzo": 3,
+            "created_at": "now()"
+        })
+        
+    return tasks

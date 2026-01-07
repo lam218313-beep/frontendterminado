@@ -23,4 +23,20 @@ create table users (
   created_at timestamptz default now()
 );
 
+create table tasks (
+  id text primary key,
+  client_id text references clients(id),
+  title text not null,
+  description text,
+  status text default 'PENDIENTE', -- PENDIENTE, EN_CURSO, REVISADO, HECHO
+  priority text default 'Media', -- Alta, Media, Baja
+  urbency text default 'media', -- alta, media, baja (frontend constraint)
+  week integer default 1,
+  area_estrategica text,
+  score_impacto integer,
+  score_esfuerzo integer,
+  created_at timestamptz default now(),
+  completed_at timestamptz
+);
+
 
