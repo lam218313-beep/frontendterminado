@@ -38,7 +38,8 @@ async def start_pipeline(request: PipelineStartRequest, background_tasks: Backgr
     # 2. Lanzar tarea en background (Pasando argumentos explícitos)
     background_tasks.add_task(
         _run_full_pipeline, 
-        report_id=report_id, 
+        report_id=report_id,
+        client_id=request.client_id,  # <-- CRITICAL: Pass client_id for task generation
         instagram_url=request.instagram_url, 
         comments_limit=request.comments_limit
     )
@@ -58,7 +59,7 @@ async def get_pipeline_result(report_id: str):
     return {"status": "Please use /semantic/analysis/{client_id}"}
 
 # Tarea Background (Limpia de memoria local)
-async def _run_full_pipeline(report_id: str, instagram_url: str, comments_limit: int = 1000):
+async def _run_full_pipeline(report_id: str, client_id: str, instagram_url: str, comments_limit: int = 1000):
     try:
         logger.info(f"🚀 [{report_id}] Pipeline STARTED for {instagram_url}")
         
