@@ -210,4 +210,3 @@ class SupabaseService:
             return []
 
 db = SupabaseService()
-```
