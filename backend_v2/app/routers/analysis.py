@@ -59,29 +59,16 @@ async def get_clients_for_analysis():
 @router.get("/context/{client_id}")
 async def get_context_status(client_id: str):
     """
-    Get context status for a client.
-    Returns whether there's an active analysis.
+    Verifica en Supabase si hay un análisis activo o terminado.
+    El frontend usa esto para decidir si mostrar gráficos o botón de carga.
     """
-    # Check if there's any report for this client
-    client_reports = [
-        state for state in _pipeline_state.values()
-        if state.get("client_id") == client_id
-    ]
-    
-    if not client_reports:
-        return {
-            "status": "no_context",
-            "message": "No analysis found. Start a pipeline first.",
-            "files": [],
-            "cache_active": False
-        }
-    
-    latest = client_reports[-1]
+    # Consultamos DB en lugar de memoria
+    client_status = db.get_client_status(client_id)
+    status = client_status.get("status")
     
     return {
-        "status": "active" if latest["status"] == "COMPLETED" else "processing",
+        "status": "active" if status == "COMPLETED" else ("processing" if status == "PROCESSING" else "no_context"),
         "context_id": client_id,
-        "cache_active": latest["status"] == "COMPLETED",
-        "last_updated": None,  # TODO: Add timestamp
+        "cache_active": status == "COMPLETED", 
         "files": []
     }

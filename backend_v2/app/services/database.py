@@ -55,4 +55,27 @@ class SupabaseService:
             logger.error(f"DB Select Error: {e}")
         return None
 
+    def get_client_status(self, client_id: str) -> dict:
+        """
+        Check if the client has any recent activity.
+        Returns: {"status": "COMPLETED" | "PROCESSING" | None, "report_id": ...}
+        """
+        if not self.client: return {"status": None}
+        try:
+            # Buscamos el último reporte (ya sea procesando o terminado)
+            response = self.client.table("analysis_reports")\
+                .select("id, status, created_at")\
+                .eq("client_id", client_id)\
+                .order("created_at", desc=True)\
+                .limit(1)\
+                .execute()
+            
+            if response.data:
+                latest = response.data[0]
+                return {"status": latest["status"], "report_id": latest["id"]}
+        except Exception as e:
+            logger.error(f"DB Status Check Error: {e}")
+        
+        return {"status": None}
+
 db = SupabaseService()
