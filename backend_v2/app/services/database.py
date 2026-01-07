@@ -140,7 +140,11 @@ class SupabaseService:
         return None
 
     def create_user_profile(self, user_data: dict):
-        if not self.client: return
+        # Use Admin Client if available to bypass RLS (needed when Admin creates another user)
+        target_client = self.admin_client if self.admin_client else self.client
+        
+        if not target_client: return
+
         try:
             # Ensure no password is stored in public profile
             if "password" in user_data:
@@ -148,7 +152,7 @@ class SupabaseService:
             if "hashed_password" in user_data:
                 del user_data["hashed_password"]
                 
-            self.client.table("users").insert(user_data).execute()
+            target_client.table("users").insert(user_data).execute()
         except Exception as e:
             logger.error(f"DB Create User Profile Error: {e}")
             raise e
