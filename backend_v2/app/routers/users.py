@@ -69,29 +69,41 @@ async def create_user(user: UserCreate):
     """Create a new user using Supabase Auth."""
     
     # 1. Register in Supabase Auth
+    # 1. Register in Supabase Auth
     try:
-        # Note: If email confirmation is enabled, user won't be able to login immediately
-        # unless we use the Admin API (service_role key). 
-        # Attempting standard sign_up.
-        auth_response = db.client.auth.sign_up({
-            "email": user.email,
-            "password": user.password,
-            "options": {
-                "data": {
+        if db.admin_client:
+            # OPTION A: Use Admin API (Best for Admin Dashboard)
+            # Creates a verified user immediately. No email logic needed.
+            print(f"Creating user {user.email} via Admin API...")
+            auth_response = db.admin_client.auth.admin.create_user({
+                "email": user.email,
+                "password": user.password,
+                "email_confirm": True, # Auto-confirm email
+                "user_metadata": {
                     "full_name": user.full_name,
                     "role": user.role
                 }
-            }
-        })
-        
-        # Check if user was created
-        if not auth_response.user or not auth_response.user.id:
-             raise HTTPException(status_code=400, detail="Supabase Auth failed to create user")
-
-        user_id = auth_response.user.id
-        
+            })
+            user_id = auth_response.user.id
+        else:
+            # OPTION B: Use Public Sign Up (Fallback)
+            # This might require email confirmation depending on Supabase settings.
+            print(f"Creating user {user.email} via Public Sign Up...")
+            auth_response = db.client.auth.sign_up({
+                "email": user.email,
+                "password": user.password,
+                "options": {
+                    "data": {
+                        "full_name": user.full_name,
+                        "role": user.role
+                    }
+                }
+            })
+            if not auth_response.user or not auth_response.user.id:
+                 raise HTTPException(status_code=400, detail="Supabase Auth failed (check email confirmation settings)")
+            user_id = auth_response.user.id
+            
     except Exception as e:
-        # Handle specific Supabase errors if possible
         raise HTTPException(status_code=400, detail=f"Auth Error: {str(e)}")
 
     # 2. Create Public Profile

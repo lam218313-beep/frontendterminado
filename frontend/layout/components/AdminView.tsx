@@ -164,8 +164,11 @@ const UsersPanel: React.FC = () => {
       setNewUserRole('client');
       setSelectedClientId('');
       loadUsers();
-    } catch (error) {
-      alert("Error al crear usuario");
+      loadUsers();
+    } catch (error: any) {
+      console.error(error);
+      const msg = error.response?.data?.detail || error.message || "Error desconocido";
+      alert("Error al crear usuario: " + msg);
     } finally {
       setCreateLoading(false);
     }
