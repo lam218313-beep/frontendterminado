@@ -193,12 +193,20 @@ class SupabaseService:
     # ============================================================================
 
     def create_tasks_batch(self, tasks_list: list[dict]):
-        if not self.client or not tasks_list: return
+        if not self.client:
+            logger.error("DB Batch Insert Error (Tasks): No DB client")
+            raise Exception("Database client not initialized")
+        if not tasks_list:
+            logger.warning("DB Batch Insert: Empty tasks list, skipping")
+            return
         try:
-            # Upsert not supported on batch insert easily, so we just insert
-            self.client.table("tasks").insert(tasks_list).execute()
+            logger.info(f"DB Batch Insert: Inserting {len(tasks_list)} tasks")
+            result = self.client.table("tasks").insert(tasks_list).execute()
+            logger.info(f"DB Batch Insert Success: {len(result.data) if result.data else 0} tasks inserted")
+            return result
         except Exception as e:
-            logger.error(f"DB Batch Insert Error (Tasks): {e}")
+            logger.error(f"DB Batch Insert Error (Tasks): {e}", exc_info=True)
+            raise  # Re-raise so pipeline can log it
 
     def get_tasks(self, client_id: str) -> list[dict]:
         if not self.client: return []
