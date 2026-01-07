@@ -110,6 +110,9 @@ const UsersPanel: React.FC = () => {
   const [newUserRole, setNewUserRole] = useState('analyst');
   const [createLoading, setCreateLoading] = useState(false);
 
+  const [clients, setClients] = useState<api.Client[]>([]);
+  const [selectedClientId, setSelectedClientId] = useState('');
+
   const loadUsers = async () => {
     setLoading(true);
     try {
@@ -121,6 +124,13 @@ const UsersPanel: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Load clients when role changes to 'client'
+  useEffect(() => {
+    if (newUserRole === 'client' && clients.length === 0) {
+      api.getClients().then(setClients).catch(console.error);
+    }
+  }, [newUserRole]);
 
   useEffect(() => { loadUsers(); }, []);
 
@@ -142,13 +152,15 @@ const UsersPanel: React.FC = () => {
         email: newUserEmail,
         password: newUserPass,
         full_name: newUserName,
-        role: newUserRole
+        role: newUserRole,
+        client_id: newUserRole === 'client' ? selectedClientId : undefined
       });
       setIsCreateModalOpen(false);
       setNewUserEmail('');
       setNewUserPass('');
       setNewUserName('');
       setNewUserRole('analyst');
+      setSelectedClientId('');
       loadUsers();
     } catch (error) {
       alert("Error al crear usuario");
@@ -258,6 +270,29 @@ const UsersPanel: React.FC = () => {
                     </div>
                   </div>
                 </div>
+
+                {newUserRole === 'client' && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">Asignar Cliente</label>
+                    <div className="relative">
+                      <select
+                        required={newUserRole === 'client'}
+                        className="w-full bg-blue-50 border border-blue-200 text-blue-900 rounded-xl p-3 outline-none focus:border-blue-500 transition-all font-bold appearance-none"
+                        value={selectedClientId}
+                        onChange={e => setSelectedClientId(e.target.value)}
+                      >
+                        <option value="">Seleccionar Cliente...</option>
+                        {clients.map(c => (
+                          <option key={c.id} value={c.id}>{c.nombre}</option>
+                        ))}
+                      </select>
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-blue-400">
+                        <Database size={16} />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
                 <div className="flex gap-3 pt-4">
                   <Button className="flex-1" onClick={() => setIsCreateModalOpen(false)}>Cancelar</Button>
                   <Button primary disabled={createLoading} className="flex-1">

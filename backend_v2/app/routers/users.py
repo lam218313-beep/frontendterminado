@@ -97,6 +97,7 @@ async def create_user(user: UserCreate):
             "email": user.email,
             "full_name": user.full_name,
             "role": user.role,
+            "client_id": user.client_id, # Link to client if provided
             "created_at": datetime.utcnow().isoformat()
         }
         
@@ -107,6 +108,7 @@ async def create_user(user: UserCreate):
             "email": user.email,
             "full_name": user.full_name,
             "role": user.role,
+            "client_id": user.client_id,
             "created_at": user_data["created_at"],
             "is_active": True
         }

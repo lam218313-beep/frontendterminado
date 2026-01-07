@@ -113,3 +113,25 @@ class AnalysisReportResponse(AnalysisReportBase):
     
     class Config:
         from_attributes = True
+
+
+# ============================================================================
+# User Schemas
+# ============================================================================
+
+class UserBase(BaseModel):
+    email: str
+    full_name: Optional[str] = None
+    role: str = "analyst"
+    client_id: Optional[str] = None # Link to specific client for 'client' role
+
+class UserCreate(UserBase):
+    password: str
+
+class UserResponse(UserBase):
+    id: str
+    is_active: bool = True
+    created_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
