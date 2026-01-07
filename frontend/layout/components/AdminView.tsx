@@ -107,7 +107,7 @@ const UsersPanel: React.FC = () => {
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserPass, setNewUserPass] = useState('');
   const [newUserName, setNewUserName] = useState('');
-  const [newUserRole, setNewUserRole] = useState('analyst');
+  const [newUserRole, setNewUserRole] = useState('client');
   const [createLoading, setCreateLoading] = useState(false);
 
   const [clients, setClients] = useState<api.Client[]>([]);
@@ -159,7 +159,7 @@ const UsersPanel: React.FC = () => {
       setNewUserEmail('');
       setNewUserPass('');
       setNewUserName('');
-      setNewUserRole('analyst');
+      setNewUserRole('client');
       setSelectedClientId('');
       loadUsers();
     } catch (error) {
@@ -261,9 +261,9 @@ const UsersPanel: React.FC = () => {
                       value={newUserRole}
                       onChange={e => setNewUserRole(e.target.value)}
                     >
-                      <option value="analyst">Analista (Por defecto)</option>
+                      <option value="client">Cliente (Por defecto)</option>
+                      <option value="analyst">Analista</option>
                       <option value="admin">Administrador</option>
-                      <option value="client">Cliente</option>
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                       <Users size={16} />
