@@ -376,17 +376,43 @@ const OrchestratorPanel: React.FC = () => {
   const [instaUrl, setInstaUrl] = useState('');
   const [analyzeLoading, setAnalyzeLoading] = useState(false);
 
+  // Status Tracking
+  const [clientStatuses, setClientStatuses] = useState<Record<string, string>>({});
+
   const loadClients = async () => {
     setLoading(true);
     try {
       const data = await api.getClients();
       setClients(data);
+      // Initial status check
+      checkAllStatuses(data);
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
     }
   };
+
+  const checkAllStatuses = async (currentClients: api.Client[]) => {
+    const newStatuses: Record<string, string> = {};
+    await Promise.all(currentClients.map(async (c) => {
+      try {
+        const context = await api.getContextStatus(c.id);
+        newStatuses[c.id] = context.status;
+      } catch (e) {
+        newStatuses[c.id] = 'no_context';
+      }
+    }));
+    setClientStatuses(newStatuses);
+  };
+
+  // Poll for updates every 5s
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (clients.length > 0) checkAllStatuses(clients);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [clients]);
 
   useEffect(() => { loadClients(); }, []);
 
@@ -432,6 +458,9 @@ const OrchestratorPanel: React.FC = () => {
         <div className="flex items-center gap-3 text-gray-500">
           <Database size={20} />
           <span className="font-bold text-sm">{clients.length} Clientes activos</span>
+          <button onClick={() => checkAllStatuses(clients)} className="p-1 hover:bg-gray-100 rounded-full text-blue-500" title="Actualizar Estados">
+            <Activity size={16} />
+          </button>
         </div>
         <Button primary onClick={() => setShowCreate(true)}>
           <Plus size={18} /> Nuevo Cliente
@@ -459,18 +488,63 @@ const OrchestratorPanel: React.FC = () => {
                 <p className="text-sm text-gray-400 font-medium mb-6">{client.industry || 'General'}</p>
 
                 <div className="space-y-3">
-                  <button
-                    onClick={() => setShowAnalyze(client.id)}
-                    className="w-full py-3 rounded-xl bg-gray-50 text-gray-900 font-bold text-xs uppercase tracking-wider hover:bg-black hover:text-white transition-all flex items-center justify-center gap-2 group/btn"
-                  >
-                    <Play size={14} className="group-hover/btn:fill-current" />
-                    Ejecutar Análisis
-                  </button>
+                  {(() => {
+                    const status = clientStatuses[client.id] || 'no_context';
+                    const isProcessing = ['processing', 'scraping', 'classifying', 'aggregating'].includes(status);
+                    const isActive = status === 'active';
+
+                    // Mapping detail text
+                    let statusText = "Procesando...";
+                    if (status === 'scraping') statusText = "Scraping Instagram...";
+                    if (status === 'classifying') statusText = "Clasificando con Gemini...";
+                    if (status === 'aggregating') statusText = "Generando Reporte...";
+
+                    if (isProcessing) {
+                      return (
+                        <div className="w-full py-3 rounded-xl bg-blue-50 text-blue-700 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-blue-100">
+                          <Loader2 size={14} className="animate-spin" />
+                          {statusText}
+                        </div>
+                      );
+                    }
+
+                    if (isActive) {
+                      return (
+                        <div className="flex flex-col gap-2">
+                          <div className="w-full py-3 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-emerald-100">
+                            <CheckCircle size={14} /> Análisis Listo
+                          </div>
+                          <button
+                            onClick={() => setShowAnalyze(client.id)}
+                            className="w-full py-2 rounded-xl text-gray-400 font-bold text-[10px] uppercase tracking-wider hover:bg-gray-50 flex items-center justify-center gap-2"
+                          >
+                            <Play size={10} /> Re-ejecutar
+                          </button>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <button
+                        onClick={() => setShowAnalyze(client.id)}
+                        className="w-full py-3 rounded-xl bg-gray-50 text-gray-900 font-bold text-xs uppercase tracking-wider hover:bg-black hover:text-white transition-all flex items-center justify-center gap-2 group/btn"
+                      >
+                        <Play size={14} className="group-hover/btn:fill-current" />
+                        Ejecutar Análisis
+                      </button>
+                    );
+                  })()}
 
                   <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                    <span className="text-xs font-bold text-emerald-500 flex items-center gap-1">
-                      <CheckCircle size={12} /> Persistente
-                    </span>
+                    {clientStatuses[client.id] === 'active' ? (
+                      <span className="text-xs font-bold text-emerald-500 flex items-center gap-1">
+                        <CheckCircle size={12} /> Persistente
+                      </span>
+                    ) : (
+                      <span className="text-xs font-bold text-gray-400 flex items-center gap-1">
+                        <Database size={12} /> Sin datos
+                      </span>
+                    )}
                     <span className="text-[10px] text-gray-300 font-mono">ID: {client.id.slice(0, 8)}...</span>
                   </div>
                 </div>

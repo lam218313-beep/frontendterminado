@@ -35,8 +35,15 @@ async def get_context_status(client_id: str):
     frontend_status = "no_context"
     if status == "COMPLETED":
         frontend_status = "active"
-    elif status == "PROCESSING":
-        frontend_status = "processing"
+    elif status in ["PROCESSING", "SCRAPING", "CLASSIFYING", "AGGREGATING"]:
+        if status == "SCRAPING":
+            frontend_status = "scraping"
+        elif status == "CLASSIFYING":
+            frontend_status = "classifying"
+        elif status == "AGGREGATING":
+            frontend_status = "aggregating"
+        else:
+            frontend_status = "processing"
     
     return {
         "status": frontend_status,

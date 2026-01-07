@@ -31,7 +31,7 @@ export interface UserInfo {
 }
 
 export interface ContextStatus {
-  status: 'active' | 'no_context';
+  status: 'active' | 'no_context' | 'processing' | 'scraping' | 'classifying' | 'aggregating';
   context_id?: string;
   cache_active: boolean;
   cache_name?: string;

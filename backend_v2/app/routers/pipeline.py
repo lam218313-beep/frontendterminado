@@ -77,6 +77,7 @@ async def _run_full_pipeline(report_id: str, instagram_url: str, comments_limit:
         logger.info(f"📦 [{report_id}] Scraped {len(all_content)} items")
 
         # PASO 2: CLASIFICACIÓN
+        db.update_report_status(report_id, "CLASSIFYING")
         normalized_items = [
             apify_service.normalize_comment_for_classification(item)
             for item in all_content
@@ -101,6 +102,7 @@ async def _run_full_pipeline(report_id: str, instagram_url: str, comments_limit:
                 })
 
         # PASO 3: AGREGACIÓN
+        db.update_report_status(report_id, "AGGREGATING")
         logger.info(f"📊 [{report_id}] Aggregating results...")
         result_json = aggregator.build_frontend_compatible_json(raw_items)
         
