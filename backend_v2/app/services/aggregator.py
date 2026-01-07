@@ -282,6 +282,104 @@ def aggregate_q8_temporal(raw_items: list[dict[str, Any]]) -> dict:
     }
 
 
+def aggregate_q9_recommendations(raw_items: list[dict[str, Any]], q6_data: dict) -> dict:
+    """
+    Q9: Recommendations & Prioritization.
+    Derived largely from Q6 Opportunities.
+    """
+    opportunities = q6_data.get("results", {}).get("oportunidades", [])
+    
+    # Transform opportunities to recommendations
+    recommendations = []
+    critical_count = 0
+    
+    for op in opportunities:
+        is_critical = op["gap_score"] > 70
+        if is_critical:
+            critical_count += 1
+            
+        recommendations.append({
+            "titulo": op["recomendacion_accion"],
+            "descripcion": op["detalle"],
+            "area": "Contenido",
+            "impacto": "Alto" if is_critical else "Medio",
+            "prioridad": "Alta" if is_critical else "Media"
+        })
+
+    # Generate a narrative insight
+    insight = "Se detectaron áreas de mejora."
+    if critical_count > 0:
+        insight = f"Se requieren acciones inmediatas en {critical_count} áreas críticas identificadas en el análisis de oportunidades."
+    elif recommendations:
+        insight = "El desempeño es estable, pero hay oportunidades para optimizar la estrategia de contenido."
+    else:
+        insight = "No se detectaron problemas críticos. Mantener la estrategia actual."
+
+    return {
+        "results": {
+            "lista_recomendaciones": recommendations,
+            "resumen_global": {
+                "recomendaciones_criticas": critical_count,
+                "areas_prioritarias": [r["area"] for r in recommendations[:3]]
+            },
+            "insight": insight
+        }
+    }
+
+
+def aggregate_q10_executive(raw_items: list[dict[str, Any]], q1_data: dict, q7_data: dict, q9_data: dict) -> dict:
+    """
+    Q10: Executive Summary.
+    Aggregates KPIs from other sections.
+    """
+    # 1. KPIs
+    emotions = q1_data.get("emociones", [])
+    top_emotion = max(emotions, key=lambda x: x["value"]) if emotions else {"name": "Neutro", "value": 0}
+    
+    sentiment_data = q7_data.get("results", {}).get("analisis_agregado", {})
+    pos_pct = int(sentiment_data.get("Positivo", 0) * 100)
+    neg_pct = int(sentiment_data.get("Negativo", 0) * 100)
+    
+    criticas = q9_data.get("results", {}).get("resumen_global", {}).get("recomendaciones_criticas", 0)
+    
+    # 2. Priority Alerts
+    alerta = "Rendimiento Estable"
+    if neg_pct > 30:
+        alerta = "Atención: Sentimiento Negativo Alto"
+    elif criticas > 2:
+        alerta = "Acción Requerida: Múltiples Bloqueantes"
+        
+    # 3. Urgency Lists (Derived from Q9 recommendations)
+    recs = q9_data.get("results", {}).get("lista_recomendaciones", [])
+    urgent_48h = [r["titulo"] for r in recs if r["prioridad"] == "Alta"][:3]
+    week_1 = [r["titulo"] for r in recs if r["prioridad"] == "Media"][:3]
+    
+    return {
+        "results": {
+            "alerta_prioritaria": alerta,
+            "hallazgos_clave": [r["descripcion"] for r in recs[:3]],
+            "resumen_general": "Resumen ejecutivo generado automáticamente.",
+            "kpis_principales": {
+                "emocion_dominante": top_emotion["name"],
+                "emocion_porcentaje": top_emotion["value"],
+                "personalidad_marca": "Sinceridad", # Default for now
+                "tema_principal": "General", # Placeholder
+                "sentimiento_positivo_pct": pos_pct,
+                "sentimiento_negativo_pct": neg_pct,
+                "tendencia_temporal": "Estable",
+                "anomalias_detectadas": 0,
+                "recomendaciones_criticas": criticas
+            },
+            "urgencias_por_prioridad": {
+                "48_horas": urgent_48h if urgent_48h else ["Revisar alertas de sentimiento"],
+                "semana_1": week_1 if week_1 else ["Analizar competencia"],
+                "semanas_2_3": ["Optimizar calendario editorial"],
+                "no_urgente": []
+            }
+        }
+    }
+
+
 def build_frontend_compatible_json(raw_items: list[dict[str, Any]]) -> dict:
     """
     Build the complete Q1-Q10 JSON that the frontend expects.
@@ -294,17 +392,31 @@ def build_frontend_compatible_json(raw_items: list[dict[str, Any]]) -> dict:
     """
     logger.info(f"📊 Aggregating {len(raw_items)} items into Q1-Q10...")
     
+    # Parallel aggregation could be better, but sequential is fine for now
+    q1 = aggregate_q1_emotions(raw_items)
+    q2 = aggregate_q2_personality(raw_items)
+    q3 = aggregate_q3_topics(raw_items)
+    q4 = aggregate_q4_narrative_frames(raw_items)
+    q5 = aggregate_q5_influencers(raw_items)
+    q6 = aggregate_q6_opportunities(raw_items)
+    q7 = aggregate_q7_sentiment(raw_items)
+    q8 = aggregate_q8_temporal(raw_items)
+    
+    # Dependent aggregations
+    q9 = aggregate_q9_recommendations(raw_items, q6)
+    q10 = aggregate_q10_executive(raw_items, q1, q7, q9)
+    
     result = {
-        "Q1": aggregate_q1_emotions(raw_items),
-        "Q2": aggregate_q2_personality(raw_items),
-        "Q3": aggregate_q3_topics(raw_items),
-        "Q4": aggregate_q4_narrative_frames(raw_items),
-        "Q5": aggregate_q5_influencers(raw_items),
-        "Q6": aggregate_q6_opportunities(raw_items),
-        "Q7": aggregate_q7_sentiment(raw_items),
-        "Q8": aggregate_q8_temporal(raw_items),
-        "Q9": {},  # TODO: Recommendations
-        "Q10": {},  # TODO: Executive Summary
+        "Q1": q1,
+        "Q2": q2,
+        "Q3": q3,
+        "Q4": q4,
+        "Q5": q5,
+        "Q6": q6,
+        "Q7": q7,
+        "Q8": q8,
+        "Q9": q9,
+        "Q10": q10,
     }
     
     logger.info("✅ Aggregation complete")
