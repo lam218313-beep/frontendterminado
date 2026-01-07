@@ -12,6 +12,8 @@ from typing import Optional
 
 from ..services.database import db
 
+router = APIRouter(tags=["Authentication"])
+
 class AuthResponse(BaseModel):
     access_token: str
     token_type: str
