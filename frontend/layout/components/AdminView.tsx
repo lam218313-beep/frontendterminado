@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Users, Database, Plus, Trash2, Search,
   Shield, Activity, Play, FileText, CheckCircle,
-  AlertCircle, Loader2, X
+  AlertCircle, Loader2, X, Key
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as api from '../services/api';
@@ -113,6 +113,11 @@ const UsersPanel: React.FC = () => {
   const [clients, setClients] = useState<api.Client[]>([]);
   const [selectedClientId, setSelectedClientId] = useState('');
 
+  // Password Reset State
+  const [showResetPass, setShowResetPass] = useState<string | null>(null);
+  const [resetPassValue, setResetPassValue] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+
   const loadUsers = async () => {
     setLoading(true);
     try {
@@ -215,12 +220,21 @@ const UsersPanel: React.FC = () => {
                   </span>
                 </td>
                 <td className="p-4 text-right">
-                  <button
-                    onClick={() => handleDelete(user.id)}
-                    className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => setShowResetPass(user.id)}
+                      className="p-2 hover:bg-yellow-50 text-gray-400 hover:text-yellow-600 rounded-lg transition-colors"
+                      title="Cambiar Contraseña"
+                    >
+                      <Key size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(user.id)}
+                      className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -255,11 +269,12 @@ const UsersPanel: React.FC = () => {
                     <label className="block text-xs font-bold text-gray-500 mb-1">Asignar Cliente (Empresa)</label>
                     <div className="relative">
                       <select
+                        required
                         className="w-full bg-blue-50 border border-blue-200 text-blue-900 rounded-xl p-3 outline-none focus:border-blue-500 transition-all font-bold appearance-none"
                         value={selectedClientId}
                         onChange={e => setSelectedClientId(e.target.value)}
                       >
-                        <option value="">Sin asignar (Crear luego)</option>
+                        <option value="">Seleccionar Cliente (Requerido)</option>
                         {clients.map(c => (
                           <option key={c.id} value={c.id}>{c.nombre}</option>
                         ))}
@@ -278,6 +293,59 @@ const UsersPanel: React.FC = () => {
                   </Button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Reset Password */}
+      <AnimatePresence>
+        {showResetPass && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md"
+            >
+              <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
+                <Key className="text-yellow-500" /> Nuevo Password
+              </h2>
+              <p className="text-gray-500 text-sm mb-4">
+                Establece una nueva contraseña manualmente.
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Nueva Contraseña</label>
+                  <input
+                    autoFocus
+                    type="text"
+                    className="w-full bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-xl p-3 outline-none focus:border-yellow-500 transition-all font-bold"
+                    placeholder="Ej. pixely123"
+                    value={resetPassValue}
+                    onChange={e => setResetPassValue(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button className="flex-1" onClick={() => { setShowResetPass(null); setResetPassValue(''); }}>Cancelar</Button>
+                  <Button primary disabled={resetLoading || !resetPassValue} className="flex-1 !bg-yellow-500 hover:!bg-yellow-600 border-yellow-600" onClick={async () => {
+                    if (!showResetPass) return;
+                    setResetLoading(true);
+                    try {
+                      await api.resetPassword(showResetPass, resetPassValue);
+                      alert("Contraseña actualizada correctamente");
+                      setShowResetPass(null);
+                      setResetPassValue('');
+                    } catch (e) {
+                      alert("Error al actualizar: " + String(e));
+                    } finally {
+                      setResetLoading(false);
+                    }
+                  }}>
+                    {resetLoading ? 'Guardando...' : 'Cambiar Pass'}
+                  </Button>
+                </div>
+              </div>
             </motion.div>
           </div>
         )}

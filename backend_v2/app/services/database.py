@@ -8,11 +8,21 @@ logger = logging.getLogger(__name__)
 
 class SupabaseService:
     def __init__(self):
+        # Public Client (Anon)
         if settings.SUPABASE_URL and settings.SUPABASE_KEY:
             self.client: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
         else:
             logger.warning("Supabase credentials missing. Persistence disabled.")
             self.client = None
+
+        # Admin Client (Service Role) - For Password Resets / Deletions
+        if settings.SUPABASE_URL and settings.SUPABASE_SERVICE_KEY:
+            try:
+                self.admin_client: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
+            except Exception:
+                self.admin_client = None
+        else:
+            self.admin_client = None
 
     # ============================================================================
     # Reports (Analysis)
@@ -155,8 +165,23 @@ class SupabaseService:
     def delete_user(self, user_id: str):
         if not self.client: return
         try:
+            # 1. Delete Public Profile
             self.client.table("users").delete().eq("id", user_id).execute()
+            
+            # 2. Delete Auth User (if Admin Key available)
+            if self.admin_client:
+                self.admin_client.auth.admin.delete_user(user_id)
+                
         except Exception as e:
             logger.error(f"DB Delete User Error: {e}")
+
+    def update_password_admin(self, user_id: str, new_password: str):
+        if not self.admin_client:
+            raise Exception("Service Key not configured. Cannot reset password.")
+        try:
+            self.admin_client.auth.admin.update_user_by_id(user_id, {"password": new_password})
+        except Exception as e:
+            logger.error(f"DB Update Password Error: {e}")
+            raise e
 
 db = SupabaseService()

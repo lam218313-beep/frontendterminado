@@ -27,6 +27,10 @@ class UserCreate(BaseModel):
     password: str
     full_name: str
     role: str = "analyst"
+    client_id: Optional[str] = None
+
+class UserPasswordUpdate(BaseModel):
+    password: str
 
 class UserResponse(BaseModel):
     id: str
@@ -123,6 +127,16 @@ async def delete_user(user_id: str):
     """Delete a user."""
     db.delete_user(user_id)
     return {"message": "User deleted successfully"}
+
+@router.put("/{user_id}/password")
+async def reset_password(user_id: str, payload: UserPasswordUpdate):
+    """Admin endpoint to force reset user password."""
+    try:
+        db.update_password_admin(user_id, payload.password)
+        return {"message": "Password updated successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 # Upload logo mock endpoint for frontend compatibility
 @router.post("/upload-logo")

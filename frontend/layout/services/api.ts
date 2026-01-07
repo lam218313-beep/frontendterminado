@@ -739,3 +739,23 @@ export async function addTaskNote(taskId: string, content: string): Promise<Task
   return handleResponse<TaskNote>(response);
 }
 
+/**
+ * Reset user password (Admin only)
+ * PUT /users/{user_id}/password
+ */
+export async function resetPassword(userId: string, password: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/password`, {
+    method: 'PUT',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ password }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    throw new ApiError(response.status, errorBody.detail || `Failed to reset password: ${response.statusText}`);
+  }
+}
+
