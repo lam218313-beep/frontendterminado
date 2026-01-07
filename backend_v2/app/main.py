@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
-from .routers import pipeline, clients, analysis
+from .routers import pipeline, clients, analysis, auth, users
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -48,6 +48,8 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(auth.router)
+app.include_router(users.router)
 app.include_router(pipeline.router)
 app.include_router(clients.router)
 app.include_router(analysis.router)

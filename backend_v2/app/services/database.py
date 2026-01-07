@@ -114,4 +114,42 @@ class SupabaseService:
         except Exception as e:
             logger.error(f"DB Delete Error (Client): {e}")
 
+    # ============================================================================
+    # Users
+    # ============================================================================
+
+    def get_user_by_email(self, email: str) -> Optional[dict]:
+        if not self.client: return None
+        try:
+            response = self.client.table("users").select("*").eq("email", email).limit(1).execute()
+            print("DB RESPONSE", response) # Debug
+            if response.data:
+                return response.data[0]
+        except Exception as e:
+            logger.error(f"DB Get User Error: {e}")
+        return None
+
+    def create_user(self, user_data: dict):
+        if not self.client: return
+        try:
+            self.client.table("users").insert(user_data).execute()
+        except Exception as e:
+            logger.error(f"DB Create User Error: {e}")
+
+    def list_users(self) -> list[dict]:
+        if not self.client: return []
+        try:
+            response = self.client.table("users").select("id, email, full_name, role, created_at").execute()
+            return response.data if response.data else []
+        except Exception as e:
+            logger.error(f"DB List Users Error: {e}")
+            return []
+
+    def delete_user(self, user_id: str):
+        if not self.client: return
+        try:
+            self.client.table("users").delete().eq("id", user_id).execute()
+        except Exception as e:
+            logger.error(f"DB Delete User Error: {e}")
+
 db = SupabaseService()
