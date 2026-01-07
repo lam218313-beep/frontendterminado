@@ -125,14 +125,11 @@ const UsersPanel: React.FC = () => {
     }
   };
 
-  // Load clients when role changes to 'client'
+  // Load clients immediately
   useEffect(() => {
-    if (newUserRole === 'client' && clients.length === 0) {
-      api.getClients().then(setClients).catch(console.error);
-    }
-  }, [newUserRole]);
-
-  useEffect(() => { loadUsers(); }, []);
+    loadUsers();
+    api.getClients().then(setClients).catch(console.error);
+  }, []);
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("¿Eliminar usuario permanentemente?")) return;
@@ -152,8 +149,8 @@ const UsersPanel: React.FC = () => {
         email: newUserEmail,
         password: newUserPass,
         full_name: newUserName,
-        role: newUserRole,
-        client_id: (newUserRole === 'client' && selectedClientId) ? selectedClientId : undefined
+        role: 'client',
+        client_id: selectedClientId || undefined
       });
       setIsCreateModalOpen(false);
       setNewUserEmail('');
@@ -254,34 +251,15 @@ const UsersPanel: React.FC = () => {
                   <input required type="password" className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-gray-900 transition-all font-medium" placeholder="••••••••" value={newUserPass} onChange={e => setNewUserPass(e.target.value)} />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1">Rol</label>
-                  <div className="relative">
-                    <select
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-gray-900 transition-all font-medium appearance-none"
-                      value={newUserRole}
-                      onChange={e => setNewUserRole(e.target.value)}
-                    >
-                      <option value="client">Cliente (Por defecto)</option>
-                      <option value="analyst">Analista</option>
-                      <option value="admin">Administrador</option>
-                    </select>
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                      <Users size={16} />
-                    </div>
-                  </div>
-                </div>
-
-                {newUserRole === 'client' && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-                    <label className="block text-xs font-bold text-gray-500 mb-1">Asignar Cliente</label>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">Asignar Cliente (Empresa)</label>
                     <div className="relative">
                       <select
-                        required={newUserRole === 'client'}
                         className="w-full bg-blue-50 border border-blue-200 text-blue-900 rounded-xl p-3 outline-none focus:border-blue-500 transition-all font-bold appearance-none"
                         value={selectedClientId}
                         onChange={e => setSelectedClientId(e.target.value)}
                       >
-                        <option value="">Seleccionar Cliente...</option>
+                        <option value="">Sin asignar (Crear luego)</option>
                         {clients.map(c => (
                           <option key={c.id} value={c.id}>{c.nombre}</option>
                         ))}
@@ -291,7 +269,7 @@ const UsersPanel: React.FC = () => {
                       </div>
                     </div>
                   </motion.div>
-                )}
+                </div>
 
                 <div className="flex gap-3 pt-4">
                   <Button className="flex-1" onClick={() => setIsCreateModalOpen(false)}>Cancelar</Button>
