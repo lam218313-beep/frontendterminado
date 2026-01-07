@@ -128,4 +128,3 @@ async def _run_full_pipeline(report_id: str, instagram_url: str, comments_limit:
         logger.error(f"❌ [{report_id}] Pipeline FAILED: {e}", exc_info=True)
         # Guardar error en DB
         db.update_report_status(report_id, "ERROR", error=str(e))
-```
