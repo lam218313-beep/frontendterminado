@@ -153,7 +153,7 @@ const UsersPanel: React.FC = () => {
         password: newUserPass,
         full_name: newUserName,
         role: newUserRole,
-        client_id: newUserRole === 'client' ? selectedClientId : undefined
+        client_id: (newUserRole === 'client' && selectedClientId) ? selectedClientId : undefined
       });
       setIsCreateModalOpen(false);
       setNewUserEmail('');
