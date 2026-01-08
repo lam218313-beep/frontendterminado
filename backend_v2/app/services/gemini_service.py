@@ -158,3 +158,91 @@ def map_classification_to_raw_item(
         "ai_topic": classification.get("topic", "Otro"),
         "ai_sentiment_score": classification.get("sentiment_score", 0.0),
     }
+
+
+# =============================================================================
+# INTERPRETATION GENERATOR - Human-readable explanations for each graph
+# =============================================================================
+
+INTERPRETATION_PROMPT = """
+Actúa como un Consultor Senior de Estrategia de Marca. Tu cliente no es técnico.
+Tienes el siguiente reporte de datos de sus redes sociales:
+
+{aggregated_json}
+
+Tu tarea es generar una interpretación breve (máximo 3 frases) para CADA bloque (Q1 a Q10).
+
+Reglas:
+1. NO repitas los números exactos (ellos ya ven el gráfico).
+2. Explica QUÉ SIGNIFICA ese resultado para su negocio.
+3. Usa un lenguaje alentador pero realista.
+4. Si puedes, usa negritas (markdown **) para destacar palabras clave.
+5. Cada explicación debe dar un insight accionable o una perspectiva estratégica.
+
+Devuelve un JSON estricto con este formato:
+{{
+    "Q1_interpretation": "Texto explicativo aquí...",
+    "Q2_interpretation": "Texto explicativo aquí...",
+    "Q3_interpretation": "Texto explicativo aquí...",
+    "Q4_interpretation": "Texto explicativo aquí...",
+    "Q5_interpretation": "Texto explicativo aquí...",
+    "Q6_interpretation": "Texto explicativo aquí...",
+    "Q7_interpretation": "Texto explicativo aquí...",
+    "Q8_interpretation": "Texto explicativo aquí...",
+    "Q9_interpretation": "Texto explicativo aquí...",
+    "Q10_interpretation": "Texto explicativo aquí..."
+}}
+"""
+
+
+async def generate_interpretations(aggregated_json: dict) -> dict:
+    """
+    Takes the aggregated Q1-Q10 data and generates human-readable explanations
+    for each section. Uses Gemini Pro for better writing quality.
+    
+    Args:
+        aggregated_json: The full Q1-Q10 analysis results
+        
+    Returns:
+        Dictionary with Q1_interpretation through Q10_interpretation keys
+    """
+    if not settings.GEMINI_API_KEY:
+        logger.warning("GEMINI_API_KEY not configured, skipping interpretations")
+        return {}
+    
+    # Use Pro model for better writing quality
+    model_pro = genai.GenerativeModel("gemini-2.0-flash")
+    
+    prompt = INTERPRETATION_PROMPT.format(
+        aggregated_json=json.dumps(aggregated_json, indent=2, ensure_ascii=False)
+    )
+    
+    try:
+        logger.info("🗣️ Generating human-readable interpretations...")
+        
+        response = await model_pro.generate_content_async(
+            prompt,
+            generation_config={
+                "response_mime_type": "application/json",
+                "temperature": 0.7,  # Slightly higher for more natural writing
+            }
+        )
+        
+        interpretations = json.loads(response.text)
+        logger.info(f"✅ Generated {len(interpretations)} interpretations")
+        return interpretations
+        
+    except json.JSONDecodeError as e:
+        logger.error(f"❌ JSON parse error in interpretations: {e}")
+        return _get_fallback_interpretations()
+        
+    except Exception as e:
+        logger.error(f"❌ Error generating interpretations: {e}")
+        return _get_fallback_interpretations()
+
+
+def _get_fallback_interpretations() -> dict:
+    """Return generic interpretations when AI generation fails."""
+    fallback = "Los datos muestran tendencias que ameritan análisis más profundo. Consulta con tu equipo de estrategia."
+    return {f"Q{i}_interpretation": fallback for i in range(1, 11)}
+

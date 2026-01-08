@@ -109,20 +109,44 @@ async def _run_full_pipeline(report_id: str, client_id: str, instagram_url: str,
              # For now, we need items.
              raise Exception("No items classified to aggregate")
 
-        result_json = aggregator.build_frontend_compatible_json(raw_items) # Changed from classified_items to raw_items
+        result_json = aggregator.build_frontend_compatible_json(raw_items)
         
-        # Guardar éxito en DB
-        db.update_report_status(report_id, "COMPLETED", result=result_json)
+        # =========================================
+        # PASO 4: GENERACIÓN DE INTERPRETACIONES (NEW!)
+        # =========================================
+        logger.info(f"🗣️ [{report_id}] Translating data to human language...")
         
-        # GENERAR TAREAS SUGERIDAS (New Step)
+        try:
+            interpretations = await gemini_service.generate_interpretations(result_json)
+            
+            # Inject interpretation_text into each Q block
+            for q_key, q_data in result_json.items():
+                interpretation_key = f"{q_key}_interpretation"
+                if interpretation_key in interpretations:
+                    # Handle both dict and nested dict structures
+                    if isinstance(q_data, dict):
+                        q_data["interpretation_text"] = interpretations[interpretation_key]
+                    
+            logger.info(f"✅ [{report_id}] Interpretations injected successfully")
+        except Exception as e:
+            logger.warning(f"⚠️ [{report_id}] Interpretation generation failed: {e}")
+            # Non-blocking - continue without interpretations
+        
+        # =========================================
+        # PASO 5: GENERAR TAREAS SUGERIDAS
+        # =========================================
         try:
             suggested_tasks = aggregator.generate_suggested_tasks(client_id, result_json)
             db.create_tasks_batch(suggested_tasks)
             logger.info(f"✅ Generated {len(suggested_tasks)} tasks for client {client_id}")
         except Exception as e:
-            logger.error(f"⚠️ Task Generation Failed: {e}")
+            logger.error(f"⚠️ Task Generation Failed: {e}", exc_info=True)
             # Non-blocking error
-            
+        
+        # =========================================
+        # FINAL: GUARDAR EN BD
+        # =========================================
+        db.update_report_status(report_id, "COMPLETED", result=result_json)
         logger.info(f"✅ [{report_id}] Pipeline FINISHED and saved.")
 
     except Exception as e:
