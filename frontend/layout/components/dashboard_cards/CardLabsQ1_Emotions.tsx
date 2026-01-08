@@ -3,17 +3,18 @@ import { MousePointer2, Heart } from 'lucide-react';
 
 interface EmotionDataPoint {
   name: string;
-  value: number; 
+  value: number;
 }
 
 interface CardLabsQ1_EmotionsProps {
   data: {
     emociones: EmotionDataPoint[];
+    interpretation_text?: string; // AI-generated explanation
   };
 }
 
 const PLUTCHIK_AXES = [
-  'Alegría', 'Confianza', 'Miedo', 'Sorpresa', 
+  'Alegría', 'Confianza', 'Miedo', 'Sorpresa',
   'Tristeza', 'Aversión', 'Ira', 'Anticipación'
 ];
 
@@ -54,9 +55,9 @@ export const CardLabsQ1_Emotions: React.FC<CardLabsQ1_EmotionsProps> = ({ data }
     return PLUTCHIK_AXES.map((axisName, index) => {
       const found = data.emociones.find(e => e.name === axisName);
       const rawValue = found ? found.value : 0;
-      const normalizedValue = Math.min(Math.max(rawValue, 0), 100) / 100; 
-      
-      const angle = (Math.PI * 2 * index) / 8 - Math.PI / 2; 
+      const normalizedValue = Math.min(Math.max(rawValue, 0), 100) / 100;
+
+      const angle = (Math.PI * 2 * index) / 8 - Math.PI / 2;
       const x = CENTER + RADIUS * normalizedValue * Math.cos(angle);
       const y = CENTER + RADIUS * normalizedValue * Math.sin(angle);
 
@@ -83,13 +84,13 @@ export const CardLabsQ1_Emotions: React.FC<CardLabsQ1_EmotionsProps> = ({ data }
   }, [data]);
 
   return (
-    <div 
+    <div
       className="relative w-full h-full min-h-[400px] [perspective:1000px] group cursor-pointer"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       onClick={() => setIsFlipped(!isFlipped)}
     >
-      <div 
+      <div
         ref={cardRef}
         className="w-full h-full relative transition-all duration-500 ease-out [transform-style:preserve-3d]"
         style={{
@@ -111,7 +112,7 @@ export const CardLabsQ1_Emotions: React.FC<CardLabsQ1_EmotionsProps> = ({ data }
             </div>
           </div>
 
-          <div 
+          <div
             className="relative flex-1 w-full flex items-center justify-center overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
@@ -131,36 +132,36 @@ export const CardLabsQ1_Emotions: React.FC<CardLabsQ1_EmotionsProps> = ({ data }
                   <stop offset="100%" stopColor={CHART_BLUE} stopOpacity="0.1" />
                 </linearGradient>
                 <filter id="glow">
-                  <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
+                  <feGaussianBlur stdDeviation="3.5" result="coloredBlur" />
                   <feMerge>
-                    <feMergeNode in="coloredBlur"/>
-                    <feMergeNode in="SourceGraphic"/>
+                    <feMergeNode in="coloredBlur" />
+                    <feMergeNode in="SourceGraphic" />
                   </feMerge>
                 </filter>
               </defs>
 
               {[0.25, 0.5, 0.75, 1].map((scale, i) => (
-                 <circle 
-                   key={i} 
-                   cx={CENTER} 
-                   cy={CENTER} 
-                   r={RADIUS * scale} 
-                   fill="none" 
-                   stroke="#f3f4f6" 
-                   strokeWidth="1"
-                   strokeDasharray={scale === 1 ? "0" : "4 4"}
-                 />
+                <circle
+                  key={i}
+                  cx={CENTER}
+                  cy={CENTER}
+                  r={RADIUS * scale}
+                  fill="none"
+                  stroke="#f3f4f6"
+                  strokeWidth="1"
+                  strokeDasharray={scale === 1 ? "0" : "4 4"}
+                />
               ))}
 
               {axisLines.map((line, i) => (
-                <line 
-                  key={i} 
-                  x1={line.x1} 
-                  y1={line.y1} 
-                  x2={line.x2} 
-                  y2={line.y2} 
-                  stroke="#e5e7eb" 
-                  strokeWidth="1" 
+                <line
+                  key={i}
+                  x1={line.x1}
+                  y1={line.y1}
+                  x2={line.x2}
+                  y2={line.y2}
+                  stroke="#e5e7eb"
+                  strokeWidth="1"
                 />
               ))}
 
@@ -175,11 +176,11 @@ export const CardLabsQ1_Emotions: React.FC<CardLabsQ1_EmotionsProps> = ({ data }
 
               {chartPoints.map((p, i) => (
                 <g key={i} className="group/point cursor-pointer">
-                  <circle 
-                    cx={p.x} 
-                    cy={p.y} 
-                    r="12" 
-                    fill="transparent" 
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r="12"
+                    fill="transparent"
                     onMouseEnter={() => setHoveredEmotion({ name: p.name, value: p.value })}
                   />
                   <circle
@@ -205,44 +206,57 @@ export const CardLabsQ1_Emotions: React.FC<CardLabsQ1_EmotionsProps> = ({ data }
               ))}
             </svg>
           </div>
-          
+
           <div className="w-full flex items-center gap-2 text-xs text-gray-500 mt-2 bg-gray-50 p-3 rounded-xl">
             <MousePointer2 size={14} className="text-chart-blue" />
             <span>Explora los puntos de datos</span>
           </div>
         </div>
 
-        {/* --- BACK FACE --- */}
-        <div className="absolute inset-0 bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 [backface-visibility:hidden] [transform:rotateY(180deg)] flex flex-col z-20">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold text-gray-900">Datos Brutos</h3>
+        {/* --- BACK FACE: AI INTERPRETATION --- */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-white rounded-[32px] p-6 shadow-sm border border-primary-100 [backface-visibility:hidden] [transform:rotateY(180deg)] flex flex-col z-20">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2.5 bg-primary-100 rounded-xl text-primary-600">
+              <Heart size={20} />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">Interpretación IA</h3>
+              <p className="text-xs text-gray-400">Radar Emocional</p>
+            </div>
           </div>
 
-          <div className="flex-1 overflow-auto custom-scrollbar">
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs text-gray-400 uppercase bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 rounded-l-lg">Emoción</th>
-                  <th className="px-4 py-3 rounded-r-lg text-right">Intensidad</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {sortedData.map((item, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-gray-700">{item.name}</td>
-                    <td className="px-4 py-3 text-right">
-                      <span className={`px-2 py-1 rounded-md font-bold text-xs ${
-                        item.value > 75 ? 'bg-chart-blue/10 text-chart-blue' :
-                        item.value > 40 ? 'bg-gray-100 text-gray-600' : 
-                        'bg-gray-50 text-gray-400'
-                      }`}>
-                        {item.value}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="flex-1 flex items-center justify-center">
+            {data.interpretation_text ? (
+              <p className="text-base text-gray-700 leading-relaxed text-center px-4"
+                dangerouslySetInnerHTML={{ __html: data.interpretation_text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-primary-600">$1</strong>') }}
+              />
+            ) : (
+              <div className="space-y-4 w-full">
+                <h4 className="text-xs text-gray-400 font-bold uppercase tracking-widest text-center">Datos Brutos</h4>
+                <div className="overflow-auto custom-scrollbar max-h-[200px]">
+                  <table className="w-full text-sm text-left">
+                    <thead className="text-xs text-gray-400 uppercase bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 rounded-l-lg">Emoción</th>
+                        <th className="px-4 py-2 rounded-r-lg text-right">%</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {sortedData.slice(0, 4).map((item, idx) => (
+                        <tr key={idx}>
+                          <td className="px-4 py-2 font-medium text-gray-700">{item.name}</td>
+                          <td className="px-4 py-2 text-right font-bold text-primary-600">{item.value}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="text-center text-xs text-gray-400 pt-4 border-t border-gray-100">
+            Clic para volver al gráfico
           </div>
         </div>
       </div>
