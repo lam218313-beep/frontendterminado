@@ -211,7 +211,7 @@ async def generate_interpretations(aggregated_json: dict) -> dict:
         return {}
     
     # Use Pro model for better writing quality
-    model_pro = genai.GenerativeModel("gemini-2.0-flash")
+    model_pro = genai.GenerativeModel("gemini-3-flash-preview")
     
     prompt = INTERPRETATION_PROMPT.format(
         aggregated_json=json.dumps(aggregated_json, indent=2, ensure_ascii=False)
