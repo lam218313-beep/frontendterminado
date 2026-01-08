@@ -227,7 +227,7 @@ export const CardLabsQ1_Emotions: React.FC<CardLabsQ1_EmotionsProps> = ({ data }
 
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             {data.interpretation_text ? (
-              <p className="text-sm text-gray-700 leading-relaxed px-1"
+              <p className="text-sm text-gray-700 leading-relaxed px-1 text-justify"
                 dangerouslySetInnerHTML={{ __html: data.interpretation_text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-primary-600">$1</strong>') }}
               />
             ) : (
