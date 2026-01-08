@@ -215,19 +215,19 @@ export const CardLabsQ1_Emotions: React.FC<CardLabsQ1_EmotionsProps> = ({ data }
 
         {/* --- BACK FACE: AI INTERPRETATION --- */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-white rounded-[32px] p-6 shadow-sm border border-primary-100 [backface-visibility:hidden] [transform:rotateY(180deg)] flex flex-col z-20">
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-4 shrink-0">
             <div className="p-2.5 bg-primary-100 rounded-xl text-primary-600">
               <Heart size={20} />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900">Interpretación IA</h3>
+              <h3 className="text-lg font-bold text-gray-900">Interpretación</h3>
               <p className="text-xs text-gray-400">Radar Emocional</p>
             </div>
           </div>
 
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
             {data.interpretation_text ? (
-              <p className="text-base text-gray-700 leading-relaxed text-center px-4"
+              <p className="text-sm text-gray-700 leading-relaxed px-1"
                 dangerouslySetInnerHTML={{ __html: data.interpretation_text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-primary-600">$1</strong>') }}
               />
             ) : (

@@ -15,6 +15,7 @@ interface CardLabsQ9_PrioritizationProps {
   data: {
     lista_recomendaciones: Recommendation[];
     insight: string;
+    interpretation_text?: string;
   };
 }
 
@@ -166,40 +167,40 @@ export const CardLabsQ9_Prioritization: React.FC<CardLabsQ9_PrioritizationProps>
 
         </div>
 
-        {/* --- BACK FACE: LIST VIEW --- */}
-        <div className="absolute inset-0 bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 [backface-visibility:hidden] [transform:rotateY(180deg)] flex flex-col z-20">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-bold text-gray-800">Lista Priorizada</h3>
-            <ArrowUpRight size={16} className="text-gray-400" />
+        {/* --- BACK FACE: INTERPRETATION --- */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-white rounded-[32px] p-6 shadow-sm border border-primary-100 [backface-visibility:hidden] [transform:rotateY(180deg)] flex flex-col z-20">
+          <div className="flex items-center gap-3 mb-4 shrink-0">
+            <div className="p-2.5 bg-primary-100 rounded-xl text-primary-600">
+              <Target size={20} />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">Interpretación</h3>
+              <p className="text-xs text-gray-400">Priorización</p>
+            </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-3">
-            {sortedRecs.map((rec, i) => (
-              <div key={i} className="bg-gray-50 rounded-xl p-3 border border-gray-100 hover:border-primary-100 hover:shadow-sm transition-all">
-                <div className="flex justify-between items-start mb-1">
-                  <div className="flex items-center gap-2">
-                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white border border-gray-200 text-[10px] font-bold text-gray-600">
-                      {i + 1}
-                    </span>
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${rec.urgencia === 'CRÍTICA' ? 'bg-chart-red/10 text-chart-red border-chart-red/20' :
-                        rec.urgencia === 'ALTA' ? 'bg-chart-yellow/10 text-chart-yellow border-chart-yellow/20' :
-                          'bg-chart-blue/10 text-chart-blue border-chart-blue/20'
-                      }`}>
-                      {rec.urgencia}
-                    </span>
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            {data.interpretation_text ? (
+              <p className="text-sm text-gray-700 leading-relaxed px-1"
+                dangerouslySetInnerHTML={{ __html: data.interpretation_text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-primary-600">$1</strong>') }}
+              />
+            ) : (
+              <div className="space-y-3">
+                {sortedRecs.slice(0, 3).map((rec, i) => (
+                  <div key={i} className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="w-5 h-5 rounded-full bg-white border border-gray-200 text-[10px] font-bold text-gray-600 flex items-center justify-center">{i + 1}</span>
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${rec.urgencia === 'CRÍTICA' ? 'bg-chart-red/10 text-chart-red' : 'bg-chart-yellow/10 text-chart-yellow'}`}>{rec.urgencia}</span>
+                    </div>
+                    <h4 className="text-xs font-bold text-gray-800">{rec.recomendacion}</h4>
                   </div>
-                  <span className="text-[9px] text-gray-400 uppercase font-bold">{rec.area_estrategica}</span>
-                </div>
-                <h4 className="text-xs font-bold text-gray-800 leading-snug mb-1">{rec.recomendacion}</h4>
-                <p className="text-[10px] text-gray-500 line-clamp-2">{rec.descripcion}</p>
+                ))}
               </div>
-            ))}
+            )}
           </div>
 
-          <div className="mt-3 pt-3 border-t border-gray-50">
-            <p className="text-[10px] text-gray-400 italic">
-              <span className="font-bold text-gray-600">Insight:</span> {data.insight}
-            </p>
+          <div className="text-center text-xs text-gray-400 pt-4 border-t border-gray-100 shrink-0">
+            Clic para volver al gráfico
           </div>
         </div>
       </div>

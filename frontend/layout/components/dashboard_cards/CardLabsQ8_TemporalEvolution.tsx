@@ -16,6 +16,7 @@ interface CardLabsQ8_TemporalEvolutionProps {
         tendencia: string;
       };
     };
+    interpretation_text?: string;
   };
 }
 
@@ -246,41 +247,45 @@ export const CardLabsQ8_TemporalEvolution: React.FC<CardLabsQ8_TemporalEvolution
           </div>
         </div>
 
-        {/* --- BACK FACE --- */}
-        <div className="absolute inset-0 bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 [backface-visibility:hidden] [transform:rotateY(180deg)] flex flex-col z-20">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold text-gray-800">Detalle Completo</h3>
+        {/* --- BACK FACE: INTERPRETATION --- */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-white rounded-[32px] p-6 shadow-sm border border-primary-100 [backface-visibility:hidden] [transform:rotateY(180deg)] flex flex-col z-20">
+          <div className="flex items-center gap-3 mb-4 shrink-0">
+            <div className="p-2.5 bg-primary-100 rounded-xl text-primary-600">
+              <TrendingUp size={20} />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">Interpretación</h3>
+              <p className="text-xs text-gray-400">Evolución Temporal</p>
+            </div>
           </div>
 
-          <div className="flex-1 overflow-auto custom-scrollbar">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="text-[10px] text-gray-400 uppercase tracking-wider border-b border-gray-100">
-                  <th className="py-2">Semana</th>
-                  <th className="py-2 text-right">Engagement</th>
-                </tr>
-              </thead>
-              <tbody>
-                {series.map((row, idx) => (
-                  <tr key={idx} className="border-b border-gray-50 hover:bg-chart-blue/5 transition-colors">
-                    <td className="py-3 text-xs font-bold text-gray-700 flex flex-col">
-                      {row.fecha_semana}
-                      <span className="text-[10px] font-normal text-gray-400">{row.topico_principal}</span>
-                    </td>
-                    <td className="py-3 text-right text-xs text-gray-600 font-mono">
-                      {row.engagement.toLocaleString()}
-                    </td>
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            {data.interpretation_text ? (
+              <p className="text-sm text-gray-700 leading-relaxed px-1"
+                dangerouslySetInnerHTML={{ __html: data.interpretation_text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-primary-600">$1</strong>') }}
+              />
+            ) : (
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="text-[10px] text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                    <th className="py-2">Semana</th>
+                    <th className="py-2 text-right">Engagement</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {series.slice(0, 4).map((row, idx) => (
+                    <tr key={idx} className="border-b border-gray-50">
+                      <td className="py-2 text-xs font-bold text-gray-700">{row.fecha_semana}</td>
+                      <td className="py-2 text-right text-xs text-gray-600">{row.engagement.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between text-xs text-gray-400">
-            <span>Tendencia Global:</span>
-            <span className={`font-bold ${data.results.resumen_global.tendencia.includes('Deterioro') ? 'text-chart-red' : 'text-chart-green'}`}>
-              {data.results.resumen_global.tendencia}
-            </span>
+          <div className="text-center text-xs text-gray-400 pt-4 border-t border-gray-100 shrink-0">
+            Clic para volver al gráfico
           </div>
         </div>
 

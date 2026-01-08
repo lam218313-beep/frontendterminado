@@ -14,6 +14,7 @@ interface CardLabsQ6_OpportunitiesMatrixProps {
     results: {
       oportunidades: Opportunity[];
     };
+    interpretation_text?: string;
   };
 }
 
@@ -193,8 +194,8 @@ export const CardLabsQ6_OpportunitiesMatrix: React.FC<CardLabsQ6_OpportunitiesMa
                     <div
                       key={idx}
                       className={`p-2.5 rounded-xl border transition-all duration-200 cursor-pointer ${isHovered
-                          ? 'bg-gray-50 border-gray-200 shadow-sm translate-x-1'
-                          : 'bg-white border-transparent hover:border-gray-100'
+                        ? 'bg-gray-50 border-gray-200 shadow-sm translate-x-1'
+                        : 'bg-white border-transparent hover:border-gray-100'
                         }`}
                       onMouseEnter={() => setHoveredOpp(item.oportunidad)}
                       onMouseLeave={() => setHoveredOpp(null)}
@@ -225,45 +226,40 @@ export const CardLabsQ6_OpportunitiesMatrix: React.FC<CardLabsQ6_OpportunitiesMa
           </div>
         </div>
 
-        {/* --- BACK FACE --- */}
-        <div className="absolute inset-0 bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 [backface-visibility:hidden] [transform:rotateY(180deg)] flex flex-col z-20">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold text-gray-800">Plan de Acción</h3>
+        {/* --- BACK FACE: INTERPRETATION --- */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-white rounded-[32px] p-6 shadow-sm border border-primary-100 [backface-visibility:hidden] [transform:rotateY(180deg)] flex flex-col z-20">
+          <div className="flex items-center gap-3 mb-4 shrink-0">
+            <div className="p-2.5 bg-primary-100 rounded-xl text-primary-600">
+              <Target size={20} />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">Interpretación</h3>
+              <p className="text-xs text-gray-400">Matriz de Oportunidades</p>
+            </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-            <div className="flex flex-col gap-3">
-              {points
-                .sort((a, b) => (b.gap_score + b.competencia_score) - (a.gap_score + a.competencia_score))
-                .map((opp, idx) => (
-                  <div key={idx} className="bg-gray-50 rounded-xl p-3 border border-gray-100 hover:border-chart-blue/30 transition-colors group">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold text-white shadow-sm" style={{ backgroundColor: opp.color }}>
-                          {idx + 1}
-                        </span>
-                        <h4 className="text-xs font-bold text-gray-800">{opp.oportunidad}</h4>
-                      </div>
-                      <div className="flex gap-1">
-                        {opp.gap_score > 80 && <Zap size={12} className="text-chart-yellow fill-chart-yellow" />}
-                      </div>
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            {data.interpretation_text ? (
+              <p className="text-sm text-gray-700 leading-relaxed px-1"
+                dangerouslySetInnerHTML={{ __html: data.interpretation_text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-primary-600">$1</strong>') }}
+              />
+            ) : (
+              <div className="flex flex-col gap-3">
+                {points.sort((a, b) => (b.gap_score + b.competencia_score) - (a.gap_score + a.competencia_score)).slice(0, 3).map((opp, idx) => (
+                  <div key={idx} className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="w-5 h-5 rounded-full text-[10px] font-bold text-white flex items-center justify-center" style={{ backgroundColor: opp.color }}>{idx + 1}</span>
+                      <h4 className="text-xs font-bold text-gray-800">{opp.oportunidad}</h4>
                     </div>
-
-                    <div className="flex gap-2 mb-2">
-                      <div className="h-1 flex-1 bg-gray-200 rounded-full overflow-hidden">
-                        <div className="h-full rounded-full" style={{ width: `${opp.gap_score}%`, backgroundColor: opp.color }}></div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-2 mt-2 bg-white p-2 rounded-lg border border-gray-100">
-                      <TrendingUp size={12} className="text-gray-400 mt-0.5 shrink-0" />
-                      <p className="text-xs text-gray-600 font-medium leading-relaxed">
-                        {opp.recomendacion_accion}
-                      </p>
-                    </div>
+                    <p className="text-xs text-gray-600">{opp.recomendacion_accion}</p>
                   </div>
                 ))}
-            </div>
+              </div>
+            )}
+          </div>
+
+          <div className="text-center text-xs text-gray-400 pt-4 border-t border-gray-100 shrink-0">
+            Clic para volver al gráfico
           </div>
         </div>
       </div>

@@ -15,6 +15,7 @@ interface CardLabsQ7_SentimentBarsProps {
       results: {
          analisis_agregado: SentimentAggregated;
       };
+      interpretation_text?: string;
    };
 }
 
@@ -143,36 +144,40 @@ export const CardLabsQ7_SentimentBars: React.FC<CardLabsQ7_SentimentBarsProps> =
 
             </div>
 
-            {/* --- BACK FACE --- */}
-            <div className="absolute inset-0 bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 [backface-visibility:hidden] [transform:rotateY(180deg)] flex flex-col z-20">
-
-               <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-bold text-gray-800">Detalle</h3>
+            {/* --- BACK FACE: INTERPRETATION --- */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-white rounded-[32px] p-6 shadow-sm border border-primary-100 [backface-visibility:hidden] [transform:rotateY(180deg)] flex flex-col z-20">
+               <div className="flex items-center gap-3 mb-4 shrink-0">
+                  <div className="p-2.5 bg-primary-100 rounded-xl text-primary-600">
+                     <BarChart3 size={20} />
+                  </div>
+                  <div>
+                     <h3 className="text-lg font-bold text-gray-900">Interpretación</h3>
+                     <p className="text-xs text-gray-400">Distribución de Sentimiento</p>
+                  </div>
                </div>
 
-               <div className="flex-1 space-y-4">
-                  {/* Stats Table */}
-                  <div className="bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
-                     {CATEGORIES.map((cat, i) => (
-                        <div key={i} className="flex justify-between items-center p-3 border-b border-gray-100 last:border-0 hover:bg-white transition-colors">
-                           <span className="text-sm text-gray-600 font-medium">{cat.label}</span>
-                           <span className={`text-sm font-bold ${cat.color.replace('bg-', 'text-')}`}>{((stats as any)[cat.key] * 100).toFixed(1)}%</span>
+               <div className="flex-1 overflow-y-auto custom-scrollbar">
+                  {data.interpretation_text ? (
+                     <p className="text-sm text-gray-700 leading-relaxed px-1"
+                        dangerouslySetInnerHTML={{ __html: data.interpretation_text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-primary-600">$1</strong>') }}
+                     />
+                  ) : (
+                     <div className="space-y-4">
+                        <div className="bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
+                           {CATEGORIES.map((cat, i) => (
+                              <div key={i} className="flex justify-between items-center p-3 border-b border-gray-100 last:border-0">
+                                 <span className="text-sm text-gray-600 font-medium">{cat.label}</span>
+                                 <span className={`text-sm font-bold ${cat.color.replace('bg-', 'text-')}`}>{((stats as any)[cat.key] * 100).toFixed(1)}%</span>
+                              </div>
+                           ))}
                         </div>
-                     ))}
-                  </div>
-
-                  {/* Mixed Insight */}
-                  <div className="bg-chart-blue/10 p-4 rounded-xl border border-chart-blue/20">
-                     <div className="flex items-center gap-2 mb-2">
-                        <RotateCw size={14} className="text-chart-blue" />
-                        <span className="text-xs font-bold text-chart-blue uppercase">Análisis Contextual</span>
                      </div>
-                     <p className="text-xs text-gray-600 italic leading-relaxed">
-                        {stats.ejemplo_mixto || "La subjetividad promedio indica que las opiniones están altamente polarizadas este mes."}
-                     </p>
-                  </div>
+                  )}
                </div>
 
+               <div className="text-center text-xs text-gray-400 pt-4 border-t border-gray-100 shrink-0">
+                  Clic para volver al gráfico
+               </div>
             </div>
 
          </div>
