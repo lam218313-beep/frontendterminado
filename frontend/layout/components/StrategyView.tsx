@@ -1,6 +1,6 @@
 import React from 'react';
 import { WorkflowStepper } from './WorkflowStepper';
-import StrategyMap from '../../estrategia/App';
+import StrategyMap from '../estrategia/App';
 
 export const StrategyView: React.FC<{ onNavigate: (view: string) => void }> = ({ onNavigate }) => {
     return (

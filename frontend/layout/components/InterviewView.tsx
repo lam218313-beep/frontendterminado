@@ -1,5 +1,5 @@
 import React from 'react';
-import { MultiStepForm } from '../../entrevista/components/MultiStepForm';
+import { MultiStepForm } from '../entrevista/components/MultiStepForm';
 import { WorkflowStepper } from './WorkflowStepper';
 
 export const InterviewView: React.FC<{ onNavigate: (view: string) => void }> = ({ onNavigate }) => {
