@@ -116,8 +116,12 @@ async def _run_full_pipeline(report_id: str, client_id: str, instagram_url: str,
         # =========================================
         logger.info(f"🗣️ [{report_id}] Translating data to human language...")
         
+        # 4.1 Fetch Context (Interview Data)
+        interview_record = db.get_interview(client_id)
+        context_data = interview_record.get("data") if interview_record else None
+        
         try:
-            interpretations = await gemini_service.generate_interpretations(result_json)
+            interpretations = await gemini_service.generate_interpretations(result_json, context=context_data)
             
             # Inject interpretation_text into each Q block
             for q_key, q_data in result_json.items():

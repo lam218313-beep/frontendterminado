@@ -8,6 +8,12 @@ import { DashboardView } from './components/DashboardView.tsx';
 import WikiView from './components/WikiView.tsx';
 import PartnersView from './components/PartnersView.tsx';
 import { AdminView } from './components/AdminView.tsx';
+import { InterviewView } from './components/InterviewView.tsx';
+import { BrandView } from './components/BrandView.tsx';
+import { ContentPlanView } from './components/ContentPlanView.tsx';
+import { ValidationView } from './components/ValidationView.tsx';
+import { StrategyView } from './components/StrategyView.tsx';
+import { BenefitsView } from './components/BenefitsView.tsx';
 import { AlertCircle, Calendar } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext.tsx';
 import { AnalysisProvider } from './hooks/useAnalysis.tsx';
@@ -62,7 +68,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
 
 // Transition States
 type FlowState = 'LOGIN_ACTIVE' | 'LOGIN_EXITING' | 'ANIMATION_ENTRY' | 'ANIMATION_EXITING' | 'DASHBOARD_ACTIVE';
-type ViewType = 'dashboard' | 'partners' | 'lab' | 'work' | 'wiki' | 'admin';
+type ViewType = 'dashboard' | 'partners' | 'lab' | 'work' | 'wiki' | 'admin' | 'interview' | 'brand' | 'strategy' | 'benefits' | 'validation';
 
 // Inner App component that uses auth context
 const AppContent: React.FC = () => {
@@ -123,30 +129,50 @@ const AppContent: React.FC = () => {
   // Content Renderer Logic
   const renderContent = () => {
     switch (activeView) {
-      case 'dashboard':
-        return (
-          <ErrorBoundary>
-            <DashboardView />
-          </ErrorBoundary>
-        );
       case 'partners':
         return (
           <ErrorBoundary>
             <PartnersView />
           </ErrorBoundary>
         );
+      case 'interview':
+        return (
+          <ErrorBoundary>
+            <InterviewView onNavigate={setActiveView} />
+          </ErrorBoundary>
+        );
+      case 'brand':
+        return (
+          <ErrorBoundary>
+            <BrandView onNavigate={setActiveView} />
+          </ErrorBoundary>
+        );
       case 'lab':
         return (
           <ErrorBoundary>
-            <LabView />
+            <LabView onNavigate={setActiveView} />
+          </ErrorBoundary>
+        );
+      case 'strategy':
+        return (
+          <ErrorBoundary>
+            <StrategyView onNavigate={setActiveView} />
+          </ErrorBoundary>
+        );
+      case 'benefits':
+        return (
+          <ErrorBoundary>
+            <BenefitsView onNavigate={setActiveView} />
           </ErrorBoundary>
         );
       case 'work':
         return (
           <ErrorBoundary>
-            <TasksView />
+            <TasksView onNavigate={setActiveView} />
           </ErrorBoundary>
         );
+      case 'img-generator': // Assuming this existed or I can add placeholders. Wait, I should stick to the list I built in Sidebar.
+        return null;
       case 'wiki':
         return (
           <ErrorBoundary>
@@ -157,6 +183,14 @@ const AppContent: React.FC = () => {
         return (
           <ErrorBoundary>
             <AdminView />
+          </ErrorBoundary>
+        );
+      // case 'dashboard': Removed
+      // case 'content-plan': Keeping just in case but seems redundant with 'work' now? Stepper has 'work' for Planificación.Sidebar has 'work'. So content-plan is unused by stepper/sidebar.
+      case 'validation':
+        return (
+          <ErrorBoundary>
+            <ValidationView onNavigate={setActiveView} />
           </ErrorBoundary>
         );
       default:
@@ -224,36 +258,7 @@ const AppContent: React.FC = () => {
             {/* Center Content */}
             <main className="flex-1 flex flex-col relative h-full overflow-hidden py-4 pr-4">
 
-              {/* Header Section (Redesigned) */}
-              <div className="flex items-center justify-end xl:mb-6 mb-2 shrink-0 xl:pt-4 pt-2 px-6 gap-4">
 
-                {/* Right Sidebar Toggle (Visible only < XL) */}
-                <button
-                  onClick={() => setRightSidebarOpen(true)}
-                  className="min-[1920px]:hidden w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-brand-dark hover:text-primary-500 transition-colors"
-                >
-                  <Calendar size={20} />
-                </button>
-
-                <h1 className="hidden xl:block text-2xl md:text-3xl font-black text-brand-dark tracking-tight">
-                  Buenos días, {displayUser || 'Usuario'}!
-                </h1>
-                <div className="hidden xl:block w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm shrink-0">
-                  {authUser?.logoUrl ? (
-                    <img
-                      src={authUser.logoUrl}
-                      alt="Client"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
-                      <span className="text-white font-bold text-xl">
-                        {authUser?.email ? authUser.email.charAt(0).toUpperCase() : displayUser.charAt(0).toUpperCase() || "U"}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
 
               {/* Dynamic Card Container */}
               <div className="flex-1 min-h-0 bg-transparent rounded-[40px] relative overflow-y-auto group flex flex-col items-stretch justify-start mb-2 transition-all duration-500">
@@ -269,13 +274,7 @@ const AppContent: React.FC = () => {
                 </div>
               </div>
 
-              {/* Footer Credit */}
-              <div className="mt-2 text-center shrink-0">
-                <p className="text-[10px] text-gray-300 font-medium flex items-center justify-center gap-1">
-                  <span className="text-primary-500">❤</span>
-                  <span>DIKIMRO</span>
-                </p>
-              </div>
+
             </main>
 
             {/* Sidebar Right (Floating Card) */}

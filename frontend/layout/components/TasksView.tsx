@@ -8,13 +8,18 @@
 import React from 'react';
 import { KanbanBoard } from './KanbanBoard';
 
-export const TasksView: React.FC = () => {
+import { WorkflowStepper } from './WorkflowStepper';
+
+export const TasksView: React.FC<{ onNavigate: (view: string) => void }> = ({ onNavigate }) => {
   // Future: Connect KanbanBoard to useTasksContext for API data
   // const { tasks, isLoading, error, updateTaskStatus, stats, refreshTasks } = useTasksContext();
 
   return (
     <div className="h-full w-full flex flex-col p-6 animate-fade-in-up bg-brand-bg">
-      <KanbanBoard />
+      <div className="max-w-7xl mx-auto w-full">
+        <WorkflowStepper currentStep={6} onNavigate={onNavigate} />
+        <KanbanBoard />
+      </div>
     </div>
   );
 };

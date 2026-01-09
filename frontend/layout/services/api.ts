@@ -600,15 +600,41 @@ export async function getFichas(): Promise<FichaCliente[]> {
   return handleResponse<FichaCliente[]>(response);
 }
 
-/**
- * Get single ficha by ID
- * GET /fichas/{ficha_id}
- */
 export async function getFicha(fichaId: string): Promise<FichaCliente> {
   const response = await fetch(`${API_BASE_URL}/fichas/${fichaId}`, {
     headers: getAuthHeaders(),
   });
   return handleResponse<FichaCliente>(response);
+}
+
+// =============================================================================
+// INTERVIEW ENDPOINTS
+// =============================================================================
+
+export async function saveInterview(clientId: string, data: any, file?: File | null): Promise<any> {
+  const formData = new FormData();
+  formData.append('client_id', clientId);
+  formData.append('data', JSON.stringify(data));
+  if (file) {
+    formData.append('file', file);
+  }
+
+  const response = await fetch(`${API_BASE_URL}/clients/${clientId}/interview`, {
+    method: 'PUT',
+    headers: {
+      // Do NOT set Content-Type here, let browser set it for multipart/form-data with boundary
+      ...getAuthHeaders(),
+    },
+    body: formData,
+  });
+  return handleResponse(response);
+}
+
+export async function getInterview(clientId: string): Promise<any> {
+  const response = await fetch(`${API_BASE_URL}/clients/${clientId}/interview`, {
+    headers: getAuthHeaders()
+  });
+  return handleResponse(response);
 }
 
 // =============================================================================

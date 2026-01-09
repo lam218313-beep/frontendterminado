@@ -166,18 +166,21 @@ def map_classification_to_raw_item(
 
 INTERPRETATION_PROMPT = """
 Actúa como un Consultor Senior de Estrategia de Marca. Tu cliente no es técnico.
-Tienes el siguiente reporte de datos de sus redes sociales:
 
+CONTEXTO DEL CLIENTE:
+{context_str}
+
+Tienes el siguiente reporte de datos de sus redes sociales:
 {aggregated_json}
 
 Tu tarea es generar una interpretación breve (máximo 3 frases) para CADA bloque (Q1 a Q10).
 
 Reglas:
 1. NO repitas los números exactos (ellos ya ven el gráfico).
-2. Explica QUÉ SIGNIFICA ese resultado para su negocio.
+2. Explica QUÉ SIGNIFICA ese resultado para su negocio, usando el CONTEXTO dado (ej. si venden lujo, analiza los precios desde esa óptica).
 3. Usa un lenguaje alentador pero realista.
 4. Si puedes, usa negritas (markdown **) para destacar palabras clave.
-5. Cada explicación debe dar un insight accionable o una perspectiva estratégica.
+5. Cada explicación debe dar un insight accionable o una perspectiva estratégica alineada a sus objetivos.
 
 Devuelve un JSON estricto con este formato:
 {{
@@ -195,13 +198,13 @@ Devuelve un JSON estricto con este formato:
 """
 
 
-async def generate_interpretations(aggregated_json: dict) -> dict:
+async def generate_interpretations(aggregated_json: dict, context: dict = None) -> dict:
     """
-    Takes the aggregated Q1-Q10 data and generates human-readable explanations
-    for each section. Uses Gemini Pro for better writing quality.
+    Takes the aggregated Q1-Q10 data AND client context to generate human-readable explanations.
     
     Args:
         aggregated_json: The full Q1-Q10 analysis results
+        context: Optional dictionary with interview data (Business info, Audience, etc.)
         
     Returns:
         Dictionary with Q1_interpretation through Q10_interpretation keys
@@ -210,21 +213,38 @@ async def generate_interpretations(aggregated_json: dict) -> dict:
         logger.warning("GEMINI_API_KEY not configured, skipping interpretations")
         return {}
     
+    # Format Context String
+    context_str = "No hay información previa disponible. Asume un e-commerce general."
+    if context:
+        c = context
+        business = c.get("businessName", "La Marca")
+        industry = c.get("history", "")[:200] # Truncate for token efficiency
+        audience = c.get("audience", {})
+        goals = c.get("goals", {})
+        
+        context_str = (
+            f"- Nombre: {business}\n"
+            f"- Historia/Industria: {industry}\n"
+            f"- Audiencia: {audience.get('ageRange', '')}, {audience.get('gender', '')}. Intereses: {audience.get('interests', '')}\n"
+            f"- Objetivos: {', '.join(goals.get('brandGoals', []))}"
+        )
+
     # Use Pro model for better writing quality
     model_pro = genai.GenerativeModel("gemini-3-flash-preview")
     
     prompt = INTERPRETATION_PROMPT.format(
+        context_str=context_str,
         aggregated_json=json.dumps(aggregated_json, indent=2, ensure_ascii=False)
     )
     
     try:
-        logger.info("🗣️ Generating human-readable interpretations...")
+        logger.info(f"🗣️ Generating interpretations with context ({len(context_str)} chars)...")
         
         response = await model_pro.generate_content_async(
             prompt,
             generation_config={
                 "response_mime_type": "application/json",
-                "temperature": 0.7,  # Slightly higher for more natural writing
+                "temperature": 0.7, 
             }
         )
         

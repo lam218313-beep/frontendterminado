@@ -217,4 +217,42 @@ class SupabaseService:
             logger.error(f"DB Get Tasks Error: {e}")
             return []
 
+    # ============================================================================
+    # Interview / Context
+    # ============================================================================
+
+    def save_interview(self, client_id: str, data: dict, file_url: Optional[str] = None):
+        if not self.client: return
+        try:
+            # Check if exists to update or insert
+            existing = self.client.table("client_interviews").select("id").eq("client_id", client_id).execute()
+            
+            payload = {
+                "client_id": client_id,
+                "data": data,
+                "updated_at": "now()"
+            }
+            if file_url:
+                payload["file_url"] = file_url
+
+            if existing.data:
+                # Update
+                self.client.table("client_interviews").update(payload).eq("client_id", client_id).execute()
+            else:
+                # Insert
+                self.client.table("client_interviews").insert(payload).execute()
+                
+        except Exception as e:
+            logger.error(f"DB Save Interview Error: {e}")
+            raise e
+
+    def get_interview(self, client_id: str) -> Optional[dict]:
+        if not self.client: return None
+        try:
+            response = self.client.table("client_interviews").select("*").eq("client_id", client_id).single().execute()
+            return response.data
+        except Exception as e:
+            logger.error(f"DB Get Interview Error: {e}")
+            return None
+
 db = SupabaseService()

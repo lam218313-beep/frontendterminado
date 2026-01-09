@@ -5,8 +5,9 @@ import {
   FileText
 } from 'lucide-react';
 
+import { WorkflowStepper } from './WorkflowStepper';
+
 // Import Dashboard Components
-import { CardLabsHeader } from './dashboard_cards/CardLabsHeader';
 import { CardLabsQ1_Emotions } from './dashboard_cards/CardLabsQ1_Emotions';
 import { CardLabsQ3_TopTopics } from './dashboard_cards/CardLabsQ3_TopTopics';
 import { CardLabsQ6_OpportunitiesMatrix } from './dashboard_cards/CardLabsQ6_OpportunitiesMatrix';
@@ -16,7 +17,7 @@ import { CardLabsQ9_Prioritization } from './dashboard_cards/CardLabsQ9_Prioriti
 import { CardLabsQ10_ExecutiveSummary } from './dashboard_cards/CardLabsQ10_ExecutiveSummary';
 
 
-export const DashboardView: React.FC = () => {
+export const DashboardView: React.FC<{ onNavigate: (view: string) => void }> = ({ onNavigate }) => {
   const { data, isLoading, error } = useAnalysisContext();
 
   if (isLoading) {
@@ -57,7 +58,7 @@ export const DashboardView: React.FC = () => {
     <div className="h-full w-full flex flex-col p-4 md:p-8 animate-fade-in-up bg-brand-bg overflow-y-auto">
       <div className="max-w-7xl mx-auto space-y-6 w-full">
 
-        <CardLabsHeader />
+        <WorkflowStepper currentStep={3} onNavigate={onNavigate} />
 
         {/* Grid Layout for exactly 8 Cards (4 double-width, 4 single-width) */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">

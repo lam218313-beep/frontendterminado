@@ -39,4 +39,12 @@ create table tasks (
   completed_at timestamptz
 );
 
+create table client_interviews (
+  id uuid default gen_random_uuid() primary key,
+  client_id text references clients(id),
+  data jsonb,
+  file_url text,
+  updated_at timestamptz default now()
+);
+
 

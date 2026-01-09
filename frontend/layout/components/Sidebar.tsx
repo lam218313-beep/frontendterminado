@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutGrid, Users, Layers, FileText, BookOpen, Power, Hexagon, Shield } from 'lucide-react';
+import { LayoutGrid, Users, Layers, FileText, BookOpen, Power, Hexagon, Shield, ClipboardList, Palette, CalendarRange, CheckCircle, CheckCircle2 } from 'lucide-react';
 import pixelyLogo from '../src/assets/logo.png';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -23,41 +23,87 @@ export const Sidebar: React.FC<SidebarProps> = ({ isExpanded, setIsExpanded, act
 
             {/* Logo Area */}
             <div className="h-24 flex items-center justify-center relative shrink-0 w-full">
-                <div className="w-[72px] h-[72px] rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 overflow-hidden">
+                <div className="w-20 h-20 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 overflow-hidden">
                     <img src={pixelyLogo} alt="Pixely Logo" className="w-full h-full object-contain" />
                 </div>
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 flex flex-col justify-center space-y-3 px-3 w-full">
+            <nav className="flex-1 flex flex-col justify-center space-y-2 px-3 w-full overflow-y-auto custom-scrollbar">
+
+                {/* 1. Partners */}
                 <SidebarItem
                     icon={Users}
-                    label="Pixely Partners"
+                    label="Partners"
                     viewId="partners"
                     isActive={activeView === 'partners'}
                     onClick={setActiveView}
                 />
+
+                {/* 2. Entrevista */}
                 <SidebarItem
-                    icon={LayoutGrid}
-                    label="Dashboard"
-                    viewId="dashboard"
-                    isActive={activeView === 'dashboard'}
+                    icon={ClipboardList}
+                    label="Entrevista"
+                    viewId="interview"
+                    isActive={activeView === 'interview'}
                     onClick={setActiveView}
                 />
+
+                {/* 3. Manual */}
+                <SidebarItem
+                    icon={Palette}
+                    label="Manual"
+                    viewId="brand"
+                    isActive={activeView === 'brand'}
+                    onClick={setActiveView}
+                />
+
+                {/* 4. Análisis */}
                 <SidebarItem
                     icon={Layers}
-                    label="Lab"
+                    label="Análisis"
                     viewId="lab"
                     isActive={activeView === 'lab'}
                     onClick={setActiveView}
                 />
+
+                {/* 5. Estrategia */}
                 <SidebarItem
-                    icon={FileText}
-                    label="Tareas"
+                    icon={LayoutGrid}
+                    label="Estrategia"
+                    viewId="strategy"
+                    isActive={activeView === 'strategy'}
+                    onClick={setActiveView}
+                />
+
+                {/* 6. Beneficios */}
+                <SidebarItem
+                    icon={CheckCircle2}
+                    label="Beneficios"
+                    viewId="benefits"
+                    isActive={activeView === 'benefits'}
+                    onClick={setActiveView}
+                />
+
+                {/* 7. Planificación */}
+                <SidebarItem
+                    icon={CalendarRange}
+                    label="Planificación"
                     viewId="work"
                     isActive={activeView === 'work'}
                     onClick={setActiveView}
                 />
+
+                {/* 8. Validación */}
+                <SidebarItem
+                    icon={CheckCircle2}
+                    label="Validación"
+                    viewId="validation"
+                    isActive={activeView === 'validation'}
+                    onClick={setActiveView}
+                />
+
+                {/* 9. Wiki */}
                 <SidebarItem
                     icon={BookOpen}
                     label="Wiki"

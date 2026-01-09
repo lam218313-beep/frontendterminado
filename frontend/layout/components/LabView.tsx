@@ -9,7 +9,6 @@ import React from 'react';
 import { Layers } from 'lucide-react';
 import { useAnalysisContext } from '../hooks/useAnalysis';
 import {
-  CardLabsHeader,
   CardLabsQ1_Emotions,
   CardLabsQ2_Personality,
   CardLabsQ3_TopTopics,
@@ -21,8 +20,9 @@ import {
   CardLabsQ8_TemporalEvolution,
   CardLabs_SemanticDistribution
 } from './lab';
+import { WorkflowStepper } from './WorkflowStepper';
 
-export const LabView: React.FC = () => {
+export const LabView: React.FC<{ onNavigate: (view: string) => void }> = ({ onNavigate }) => {
   const { data, isLoading } = useAnalysisContext();
 
   const hasData = data?.Q1 && data.Q1.emociones?.some(e => e.value > 0);
@@ -62,8 +62,8 @@ export const LabView: React.FC = () => {
       <main className="w-full p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
 
-          {/* Header Lab Card with Canvas Animation */}
-          <CardLabsHeader />
+          {/* Workflow Stepper */}
+          <WorkflowStepper currentStep={3} onNavigate={onNavigate} />
 
           {/* Grid Layout */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-8">
