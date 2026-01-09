@@ -562,6 +562,58 @@ export const MultiStepForm: React.FC = () => {
         }
     });
 
+    // Load existing interview data on mount
+    useEffect(() => {
+        const loadExistingInterview = async () => {
+            if (!clientId) return;
+
+            try {
+                setIsLoading(true);
+                const result = await getInterview(clientId);
+
+                if (result?.data && Object.keys(result.data).length > 0) {
+                    // Data exists, populate form
+                    const data = result.data;
+
+                    setFormData(prev => ({
+                        ...prev,
+                        businessName: data.businessName || '',
+                        history: data.history || '',
+                        differentiator: data.differentiator || [],
+                        vision: data.vision || '',
+                        audience: {
+                            ...prev.audience,
+                            ...data.audience
+                        },
+                        market: {
+                            ...prev.market,
+                            ...data.market
+                        },
+                        brand: {
+                            ...prev.brand,
+                            ...data.brand
+                        },
+                        goals: {
+                            ...prev.goals,
+                            ...data.goals
+                        }
+                    }));
+
+                    // Mark as finished if data was already submitted
+                    setIsFinished(true);
+                    setCurrentStep(6); // Go to confirmation step
+                }
+            } catch (error) {
+                console.error('Error loading existing interview:', error);
+                // If error, just start fresh
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadExistingInterview();
+    }, [clientId]);
+
     const [socialInput, setSocialInput] = useState({ platform: '', link: '', frequency: '' });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
