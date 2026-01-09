@@ -737,6 +737,12 @@ export const MultiStepForm: React.FC = () => {
         if (currentStep === 2) {
             if (audienceStep < 5) {
                 if (audienceStep === 3) {
+                    // Skip AI generation if already finished or personas exist
+                    if (isFinished || (formData.audience.antiPersona && formData.audience.idealPersona)) {
+                        setAudienceStep(4);
+                        return;
+                    }
+
                     setIsAnalyzing(true);
 
                     try {
@@ -824,10 +830,10 @@ export const MultiStepForm: React.FC = () => {
     };
 
     return (
-        <div className="bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col lg:flex-row min-h-[800px] animate-fade-in-up">
+        <div className="bg-white rounded-[40px] shadow-2xl flex flex-col lg:flex-row min-h-[800px] animate-fade-in-up">
 
             {/* LEFT SIDEBAR - Navigation Only */}
-            <div className="lg:w-1/3 bg-gray-50 p-8 lg:p-12 flex flex-col border-r border-gray-100 relative">
+            <div className="lg:w-1/3 bg-gray-50 p-8 lg:p-12 flex flex-col border-r border-gray-100 relative rounded-l-[40px]">
                 <div className="absolute top-0 left-0 w-64 h-64 bg-primary-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 pointer-events-none"></div>
 
                 {/* Logo Removed */}
@@ -867,7 +873,7 @@ export const MultiStepForm: React.FC = () => {
             </div>
 
             {/* RIGHT CONTENT - Form Area */}
-            <div className="lg:w-2/3 p-8 lg:p-16 bg-white relative">
+            <div className="lg:w-2/3 p-8 lg:p-16 bg-white relative rounded-r-[40px] overflow-y-auto max-h-[85vh]">
                 <div className="max-w-2xl mx-auto h-full flex flex-col">
 
                     {/* Form Header */}
