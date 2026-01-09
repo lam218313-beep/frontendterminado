@@ -18,7 +18,11 @@ export interface AuthResponse {
   ficha_cliente_id: string | null;
   logo_url: string | null;
   role: string | null;  // User role (admin, analyst, client)
+  plan: string;         // Subscription plan
+  plan_expires_at: string | null;
+  benefits: string[];   // Enabled benefits
 }
+
 
 export interface UserInfo {
   id: string;

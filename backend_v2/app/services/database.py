@@ -188,6 +188,33 @@ class SupabaseService:
             logger.error(f"DB Update Password Error: {e}")
             raise e
 
+    def get_user_by_id(self, user_id: str) -> Optional[dict]:
+        """Get user profile by ID."""
+        if not self.client: return None
+        try:
+            response = self.client.table("users").select("*").eq("id", user_id).limit(1).execute()
+            if response.data:
+                return response.data[0]
+        except Exception as e:
+            logger.error(f"DB Get User By ID Error: {e}")
+        return None
+
+    def update_user_plan(self, user_id: str, plan: str, plan_expires_at: Optional[str], benefits: list):
+        """Update user's subscription plan and benefits."""
+        target_client = self.admin_client if self.admin_client else self.client
+        if not target_client: return
+        
+        try:
+            data = {
+                "plan": plan,
+                "plan_expires_at": plan_expires_at,
+                "benefits": benefits
+            }
+            target_client.table("users").update(data).eq("id", user_id).execute()
+        except Exception as e:
+            logger.error(f"DB Update User Plan Error: {e}")
+            raise e
+
     # ============================================================================
     # Tasks
     # ============================================================================

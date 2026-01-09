@@ -18,7 +18,11 @@ export interface AuthUser {
   logoUrl: string | null;
   role: string | null;  // User role (admin, analyst, client)
   isAdmin: boolean;    // Convenience flag
+  plan: string;        // Subscription plan
+  planExpiresAt: string | null;
+  benefits: string[];  // Enabled benefits
 }
+
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -53,7 +57,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const storedUser = api.getStoredUser();
     const storedToken = api.getStoredToken();
-    
+
     if (storedUser && storedToken) {
       setUser({
         email: storedUser.user_email,
@@ -62,6 +66,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         logoUrl: storedUser.logo_url || null,
         role: storedUser.role || null,
         isAdmin: storedUser.role === 'admin',
+        plan: storedUser.plan || 'free_trial',
+        planExpiresAt: storedUser.plan_expires_at || null,
+        benefits: storedUser.benefits || [],
       });
     }
     setIsLoading(false);
@@ -70,7 +77,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await api.login(email, password);
       setUser({
@@ -80,10 +87,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         logoUrl: response.logo_url || null,
         role: response.role || null,
         isAdmin: response.role === 'admin',
+        plan: response.plan || 'free_trial',
+        planExpiresAt: response.plan_expires_at || null,
+        benefits: response.benefits || [],
       });
     } catch (err) {
-      const message = err instanceof api.ApiError 
-        ? err.message 
+      const message = err instanceof api.ApiError
+        ? err.message
         : 'Error de conexión con el servidor';
       setError(message);
       throw err;

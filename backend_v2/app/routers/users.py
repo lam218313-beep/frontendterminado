@@ -22,26 +22,38 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # Models
 # ============================================================================
 
+# Plan types
+PLAN_TYPES = ["free_trial", "lite", "basic", "pro", "premium"]
+
 class UserCreate(BaseModel):
     email: str
     password: str
     full_name: str
     role: str = "analyst"
     client_id: Optional[str] = None
+    plan: str = "free_trial"
 
 class UserPasswordUpdate(BaseModel):
     password: str
+
+class UserPlanUpdate(BaseModel):
+    plan: str
+    benefits: list[str] = []
 
 class UserResponse(BaseModel):
     id: str
     email: str
     full_name: str
     role: str
+    plan: str = "free_trial"
+    plan_expires_at: Optional[str] = None
+    benefits: list[str] = []
     created_at: Optional[str] = None
-    is_active: bool = True # Compatibility
+    is_active: bool = True
 
     class Config:
         from_attributes = True
+
 
 # ============================================================================
 # Helpers
@@ -154,3 +166,44 @@ async def reset_password(user_id: str, payload: UserPasswordUpdate):
 @router.post("/upload-logo")
 async def upload_logo():
     return {"url": "https://via.placeholder.com/150"}
+
+
+# ============================================================================
+# Plan Management
+# ============================================================================
+
+@router.get("/{user_id}/plan")
+async def get_user_plan(user_id: str):
+    """Get user's current plan."""
+    user = db.get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "plan": user.get("plan", "free_trial"),
+        "plan_expires_at": user.get("plan_expires_at"),
+        "benefits": user.get("benefits", [])
+    }
+
+@router.put("/{user_id}/plan")
+async def update_user_plan(user_id: str, payload: UserPlanUpdate):
+    """Admin endpoint to update user's plan and benefits."""
+    if payload.plan not in PLAN_TYPES:
+        raise HTTPException(status_code=400, detail=f"Invalid plan. Must be one of: {PLAN_TYPES}")
+    
+    try:
+        # Calculate expiration for free_trial (30 days)
+        plan_expires_at = None
+        if payload.plan == "free_trial":
+            from datetime import datetime, timedelta
+            plan_expires_at = (datetime.utcnow() + timedelta(days=30)).isoformat()
+        
+        db.update_user_plan(user_id, payload.plan, plan_expires_at, payload.benefits)
+        return {
+            "message": "Plan updated successfully",
+            "plan": payload.plan,
+            "plan_expires_at": plan_expires_at,
+            "benefits": payload.benefits
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
