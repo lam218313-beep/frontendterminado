@@ -122,7 +122,7 @@ async def generate_personas(client_id: str, request: PersonaRequest):
         }}
         """
         
-        model = genai.GenerativeModel("gemini-2.0-flash")
+        model = genai.GenerativeModel("gemini-3-flash-preview")
         response = model.generate_content(prompt)
         
         # Extract text from response
