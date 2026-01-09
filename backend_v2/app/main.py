@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
-from .routers import pipeline, clients, analysis, auth, users, tasks, interview
+from .routers import pipeline, clients, analysis, auth, users, tasks, interview, personas
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -44,6 +44,7 @@ app.include_router(clients.router)
 app.include_router(analysis.router)
 app.include_router(tasks.router)
 app.include_router(interview.router)
+app.include_router(personas.router)
 
 
 @app.get("/", tags=["Health"])

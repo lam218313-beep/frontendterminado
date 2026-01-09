@@ -48,7 +48,7 @@ import {
     Send
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { saveInterview, getInterview } from '../../services/api';
+import { saveInterview, getInterview, generatePersonas } from '../../services/api';
 
 // Step Definition
 const STEPS = [
@@ -495,7 +495,9 @@ export const MultiStepForm: React.FC = () => {
             frequency: '',
             loyalty: '',
             decisionRole: '',
-            usage: ''
+            usage: '',
+            antiPersona: null,
+            idealPersona: null
         },
         // Step 3 Data (Market)
         market: {
@@ -532,6 +534,13 @@ export const MultiStepForm: React.FC = () => {
 
     const handleAudienceChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            audience: { ...prev.audience, [name]: value }
+        }));
+    };
+
+    const handleAudienceFieldChange = (name: string, value: string) => {
         setFormData(prev => ({
             ...prev,
             audience: { ...prev.audience, [name]: value }
@@ -640,14 +649,41 @@ export const MultiStepForm: React.FC = () => {
             if (audienceStep < 5) {
                 if (audienceStep === 3) {
                     setIsAnalyzing(true);
-                    setAudienceStep(4);
-                    setTimeout(() => setIsAnalyzing(false), 3000);
+
+                    try {
+                        // AI Generation Call
+                        if (clientId) {
+                            const personas = await generatePersonas(clientId, {
+                                audience_data: formData.audience,
+                                market_data: formData.market,
+                                brand_data: formData.brand
+                            });
+
+                            setFormData(prev => ({
+                                ...prev,
+                                audience: {
+                                    ...prev.audience,
+                                    antiPersona: personas.anti_persona,
+                                    idealPersona: personas.ideal_persona
+                                }
+                            }));
+                        } else {
+                            console.warn("No ClientID for AI generation");
+                        }
+                    } catch (error) {
+                        console.error("Error generating personas:", error);
+                        // Optionally show error, but we proceed to show placeholders/empty for now
+                    } finally {
+                        setAudienceStep(4);
+                        setIsAnalyzing(false);
+                    }
                 } else {
                     setAudienceStep(prev => prev + 1);
                 }
                 return;
             }
         }
+
 
         if (currentStep < 6) {
             setIsLoading(true);
@@ -692,16 +728,26 @@ export const MultiStepForm: React.FC = () => {
         }
     };
 
-    const InputField = ({ label, name, placeholder, type = "text", options = [] as string[] }) => {
+    // Moved InputField outside to avoid remounting issues
+    const InputField: React.FC<{
+        label: string;
+        name: string;
+        value: string;
+        onChange: (name: string, value: string) => void; // Changed signature
+        placeholder: string;
+        type?: string;
+        options?: string[];
+        disabled?: boolean;
+    }> = ({ label, name, value, onChange, placeholder, type = "text", options = [], disabled }) => {
         if (options.length > 0) {
             return (
                 <CustomSelect
                     label={label}
-                    value={(formData.audience as any)[name]}
-                    onChange={(val) => handleAudienceSelect(name, val)}
+                    value={value}
+                    onChange={(val) => onChange(name, val)}
                     options={options}
                     placeholder={placeholder}
-                    disabled={isFinished}
+                    disabled={disabled}
                 />
             );
         }
@@ -712,11 +758,11 @@ export const MultiStepForm: React.FC = () => {
                 <input
                     type={type}
                     name={name}
-                    value={(formData.audience as any)[name]}
-                    onChange={handleAudienceChange}
+                    value={value}
+                    onChange={(e) => onChange(name, e.target.value)}
                     placeholder={placeholder}
-                    disabled={isFinished}
-                    className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all ${isFinished ? 'border-gray-100 bg-gray-50 cursor-default' : 'border-gray-200'}`}
+                    disabled={disabled}
+                    className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all ${disabled ? 'border-gray-100 bg-gray-50 cursor-default' : 'border-gray-200'}`}
                 />
             </div>
         );
@@ -858,11 +904,11 @@ export const MultiStepForm: React.FC = () => {
                                             <Users className="text-primary-500" /> Perfil Demográfico
                                         </h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <InputField label="Rango de Edad" name="ageRange" placeholder="Ej. 25-34 años" options={['18-24', '25-34', '35-44', '45-54', '55+']} />
-                                            <InputField label="Género" name="gender" placeholder="Ej. Femenino" options={['Masculino', 'Femenino', 'Mixto/Todos']} />
-                                            <InputField label="Ubicación" name="location" placeholder="Ej. Madrid, España (Urbano)" />
-                                            <InputField label="Ocupación/Rol" name="occupation" placeholder="Ej. Profesionales de Marketing" />
-                                            <InputField label="Estado Civil/Familiar" name="maritalStatus" placeholder="Ej. Solteros sin hijos" options={['Soltero', 'Casado', 'Con hijos', 'Sin hijos']} />
+                                            <InputField label="Rango de Edad" name="ageRange" value={formData.audience.ageRange} onChange={handleAudienceFieldChange} placeholder="Ej. 25-34 años" options={['18-24', '25-34', '35-44', '45-54', '55+']} disabled={isFinished} />
+                                            <InputField label="Género" name="gender" value={formData.audience.gender} onChange={handleAudienceFieldChange} placeholder="Ej. Femenino" options={['Masculino', 'Femenino', 'Mixto/Todos']} disabled={isFinished} />
+                                            <InputField label="Ubicación" name="location" value={formData.audience.location} onChange={handleAudienceFieldChange} placeholder="Ej. Madrid, España (Urbano)" disabled={isFinished} />
+                                            <InputField label="Ocupación/Rol" name="occupation" value={formData.audience.occupation} onChange={handleAudienceFieldChange} placeholder="Ej. Profesionales de Marketing" disabled={isFinished} />
+                                            <InputField label="Estado Civil/Familiar" name="maritalStatus" value={formData.audience.maritalStatus} onChange={handleAudienceFieldChange} placeholder="Ej. Solteros sin hijos" options={['Soltero', 'Casado', 'Con hijos', 'Sin hijos']} disabled={isFinished} />
                                         </div>
                                     </div>
                                 )}
@@ -874,12 +920,12 @@ export const MultiStepForm: React.FC = () => {
                                             <BrainCircuit className="text-primary-500" /> Perfil Psicográfico
                                         </h3>
                                         <div className="grid grid-cols-1 gap-6">
-                                            <InputField label="Intereses" name="interests" placeholder="Ej. Tecnología, Viajes, Fitness" />
-                                            <InputField label="Valores Principales" name="values" placeholder="Ej. Sostenibilidad, Innovación, Calidad" />
-                                            <InputField label="Dolores (Pain Points)" name="painPoints" placeholder="¿Qué problema les quita el sueño?" />
+                                            <InputField label="Intereses" name="interests" value={formData.audience.interests} onChange={handleAudienceFieldChange} placeholder="Ej. Tecnología, Viajes, Fitness" disabled={isFinished} />
+                                            <InputField label="Valores Principales" name="values" value={formData.audience.values} onChange={handleAudienceFieldChange} placeholder="Ej. Sostenibilidad, Innovación, Calidad" disabled={isFinished} />
+                                            <InputField label="Dolores (Pain Points)" name="painPoints" value={formData.audience.painPoints} onChange={handleAudienceFieldChange} placeholder="¿Qué problema les quita el sueño?" disabled={isFinished} />
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <InputField label="Deseos/Metas" name="desires" placeholder="¿Qué transformación buscan?" />
-                                                <InputField label="Estilo de Vida" name="lifestyle" placeholder="Ej. Nómada digital, Saludable" />
+                                                <InputField label="Deseos/Metas" name="desires" value={formData.audience.desires} onChange={handleAudienceFieldChange} placeholder="¿Qué transformación buscan?" disabled={isFinished} />
+                                                <InputField label="Estilo de Vida" name="lifestyle" value={formData.audience.lifestyle} onChange={handleAudienceFieldChange} placeholder="Ej. Nómada digital, Saludable" disabled={isFinished} />
                                             </div>
                                         </div>
                                     </div>
@@ -892,9 +938,9 @@ export const MultiStepForm: React.FC = () => {
                                             <Wallet className="text-primary-500" /> Perfil Económico
                                         </h3>
                                         <div className="grid grid-cols-1 gap-6">
-                                            <InputField label="Nivel de Ingresos" name="incomeLevel" placeholder="Ej. Medio-Alto" options={['Bajo', 'Medio', 'Medio-Alto', 'Alto', 'Premium']} />
-                                            <InputField label="Sensibilidad al Precio" name="priceSensitivity" placeholder="Ej. Busca valor sobre precio" options={['Busca Ofertas', 'Equilibrado', 'Paga por Valor', 'Sin restricciones']} />
-                                            <InputField label="Hábitos de Gasto" name="spendingHabits" placeholder="Ej. Planificado vs Impulsivo" />
+                                            <InputField label="Nivel de Ingresos" name="incomeLevel" value={formData.audience.incomeLevel} onChange={handleAudienceFieldChange} placeholder="Ej. Medio-Alto" options={['Bajo', 'Medio', 'Medio-Alto', 'Alto', 'Premium']} disabled={isFinished} />
+                                            <InputField label="Sensibilidad al Precio" name="priceSensitivity" value={formData.audience.priceSensitivity} onChange={handleAudienceFieldChange} placeholder="Ej. Busca valor sobre precio" options={['Busca Ofertas', 'Equilibrado', 'Paga por Valor', 'Sin restricciones']} disabled={isFinished} />
+                                            <InputField label="Hábitos de Gasto" name="spendingHabits" value={formData.audience.spendingHabits} onChange={handleAudienceFieldChange} placeholder="Ej. Planificado vs Impulsivo" disabled={isFinished} />
                                         </div>
                                     </div>
                                 )}
@@ -906,10 +952,10 @@ export const MultiStepForm: React.FC = () => {
                                             <Activity className="text-primary-500" /> Comportamiento
                                         </h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <InputField label="Frecuencia de Compra" name="frequency" placeholder="Ej. Mensual" options={['Diaria', 'Semanal', 'Mensual', 'Anual', 'Esporádica']} />
-                                            <InputField label="Nivel de Lealtad" name="loyalty" placeholder="Ej. Recurrente" options={['Nuevo', 'Recurrente', 'Embajador de Marca']} />
-                                            <InputField label="Rol en la Decisión" name="decisionRole" placeholder="Ej. Decisor Final" options={['Usuario', 'Influenciador', 'Decisor Final']} />
-                                            <InputField label="Uso del Producto" name="usage" placeholder="Ej. Diario/Intensivo" />
+                                            <InputField label="Frecuencia de Compra" name="frequency" value={formData.audience.frequency} onChange={handleAudienceFieldChange} placeholder="Ej. Mensual" options={['Diaria', 'Semanal', 'Mensual', 'Anual', 'Esporádica']} disabled={isFinished} />
+                                            <InputField label="Nivel de Lealtad" name="loyalty" value={formData.audience.loyalty} onChange={handleAudienceFieldChange} placeholder="Ej. Recurrente" options={['Nuevo', 'Recurrente', 'Embajador de Marca']} disabled={isFinished} />
+                                            <InputField label="Rol en la Decisión" name="decisionRole" value={formData.audience.decisionRole} onChange={handleAudienceFieldChange} placeholder="Ej. Decisor Final" options={['Usuario', 'Influenciador', 'Decisor Final']} disabled={isFinished} />
+                                            <InputField label="Uso del Producto" name="usage" value={formData.audience.usage} onChange={handleAudienceFieldChange} placeholder="Ej. Diario/Intensivo" disabled={isFinished} />
                                         </div>
                                     </div>
                                 )}

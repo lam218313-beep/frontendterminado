@@ -26,19 +26,38 @@ async def save_interview_data(
         except json.JSONDecodeError:
             raise HTTPException(status_code=400, detail="Invalid JSON format in 'data' field")
 
-        # 2. Handle File (Upload to Supabase Storage - Placeholder for now)
-        # TODO: Implement actual Storage upload if needed. 
-        # For now, we just note the filename if present.
-        file_url = None
+        # 2. Handle File (Read content for Context)
         if file:
-            logger.info(f"Received file: {file.filename} ({file.content_type})")
-            # Mock upload: In real usage, use supabase.storage.from('bucket').upload(...)
-            # file_url = f"https://.../{file.filename}" 
-            # We will just save the filename for reference in the DB json for now
-            parsed_data["attached_file_name"] = file.filename
+            logger.info(f"Processing file: {file.filename} ({file.content_type})")
+            file_content = ""
+            
+            try:
+                contents = await file.read()
+                
+                if file.filename.endswith('.xlsx') or file.filename.endswith('.xls'):
+                    import pandas as pd
+                    from io import BytesIO
+                    df = pd.read_excel(BytesIO(contents))
+                    # Convert full dataframe to string for context
+                    file_content = df.to_string()
+                elif file.filename.endswith('.pdf'):
+                    # Basic PDF text extraction (Placeholder - requires pypdf or similar if strictly needed)
+                    # For now we skip complex PDF parsing to avoid extra heavy deps unless requested
+                    file_content = f"[PDF File: {file.filename} uploaded. Content extraction pending.]"
+                else:
+                    # Generic text decoding
+                    file_content = contents.decode('utf-8', errors='ignore')
+                
+                # Ingest into context
+                parsed_data["product_context"] = file_content[:10000] # Limit context size
+                parsed_data["attached_file_name"] = file.filename
+                
+            except Exception as file_err:
+                logger.error(f"Error reading file {file.filename}: {file_err}")
+                parsed_data["file_error"] = str(file_err)
 
         # 3. Save to DB
-        db.save_interview(client_id, parsed_data, file_url)
+        db.save_interview(client_id, parsed_data, None)
 
         return {"status": "success", "message": "Interview data saved successfully"}
 
