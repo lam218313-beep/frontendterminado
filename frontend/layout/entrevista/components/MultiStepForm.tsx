@@ -698,7 +698,13 @@ export const MultiStepForm: React.FC = () => {
                             const personas = await generatePersonas(clientId, {
                                 audience_data: formData.audience,
                                 market_data: formData.market,
-                                brand_data: formData.brand
+                                brand_data: formData.brand,
+                                business_context: {
+                                    businessName: formData.businessName,
+                                    history: formData.history,
+                                    vision: formData.vision,
+                                    differentiator: formData.differentiator
+                                }
                             });
 
                             setFormData(prev => ({

@@ -86,7 +86,7 @@ async def classify_comments_batch(comments: list[str], batch_size: int = 50) -> 
     if not settings.GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY not configured")
     
-    model = genai.GenerativeModel("gemini-3-flash-preview")
+    model = genai.GenerativeModel("gemini-2.0-flash")
     all_results: list[dict] = []
     
     # Process in batches
