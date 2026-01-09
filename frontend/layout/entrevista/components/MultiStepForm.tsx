@@ -298,7 +298,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({ type, data }) => {
 
     // Config based on type
     const isIdeal = type === 'ideal';
-    const title = isIdeal ? 'Cliente Ideal' : 'Anti-Persona';
+    const title = data?.name || (isIdeal ? 'Cliente Ideal' : 'Anti-Persona');
     const subTitle = isIdeal ? 'High Value Target' : 'Cliente No Deseado';
     const badgeColor = isIdeal ? 'bg-green-500' : 'bg-red-500';
     const gradient = isIdeal ? 'from-primary-500 to-purple-600' : 'from-gray-600 to-gray-800';
@@ -322,14 +322,9 @@ const PersonaCard: React.FC<PersonaCardProps> = ({ type, data }) => {
 
     const handleMouseLeave = () => setRotation({ x: 0, y: 0 });
 
-    // Helper to invert logic for Anti-Persona display
+    // Helper to get display value - now data comes with real values from AI
     const getDisplayValue = (key: string, originalValue: string) => {
-        if (isIdeal) return originalValue;
-        // Simple mock inversion logic for demo purposes
-        if (key === 'income') return originalValue.includes('Alto') ? 'Bajo' : 'Inconsistente';
-        if (key === 'loyalty') return originalValue.includes('Recurrente') ? 'Infiel' : 'Mercenario';
-        if (key === 'pain') return isIdeal ? originalValue : 'Ignora el valor, solo busca precio';
-        return originalValue;
+        return originalValue || 'N/A';
     };
 
     return (
@@ -444,11 +439,11 @@ const PersonaCard: React.FC<PersonaCardProps> = ({ type, data }) => {
                         </div>
 
                         <div className="mt-4 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                            <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Estrategia</span>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">{isIdeal ? 'Por qué es ideal' : 'Por qué evitarlo'}</span>
                             <p className="text-xs text-gray-600 leading-relaxed">
                                 {isIdeal
-                                    ? "Focalizar recursos de marketing en este segmento para maximizar ROI y LTV."
-                                    : "Evitar captación activa. Crear filtros en el funnel para descalificar tempranamente."}
+                                    ? (data?.ideal_reason || "Focalizar recursos de marketing en este segmento para maximizar ROI y LTV.")
+                                    : (data?.avoid_reason || "Evitar captación activa. Crear filtros en el funnel para descalificar tempranamente.")}
                             </p>
                         </div>
                     </div>
@@ -996,7 +991,7 @@ export const MultiStepForm: React.FC = () => {
                                         ) : (
                                             // ANTI-PERSONA CARD
                                             <div className="animate-in zoom-in-50 duration-700 ease-out-back fill-mode-forwards w-full">
-                                                <PersonaCard type="anti" data={formData.audience} />
+                                                <PersonaCard type="anti" data={formData.audience.antiPersona || formData.audience} />
                                             </div>
                                         )}
                                     </div>
@@ -1006,7 +1001,7 @@ export const MultiStepForm: React.FC = () => {
                                 {audienceStep === 5 && (
                                     <div className="flex items-center justify-center py-4 relative h-[450px]">
                                         <div className="animate-in zoom-in-50 duration-700 ease-out-back fill-mode-forwards w-full">
-                                            <PersonaCard type="ideal" data={formData.audience} />
+                                            <PersonaCard type="ideal" data={formData.audience.idealPersona || formData.audience} />
                                         </div>
                                     </div>
                                 )}
