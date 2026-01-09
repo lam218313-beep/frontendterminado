@@ -13,7 +13,28 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
 from .routers import pipeline, clients, analysis, auth, users, tasks, interview
 
-# ...
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup logic
+    logging.basicConfig(level=logging.INFO)
+    yield
+    # Shutdown logic
+
+app = FastAPI(
+    title="Pixely Partners API v2",
+    description="Backend for Pixely Partners (Agency Workflow)",
+    version="2.0.0",
+    lifespan=lifespan
+)
+
+# CORS Configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all for dev
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Include routers
 app.include_router(auth.router)

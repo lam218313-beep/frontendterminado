@@ -461,6 +461,9 @@ const PersonaCard: React.FC<PersonaCardProps> = ({ type, data }) => {
 // --- MAIN FORM COMPONENT ---
 
 export const MultiStepForm: React.FC = () => {
+    const { user } = useAuth();
+    const clientId = user?.fichaClienteId;
+
     const [currentStep, setCurrentStep] = useState(1);
     const [audienceStep, setAudienceStep] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
