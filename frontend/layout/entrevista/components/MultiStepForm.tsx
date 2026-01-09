@@ -458,6 +458,48 @@ const PersonaCard: React.FC<PersonaCardProps> = ({ type, data }) => {
     );
 };
 
+// --- SIMPLE INPUT FIELD COMPONENT (Module Level) ---
+interface InputFieldProps {
+    label: string;
+    name: string;
+    value: string;
+    onChange: (name: string, value: string) => void;
+    placeholder: string;
+    type?: string;
+    options?: string[];
+    disabled?: boolean;
+}
+
+const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, placeholder, type = "text", options = [], disabled }) => {
+    if (options.length > 0) {
+        return (
+            <CustomSelect
+                label={label}
+                value={value}
+                onChange={(val) => onChange(name, val)}
+                options={options}
+                placeholder={placeholder}
+                disabled={disabled}
+            />
+        );
+    }
+
+    return (
+        <div className="space-y-2">
+            <label className="text-sm font-bold text-gray-700 ml-1">{label}</label>
+            <input
+                type={type}
+                name={name}
+                value={value}
+                onChange={(e) => onChange(name, e.target.value)}
+                placeholder={placeholder}
+                disabled={disabled}
+                className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all ${disabled ? 'border-gray-100 bg-gray-50 cursor-default' : 'border-gray-200'}`}
+            />
+        </div>
+    );
+};
+
 // --- MAIN FORM COMPONENT ---
 
 export const MultiStepForm: React.FC = () => {
@@ -726,46 +768,6 @@ export const MultiStepForm: React.FC = () => {
         } finally {
             setIsSubmitting(false);
         }
-    };
-
-    // Moved InputField outside to avoid remounting issues
-    const InputField: React.FC<{
-        label: string;
-        name: string;
-        value: string;
-        onChange: (name: string, value: string) => void; // Changed signature
-        placeholder: string;
-        type?: string;
-        options?: string[];
-        disabled?: boolean;
-    }> = ({ label, name, value, onChange, placeholder, type = "text", options = [], disabled }) => {
-        if (options.length > 0) {
-            return (
-                <CustomSelect
-                    label={label}
-                    value={value}
-                    onChange={(val) => onChange(name, val)}
-                    options={options}
-                    placeholder={placeholder}
-                    disabled={disabled}
-                />
-            );
-        }
-
-        return (
-            <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-700 ml-1">{label}</label>
-                <input
-                    type={type}
-                    name={name}
-                    value={value}
-                    onChange={(e) => onChange(name, e.target.value)}
-                    placeholder={placeholder}
-                    disabled={disabled}
-                    className={`w-full bg-gray-50 border rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all ${disabled ? 'border-gray-100 bg-gray-50 cursor-default' : 'border-gray-200'}`}
-                />
-            </div>
-        );
     };
 
     return (

@@ -1,11 +1,17 @@
 
 import logging
-from fastapi import APIRouter, HTTPException, Body
+import json
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from ..services.gemini_service import gemini
+import google.generativeai as genai
+from ..config import settings
 
 router = APIRouter(prefix="/clients", tags=["Personas"])
 logger = logging.getLogger(__name__)
+
+# Configure Gemini
+if settings.GEMINI_API_KEY:
+    genai.configure(api_key=settings.GEMINI_API_KEY)
 
 class PersonaRequest(BaseModel):
     audience_data: dict
@@ -54,14 +60,18 @@ async def generate_personas(client_id: str, request: PersonaRequest):
         }}
         """
         
-        response = await gemini.generate_content(prompt)
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        response = model.generate_content(prompt)
+        
+        # Extract text from response
+        response_text = response.text
         
         # Simple cleaning of response if it contains markdown (```json ...)
-        cleaned_response = response.replace("```json", "").replace("```", "").strip()
+        cleaned_response = response_text.replace("```json", "").replace("```", "").strip()
         
-        import json
         return json.loads(cleaned_response)
 
     except Exception as e:
         logger.error(f"Error generating personas: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
