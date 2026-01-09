@@ -1,5 +1,5 @@
 import React from 'react';
-import BrandBookApp from '../../brand-book/App';
+import BrandBookApp from '../brand-book/App';
 import { WorkflowStepper } from './WorkflowStepper';
 
 export const BrandView: React.FC<{ onNavigate: (view: string) => void }> = ({ onNavigate }) => {
