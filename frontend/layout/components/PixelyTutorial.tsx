@@ -413,7 +413,7 @@ const VisualStep4 = () => {
                         </div>
                     </motion.div>
 
-                    {/* Item 2: Pending */}
+                    {/* Item 2: Pending (Now with Validation Controls) */}
                     <motion.div
                         initial={{ x: -20, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
@@ -423,14 +423,31 @@ const VisualStep4 = () => {
                         {/* Dot */}
                         <div className="absolute left-[-5px] top-4 w-3.5 h-3.5 bg-amber-400 rounded-full ring-4 ring-white shadow-sm z-10"></div>
 
-                        {/* Card */}
-                        <div className="bg-white/80 p-4 rounded-2xl border border-slate-100 flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-500 flex items-center justify-center shrink-0">
-                                <FileText size={18} />
+                        {/* Card with embedded controls */}
+                        <div className="bg-white/80 p-3 rounded-2xl border border-slate-100 flex flex-col gap-3 shadow-sm">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-500 flex items-center justify-center shrink-0">
+                                    <FileText size={18} />
+                                </div>
+                                <div>
+                                    <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Mañana, 03:00 PM</div>
+                                    <div className="text-slate-700 font-bold">Blog Post Semanal</div>
+                                </div>
                             </div>
-                            <div>
-                                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Mañana, 03:00 PM</div>
-                                <div className="text-slate-700 font-bold">Blog Post Semanal</div>
+
+                            {/* Validation Controls (Merged) */}
+                            <div className="flex items-center gap-2 pt-2 border-t border-slate-50 justify-end">
+                                <span className="text-[10px] font-bold text-slate-400 mr-auto uppercase tracking-wide">Validación requerida</span>
+                                <button className="w-8 h-8 rounded-full bg-slate-50 border border-slate-100 text-slate-300 flex items-center justify-center hover:bg-red-50 hover:text-red-400 transition-colors">
+                                    <X size={14} strokeWidth={2.5} />
+                                </button>
+                                <motion.button
+                                    animate={{ boxShadow: ["0 0 0 0px rgba(34, 197, 94, 0)", "0 0 0 4px rgba(34, 197, 94, 0.2)", "0 0 0 0px rgba(34, 197, 94, 0)"] }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                    className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 text-white flex items-center justify-center shadow-lg shadow-green-500/20"
+                                >
+                                    <Check size={14} strokeWidth={3} />
+                                </motion.button>
                             </div>
                         </div>
                     </motion.div>
@@ -462,58 +479,7 @@ const VisualStep4 = () => {
     );
 };
 
-// 8. STEP 5: VALIDATION (NEW: POST PREVIEW)
-const VisualStep5 = () => (
-    <div className="flex flex-col justify-center h-[400px] items-center w-full gap-8">
-        {/* Post Preview Card */}
-        <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="w-72 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden relative z-10"
-        >
-            {/* Header */}
-            <div className="p-3 flex items-center gap-3 border-b border-slate-50">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary-400 to-accent-400"></div>
-                <div>
-                    <div className="h-2 w-24 bg-slate-200 rounded-full mb-1"></div>
-                    <div className="h-1.5 w-16 bg-slate-100 rounded-full"></div>
-                </div>
-            </div>
-
-            {/* Content Area */}
-            <div className="aspect-square bg-slate-50 flex items-center justify-center relative group">
-                <ImageIcon size={48} className="text-slate-200" />
-            </div>
-
-            {/* Actions Footer */}
-            <div className="p-3">
-                <div className="flex gap-3 mb-3 text-slate-300">
-                    <Heart size={20} />
-                    <MessageSquare size={20} />
-                    <Gift size={20} />
-                </div>
-                <div className="space-y-2">
-                    <div className="h-2 w-full bg-slate-100 rounded-full"></div>
-                    <div className="h-2 w-2/3 bg-slate-100 rounded-full"></div>
-                </div>
-            </div>
-        </motion.div>
-
-        {/* Review Controls */}
-        <div className="flex items-center gap-12">
-            <button className="w-14 h-14 rounded-full bg-white border border-slate-200 text-slate-300 flex items-center justify-center cursor-not-allowed">
-                <X size={24} strokeWidth={2.5} />
-            </button>
-            <motion.button
-                animate={{ boxShadow: ["0 0 0 0px rgba(34, 197, 94, 0)", "0 0 0 6px rgba(34, 197, 94, 0.2)", "0 0 0 0px rgba(34, 197, 94, 0)"] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 text-white flex items-center justify-center shadow-xl shadow-green-500/30"
-            >
-                <Check size={36} strokeWidth={3} />
-            </motion.button>
-        </div>
-    </div>
-);
+// 8. VisualStep5 removed (Merged into Step 4)
 
 // 9. STEP 6: BENEFITS (UPDATED: TRANSLATED TEXT)
 const VisualStep6 = () => (
