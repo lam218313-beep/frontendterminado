@@ -15,7 +15,7 @@ import confetti from 'canvas-confetti';
 // 1. WELCOME: CLOUD LOOP (SMOOTHER)
 const VisualWelcome = () => {
     return (
-        <div className="relative flex items-center justify-center w-full h-[500px]">
+        <div className="relative flex items-center justify-center w-full h-[350px] xl:h-[500px]">
             {/* Organic Cloud Background Loop - Slower and smoother */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <motion.div
@@ -67,7 +67,7 @@ const VisualWelcome = () => {
 
 // 2. INTRO: CONNECTED FLOATING CARDS (LOOP)
 const VisualIntro = () => (
-    <div className="flex items-center justify-center gap-4 md:gap-12 h-[450px] w-full relative">
+    <div className="flex items-center justify-center gap-4 md:gap-12 h-[350px] xl:h-[450px] w-full relative">
         {/* Connecting Line Pulse */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-2 bg-slate-200 rounded-full overflow-hidden z-0">
             <motion.div
@@ -81,7 +81,7 @@ const VisualIntro = () => (
         <motion.div
             animate={{ y: [0, -20, 0] }}
             transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-            className="w-64 h-64 rounded-[40px] glass-card flex flex-col items-center justify-center relative z-10 bg-white/60"
+            className="w-48 h-48 lg:w-64 lg:h-64 rounded-[40px] glass-card flex flex-col items-center justify-center relative z-10 bg-white/60"
         >
             <motion.div
                 animate={{ scale: [1, 1.1, 1], rotate: [0, 5, 0] }}
@@ -97,7 +97,7 @@ const VisualIntro = () => (
         <motion.div
             animate={{ y: [0, 20, 0] }}
             transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-            className="w-64 h-64 rounded-[40px] glass-card flex flex-col items-center justify-center border-2 border-primary-100 z-10 bg-white/80"
+            className="w-48 h-48 lg:w-64 lg:h-64 rounded-[40px] glass-card flex flex-col items-center justify-center border-2 border-primary-100 z-10 bg-white/80"
         >
             <motion.div
                 animate={{ scale: [1, 1.1, 1] }}
