@@ -9,7 +9,7 @@ const PixelyLogo = () => (
 );
 
 const PartnerLogo = ({ label, color = "#6B7280" }: { label: string; color?: string }) => (
-  <div className="bg-white rounded-full p-3 shadow-xl flex items-center justify-center w-16 h-16 md:w-20 md:h-20 border-2 border-white/80 backdrop-blur-sm hover:scale-110 transition-transform duration-300 cursor-pointer">
+  <div className="bg-white rounded-full p-3 shadow-md flex items-center justify-center w-16 h-16 md:w-20 md:h-20 border border-gray-100 hover:scale-110 transition-transform duration-300 cursor-pointer will-change-transform">
     <div className="text-xs md:text-sm font-bold text-center leading-tight" style={{ color }}>
       {label}
     </div>
