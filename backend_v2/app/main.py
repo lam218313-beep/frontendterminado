@@ -13,8 +13,39 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
 from .routers import pipeline, clients, analysis, auth, users, tasks, interview, personas, tts, strategy, brand
 
-# ...
+# Lifespan context
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: logging, db connections if needed
+    logging.info("Starting up Aggregation Engine...")
+    yield
+    # Shutdown
+    logging.info("Shutting down...")
 
+app = FastAPI(
+    title="Pixely Partners API v2",
+    description="The Aggregation Engine for Social Analysis",
+    version="2.0.0",
+    lifespan=lifespan
+)
+
+# Middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Strictify in logic later if needed
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Routers
+app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(clients.router)
+app.include_router(analysis.router)
+app.include_router(pipeline.router)
+app.include_router(tasks.router)
+app.include_router(interview.router)
 app.include_router(personas.router)
 app.include_router(tts.router)
 app.include_router(strategy.router)
