@@ -803,7 +803,7 @@ export const PixelyTutorial: React.FC = () => {
             </div>
 
             {/* --- MAIN STAGE --- */}
-            <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10 overflow-hidden">
+            <div className="flex-1 flex flex-col items-center justify-start md:justify-center p-4 md:p-6 relative z-10 overflow-y-auto custom-scrollbar scroll-smooth">
                 <AnimatePresence mode='wait'>
                     <motion.div
                         key={currentSlide}
@@ -811,10 +811,10 @@ export const PixelyTutorial: React.FC = () => {
                         animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
                         exit={{ opacity: 0, scale: 1.05, filter: "blur(10px)" }}
                         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                        className="w-full max-w-6xl flex flex-col items-center"
+                        className="w-full max-w-6xl flex flex-col items-center py-4"
                     >
                         {/* Visual Container */}
-                        <div className="flex-1 w-full flex items-center justify-center mb-8 min-h-[500px]">
+                        <div className="flex-1 w-full flex items-center justify-center mb-4 md:mb-8 min-h-[300px] md:min-h-[500px]">
                             {slides[currentSlide].component}
                         </div>
 
