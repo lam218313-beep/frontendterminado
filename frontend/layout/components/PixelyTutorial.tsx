@@ -666,7 +666,7 @@ const slides: SlideContent[] = [
     {
         id: 0,
         title: "Bienvenido",
-        narration: "¡Bienvenido a Pixely Partners! Soy tu asistente y estoy aquí para mostrarte cómo nuestra metodología transformará tu estrategia de marketing digital. Descubre el poder de nuestro sistema de diagnóstico.",
+        narration: "Bienvenido a Pixely Partners. Te mostraré paso a paso cómo nuestra metodología impulsará tu presencia digital. Descubre el poder de nuestro sistema de diagnóstico.",
         component: <VisualWelcome />
     },
     {
