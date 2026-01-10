@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Layout,
     List,
@@ -13,6 +13,7 @@ import {
     RotateCcw,
     ThumbsUp
 } from 'lucide-react';
+import * as api from '../services/api';
 
 // --- Types & Mock Data ---
 
@@ -30,18 +31,34 @@ interface Task {
     members: string[]; // Initials
 }
 
-const INITIAL_TASKS: Task[] = [
-    { id: '1', title: 'Rediseño de Homepage', description: 'Actualizar hero section y footer con nuevos assets de marca.', category: 'Diseño', date: '2023-10-15', status: 'in-progress', priority: 'high', members: ['AB', 'CD'] },
-    { id: '2', title: 'Integración de API de Pagos', description: 'Conectar Stripe y PayPal en el checkout.', category: 'Desarrollo', date: '2023-10-18', status: 'todo', priority: 'high', members: ['JS'] },
-    { id: '3', title: 'Análisis de Competencia Q4', description: 'Revisión de pricing de competidores directos.', category: 'Marketing', date: '2023-10-12', status: 'done', priority: 'medium', members: ['MR', 'TJ'] },
-    { id: '4', title: 'Actualizar Documentación', description: 'Actualizar readme y wiki interna.', category: 'General', date: '2023-10-20', status: 'todo', priority: 'low', members: ['AB'] },
-    { id: '5', title: 'Fix: Login Bug en Safari', description: 'Usuarios reportan loop infinito en iOS 17.', category: 'Desarrollo', date: '2023-10-16', status: 'review', priority: 'high', members: ['JS', 'MR'] },
-    { id: '6', title: 'Newsletter de Octubre', description: 'Drafting y diseño de correo mensual.', category: 'Marketing', date: '2023-10-25', status: 'todo', priority: 'medium', members: ['TJ'] },
-    { id: '7', title: 'Revisión de Métricas', description: 'Analizar churn rate del mes pasado.', category: 'Data', date: '2023-10-15', status: 'review', priority: 'medium', members: ['CD'] },
-    { id: '8', title: 'Entrevista Usuario A', description: 'Validación de prototipo v2.', category: 'Diseño', date: '2023-10-28', status: 'todo', priority: 'medium', members: ['AB'] },
-    { id: '9', title: 'Backup DB Semanal', description: 'Ejecutar script de respaldo manual.', category: 'DevOps', date: '2023-10-29', status: 'done', priority: 'high', members: ['JS'] },
-    { id: '10', title: 'Planificación Q1', description: 'Reunión estratégica con stakeholders.', category: 'General', date: '2023-11-01', status: 'todo', priority: 'high', members: ['TJ', 'CD'] },
-];
+// Map Backend Status to Frontend Status
+const mapStatusFromBackend = (status: string): Status => {
+    switch (status) {
+        case 'PENDIENTE': return 'todo';
+        case 'EN_CURSO': return 'in-progress';
+        case 'REVISADO': return 'review';
+        case 'HECHO': return 'done';
+        default: return 'todo';
+    }
+};
+
+const mapStatusToBackend = (status: Status): string => {
+    switch (status) {
+        case 'todo': return 'PENDIENTE';
+        case 'in-progress': return 'EN_CURSO';
+        case 'review': return 'REVISADO';
+        case 'done': return 'HECHO';
+        default: return 'PENDIENTE';
+    }
+};
+
+const mapPriorityFromBackend = (p: string | undefined): Priority => {
+    if (!p) return 'medium';
+    const lower = p.toLowerCase();
+    if (lower === 'alta' || lower === 'high') return 'high';
+    if (lower === 'baja' || lower === 'low') return 'low';
+    return 'medium';
+};
 
 const COLUMNS: { id: Status; label: string; color: string; badge: string }[] = [
     { id: 'todo', label: 'Por Hacer', color: 'bg-gray-200', badge: 'bg-gray-100 text-gray-600' },
@@ -97,7 +114,7 @@ const TaskCard: React.FC<{
         <div className="flex justify-between items-center border-t border-gray-50 pt-3 pointer-events-none">
             <div className="flex items-center gap-1.5 text-gray-400">
                 <Clock size={12} />
-                <span className="text-[10px] font-medium">{new Date(task.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span>
+                <span className="text-[10px] font-medium">{task.date ? new Date(task.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : 'No date'}</span>
             </div>
             <MemberStack members={task.members} />
         </div>
@@ -140,7 +157,7 @@ const TaskDetailModal: React.FC<{ task: Task; onClose: () => void; updateTaskSta
                             <div className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
                                 <Clock size={16} /> Fecha Límite
                             </div>
-                            <div className="text-sm text-gray-600">{new Date(task.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                            <div className="text-sm text-gray-600">{task.date ? new Date(task.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Sin fecha'}</div>
                         </div>
                         <div>
                             <div className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
@@ -234,10 +251,56 @@ const DayOverviewModal: React.FC<{ date: string; tasks: Task[]; onClose: () => v
 // --- Main Component ---
 
 export const KanbanBoard: React.FC = () => {
-    const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
+    const [tasks, setTasks] = useState<Task[]>([]);
     const [view, setView] = useState<'board' | 'list' | 'calendar'>('board');
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [selectedDay, setSelectedDay] = useState<{ date: string, tasks: Task[] } | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const CLIENT_ID = localStorage.getItem('clientId');
+
+    // Fetch Tasks
+    useEffect(() => {
+        const fetchTasks = async () => {
+            if (!CLIENT_ID) return;
+            setIsLoading(true);
+            try {
+                // api.getTasks returns TasksByWeekResponse (nested weeks)
+                // We need to cast or inspect response. Since we know structure from backend analysis...
+                // But TypeScript might complain if api definitions are different.
+                // Assuming api.getTasks returns 'any' or 'TasksByWeekResponse'.
+                const res: any = await api.getTasks(CLIENT_ID);
+
+                // Flatten weeks
+                const week1 = res.week_1 || [];
+                const week2 = res.week_2 || [];
+                const week3 = res.week_3 || [];
+                const week4 = res.week_4 || [];
+
+                const allRaw = [...week1, ...week2, ...week3, ...week4];
+
+                const mapped: Task[] = allRaw.map((t: any) => ({
+                    id: t.id,
+                    title: t.title,
+                    description: t.description || '',
+                    category: t.area_estrategica || 'General',
+                    date: t.created_at ? t.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10),
+                    status: mapStatusFromBackend(t.status),
+                    priority: mapPriorityFromBackend(t.priority),
+                    members: [] // Mock members
+                }));
+
+                setTasks(mapped);
+
+            } catch (e) {
+                console.error("Failed to fetch tasks", e);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchTasks();
+    }, [CLIENT_ID]);
 
     // DnD State
     const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
@@ -262,6 +325,19 @@ export const KanbanBoard: React.FC = () => {
         }
     }
 
+    const updateStatusAPI = async (id: string, newStatus: Status) => {
+        // Optimistic update
+        setTasks(prev => prev.map(t => t.id === id ? { ...t, status: newStatus } : t));
+
+        // API Call
+        try {
+            await api.updateTaskStatus(id, mapStatusToBackend(newStatus) as any);
+        } catch (e) {
+            console.error("Failed to update status", e);
+            // Revert? For now, we assume success or reload page.
+        }
+    };
+
     // Handle dropping in Board/List View (updates Status)
     const handleDropToStatus = (e: React.DragEvent, status: Status) => {
         e.preventDefault();
@@ -274,12 +350,7 @@ export const KanbanBoard: React.FC = () => {
             return;
         }
 
-        setTasks(prevTasks => prevTasks.map(t => {
-            if (t.id === id) {
-                return { ...t, status };
-            }
-            return t;
-        }));
+        updateStatusAPI(id, status);
 
         setDraggedTaskId(null);
         setActiveDropZone(null);

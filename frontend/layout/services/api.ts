@@ -833,4 +833,35 @@ export async function getBrand(clientId: string): Promise<{ status: string; data
   }
 }
 
+// =============================================================================
+// STRATEGY ENDPOINTS
+// =============================================================================
 
+export interface StrategyNode {
+  id: string;
+  type: string;
+  label: string;
+  description?: string;
+  parentId?: string | null;
+  x: number;
+  y: number;
+}
+
+export async function getStrategy(clientId: string): Promise<StrategyNode[]> {
+  const response = await fetch(`${API_BASE_URL}/strategy/${clientId}`, {
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(response);
+}
+
+export async function syncStrategy(clientId: string, nodes: StrategyNode[]): Promise<any> {
+  const response = await fetch(`${API_BASE_URL}/strategy/sync`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ client_id: clientId, nodes }),
+  });
+  return handleResponse(response);
+}

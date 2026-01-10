@@ -96,6 +96,58 @@ const App: React.FC = () => {
         fetchAnalysis();
     }, [CLIENT_ID]);
 
+    // --- Persistence Logic ---
+    const [hasLoaded, setHasLoaded] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const saveTimeout = useRef<NodeJS.Timeout | null>(null);
+
+    // Load Strategy on Mount
+    useEffect(() => {
+        const loadStrategy = async () => {
+            if (!CLIENT_ID) return;
+            try {
+                const fetchedNodes = await api.getStrategy(CLIENT_ID);
+                if (fetchedNodes && fetchedNodes.length > 0) {
+                    // Map API nodes back to internal structure if needed, or use directly
+                    // Ensure types match. API StrategyNode has same structure as NodeData
+                    const mappedNodes = fetchedNodes.map(n => ({
+                        ...n,
+                        // Ensure optional fields are handled if necessary
+                    }));
+                    setNodes(mappedNodes as NodeData[]);
+                }
+            } catch (e) {
+                console.error("Failed to load strategy nodes:", e);
+            } finally {
+                setHasLoaded(true);
+            }
+        };
+        loadStrategy();
+    }, [CLIENT_ID]);
+
+    // Auto-Save on Change
+    useEffect(() => {
+        if (!CLIENT_ID || !hasLoaded) return;
+
+        // Clear existing timer
+        if (saveTimeout.current) clearTimeout(saveTimeout.current);
+
+        setIsSaving(true);
+        saveTimeout.current = setTimeout(async () => {
+            try {
+                await api.syncStrategy(CLIENT_ID, nodes);
+            } catch (e) {
+                console.error("Failed to save strategy:", e);
+            } finally {
+                setIsSaving(false);
+            }
+        }, 2000); // 2 second debounce
+
+        return () => {
+            if (saveTimeout.current) clearTimeout(saveTimeout.current);
+        };
+    }, [nodes, CLIENT_ID, hasLoaded]);
+
     // --- Logic: Data Management ---
     const updateNodeData = (id: string, field: keyof NodeData, value: any) => {
         setNodes(prev => prev.map(n => n.id === id ? { ...n, [field]: value } : n));
@@ -495,7 +547,7 @@ const App: React.FC = () => {
 
             {/* RECOMMENDATIONS SIDEBAR */}
             <aside
-                className={`fixed right-8 top-32 bottom-8 w-80 glass-panel border border-white/40 shadow-2xl rounded-[32px] p-6 flex flex-col transition-all duration-300 transform z-50 
+                className={`absolute right-6 top-6 bottom-6 w-80 glass-panel border border-white/40 shadow-2xl rounded-[32px] p-6 flex flex-col transition-all duration-300 transform z-50
                 ${showRecs ? 'translate-x-0 opacity-100' : 'translate-x-[120%] opacity-0 pointer-events-none'}`}
             >
                 <div className="flex items-center justify-between mb-6">
