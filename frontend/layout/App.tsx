@@ -269,7 +269,7 @@ const AppContent: React.FC = () => {
 
 
               {/* Dynamic Card Container */}
-              <div className="flex-1 min-h-0 bg-transparent rounded-[40px] relative overflow-y-auto group flex flex-col items-stretch justify-start mb-2 transition-all duration-500">
+              <div className="flex-1 min-h-0 bg-transparent rounded-[40px] relative overflow-y-auto group flex flex-col items-stretch justify-start mb-2">
 
                 {/* Subtle grid background */}
                 <div className="absolute inset-0 pointer-events-none opacity-[0.03] z-0"

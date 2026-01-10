@@ -140,7 +140,7 @@ const TetrisCards: React.FC = () => {
 
               {/* Background Decor - Only visible on hover */}
               <div className={`
-                absolute -right-16 -bottom-16 w-64 h-64 bg-gradient-to-tl from-primary-100/60 to-transparent rounded-full blur-3xl 
+                absolute -right-16 -bottom-16 w-64 h-64 bg-gradient-to-tl from-primary-100/40 to-transparent rounded-full 
                 transition-opacity duration-700 pointer-events-none z-10
                 ${isHovered ? 'opacity-100' : 'opacity-0'}
               `}></div>
