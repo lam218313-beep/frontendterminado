@@ -70,19 +70,25 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
 type FlowState = 'LOGIN_ACTIVE' | 'LOGIN_EXITING' | 'ANIMATION_ENTRY' | 'ANIMATION_EXITING' | 'DASHBOARD_ACTIVE';
 type ViewType = 'dashboard' | 'partners' | 'lab' | 'work' | 'wiki' | 'admin' | 'interview' | 'brand' | 'strategy' | 'benefits' | 'validation';
 
+// ... imports
+import { TutorialModal } from './components/TutorialModal.tsx';
+
+// ... ErrorBoundary ...
+
 // Inner App component that uses auth context
 const AppContent: React.FC = () => {
   const { user: authUser, isAuthenticated, logout, isLoading: authLoading } = useAuth();
   const [flow, setFlow] = useState<FlowState>('LOGIN_ACTIVE');
   const [displayUser, setDisplayUser] = useState('');
 
+  // Tutorial State
+  const [showTutorial, setShowTutorial] = useState(false);
+
   // State to track sidebar hover/expansion
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
-
-  // State for Right Sidebar (Mobile/Tablet)
+  // ... rightSidebarOpen ...
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
-
-  // State to track active page view
+  // ... activeView ...
   const [activeView, setActiveView] = useState<string>('partners');
 
   // Check for existing session on mount
@@ -92,39 +98,34 @@ const AppContent: React.FC = () => {
       setDisplayUser(authUser.email.split('@')[0]);
       setFlow('DASHBOARD_ACTIVE');
       setActiveView('partners');
+
+      // Check if tutorial has been seen
+      const seen = localStorage.getItem('pixely_tutorial_seen_v2');
+      if (!seen) {
+        // Small delay to let dashboard load
+        setTimeout(() => setShowTutorial(true), 1000);
+      }
     }
   }, [isAuthenticated, authUser, authLoading]);
 
-  // Handler for login form submission
+  const handleTutorialClose = () => {
+    setShowTutorial(false);
+    localStorage.setItem('pixely_tutorial_seen_v2', 'true');
+  };
+
+  // ... handleLogin ...
   const handleLogin = (username: string) => {
     setDisplayUser(username);
     setFlow('LOGIN_EXITING');
     setActiveView('partners');
+    // Check tutorial on fresh login too
+    const seen = localStorage.getItem('pixely_tutorial_seen_v2');
+    if (!seen) {
+      setTimeout(() => setShowTutorial(true), 3500); // Wait for animation
+    }
   };
 
-  // Handler for logout
-  const handleLogout = () => {
-    logout();
-    setDisplayUser('');
-    setFlow('LOGIN_ACTIVE');
-  };
-
-  // State Machine for Transitions
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-
-    if (flow === 'LOGIN_EXITING') {
-      timer = setTimeout(() => setFlow('ANIMATION_ENTRY'), 400);
-    }
-    else if (flow === 'ANIMATION_ENTRY') {
-      timer = setTimeout(() => setFlow('ANIMATION_EXITING'), 2800);
-    }
-    else if (flow === 'ANIMATION_EXITING') {
-      timer = setTimeout(() => setFlow('DASHBOARD_ACTIVE'), 600);
-    }
-
-    return () => clearTimeout(timer);
-  }, [flow]);
+  // ...
 
   // Content Renderer Logic
   const renderContent = () => {
@@ -132,7 +133,7 @@ const AppContent: React.FC = () => {
       case 'partners':
         return (
           <ErrorBoundary>
-            <PartnersView />
+            <PartnersView onShowTutorial={() => setShowTutorial(true)} />
           </ErrorBoundary>
         );
       case 'interview':
@@ -289,6 +290,9 @@ const AppContent: React.FC = () => {
           </div>
         </div>
       )}
+      {/* 4. TUTORIAL MODAL */}
+      <TutorialModal isOpen={showTutorial} onClose={handleTutorialClose} />
+
     </div>
   );
 };
