@@ -379,52 +379,84 @@ const VisualStep3 = () => (
     </div>
 );
 
-// 7. STEP 4: CALENDAR (UPDATED: REALISTIC POST ANIMATION)
+// 7. STEP 4: PLANNING (NEW: CONTENT TIMELINE)
 const VisualStep4 = () => {
-    // Days with posts
-    const activeDays = [0, 2, 4, 7, 9, 11, 14, 16, 18, 21, 23, 25, 28, 30];
-
     return (
-        <div className="w-full max-w-4xl glass-card rounded-[40px] p-6 shadow-2xl h-[400px] flex flex-col">
-            <div className="flex justify-between items-center mb-4 px-2">
-                <h3 className="font-bold text-slate-700 text-lg">Octubre</h3>
-                <div className="flex gap-2">
-                    <div className="w-6 h-6 rounded-full bg-slate-100"></div>
-                    <div className="w-6 h-6 rounded-full bg-slate-100"></div>
+        <div className="w-full max-w-lg h-[400px] flex items-center justify-center p-4">
+            <div className="relative w-full max-w-sm ml-8">
+                {/* Vertical Timeline Line */}
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-slate-100 rounded-full"></div>
+
+                <div className="flex flex-col gap-6">
+                    {/* Item 1: Scheduled */}
+                    <motion.div
+                        initial={{ x: -20, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: 0.2 }}
+                        className="relative pl-8"
+                    >
+                        {/* Dot */}
+                        <div className="absolute left-[-5px] top-4 w-3.5 h-3.5 bg-green-500 rounded-full ring-4 ring-white shadow-sm z-10"></div>
+
+                        {/* Card */}
+                        <div className="bg-white p-4 rounded-2xl shadow-lg border border-slate-100 flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-orange-100 text-orange-500 flex items-center justify-center shrink-0">
+                                <ImageIconLucide size={18} />
+                            </div>
+                            <div>
+                                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Hoy, 10:00 AM</div>
+                                <div className="text-slate-700 font-bold">Lanzamiento Producto</div>
+                            </div>
+                            <div className="ml-auto">
+                                <CheckCircle2 size={16} className="text-green-500" />
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    {/* Item 2: Pending */}
+                    <motion.div
+                        initial={{ x: -20, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: 0.6 }}
+                        className="relative pl-8"
+                    >
+                        {/* Dot */}
+                        <div className="absolute left-[-5px] top-4 w-3.5 h-3.5 bg-amber-400 rounded-full ring-4 ring-white shadow-sm z-10"></div>
+
+                        {/* Card */}
+                        <div className="bg-white/80 p-4 rounded-2xl border border-slate-100 flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-500 flex items-center justify-center shrink-0">
+                                <FileText size={18} />
+                            </div>
+                            <div>
+                                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Mañana, 03:00 PM</div>
+                                <div className="text-slate-700 font-bold">Blog Post Semanal</div>
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    {/* Item 3: Draft */}
+                    <motion.div
+                        initial={{ x: -20, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: 1.0 }}
+                        className="relative pl-8"
+                    >
+                        {/* Dot */}
+                        <div className="absolute left-[-5px] top-4 w-3.5 h-3.5 bg-slate-300 rounded-full ring-4 ring-white shadow-sm z-10"></div>
+
+                        {/* Card */}
+                        <div className="bg-white/60 p-4 rounded-2xl border border-dashed border-slate-200 flex items-center gap-4 opacity-70">
+                            <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center shrink-0">
+                                <Calendar size={18} />
+                            </div>
+                            <div>
+                                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Viernes, 09:00 AM</div>
+                                <div className="text-slate-600 font-bold">Newsletter</div>
+                            </div>
+                        </div>
+                    </motion.div>
                 </div>
-            </div>
-
-            <div className="grid grid-cols-7 gap-2 mb-2 text-center">
-                {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map(d => (
-                    <div key={d} className="text-[10px] font-bold text-slate-400 uppercase">{d}</div>
-                ))}
-            </div>
-
-            <div className="grid grid-cols-7 gap-1 md:gap-2 flex-1 min-h-0">
-                {Array.from({ length: 31 }).map((_, i) => (
-                    <div key={i} className="rounded-lg bg-white/40 border border-white/60 flex flex-col items-center justify-between pt-6 pb-1 relative overflow-hidden group hover:border-primary-200 transition-colors">
-                        <span className="text-[10px] text-slate-400 font-medium z-10 absolute top-1 left-2">{i + 1}</span>
-
-                        {activeDays.includes(i) && (
-                            <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "auto", opacity: 1 }}
-                                transition={{
-                                    duration: 0.6,
-                                    delay: i * 0.08, // Sequential fill
-                                    ease: "circOut"
-                                }}
-                                className="w-[90%] bg-primary-100 rounded-md shadow-sm border border-primary-200 flex flex-col gap-1 p-1"
-                            >
-                                <div className="h-1.5 w-3/4 bg-primary-300 rounded-full"></div>
-                                <div className="h-1.5 w-1/2 bg-primary-200 rounded-full"></div>
-                                <div className="mt-1 self-end text-primary-400">
-                                    {i % 2 === 0 ? <ImageIconLucide size={8} /> : <FileText size={8} />}
-                                </div>
-                            </motion.div>
-                        )}
-                    </div>
-                ))}
             </div>
         </div>
     );
