@@ -5,12 +5,15 @@ Mock authentication for Pixely Partners.
 Provides token generation to allow frontend login.
 """
 
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 from typing import Optional
 
 from ..services.database import db
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Authentication"])
 
@@ -36,22 +39,9 @@ class UserInfo(BaseModel):
 @router.post("/token", response_model=AuthResponse)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     """
-    Login endpoint. Checks DB first, falls back to mock admin.
+    Login endpoint. Authenticates via Supabase Auth.
     """
-    # 1. Try Mock Admin (Fallback)
-    if form_data.username == "admin@pixely.pe" and form_data.password == "admin":
-        # Check if real admin exists in DB to disable mock? No, keep it simple for now.
-        return {
-            "access_token": "mock-jwt-token-admin",
-            "token_type": "bearer",
-            "user_email": form_data.username,
-            "tenant_id": "tenant-default",
-            "ficha_cliente_id": None,
-            "logo_url": None,
-            "role": "admin"
-        }
-    
-    # 2. Check Database via Supabase Auth
+    # Check Database via Supabase Auth
     try:
         # This returns a session if successful
         auth_response = db.client.auth.sign_in_with_password({
@@ -75,11 +65,11 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
                 "role": role
             }
     except Exception as e:
-        # Fallthrough to error
-        print(f"Login Error: {e}") # Debug log
+        # Log error for debugging
+        logger.error(f"Login failed for {form_data.username}: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Login failed: {str(e)}", # Reveal error to frontend
+            detail="Invalid credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
 

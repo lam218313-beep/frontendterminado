@@ -201,7 +201,8 @@ def aggregate_q6_opportunities(raw_items: list[dict[str, Any]]) -> dict:
 
 def aggregate_q7_sentiment(raw_items: list[dict[str, Any]]) -> dict:
     """
-    Q7: Detailed Sentiment Distribution.
+    Q7: Detailed Sentiment Distribution with calculated subjectivity.
+    Subjectivity is derived from variance in sentiment scores.
     """
     total = len(raw_items)
     if total == 0:
@@ -226,6 +227,17 @@ def aggregate_q7_sentiment(raw_items: list[dict[str, Any]]) -> dict:
         "Comentario con opiniones mixtas."
     )
     
+    # Calculate subjectivity from sentiment variance
+    # Higher variance = more subjective (opinions vary more)
+    sentiments = [i.get("ai_sentiment_score", 0) for i in raw_items]
+    if sentiments:
+        mean_sentiment = sum(sentiments) / len(sentiments)
+        variance = sum((s - mean_sentiment) ** 2 for s in sentiments) / len(sentiments)
+        # Normalize variance to 0-1 range (typical variance is 0-0.5)
+        subjectivity = min(1.0, variance * 2)
+    else:
+        subjectivity = 0.5
+    
     return {
         "results": {
             "analisis_agregado": {
@@ -233,7 +245,7 @@ def aggregate_q7_sentiment(raw_items: list[dict[str, Any]]) -> dict:
                 "Negativo": round(negative / total, 2),
                 "Neutral": round(neutral / total, 2),
                 "Mixto": round((total - positive - negative - neutral) / total, 2) if total > 0 else 0,
-                "subjetividad_promedio_global": 0.65,  # Placeholder
+                "subjetividad_promedio_global": round(subjectivity, 2),
                 "ejemplo_mixto": mixed_example
             }
         }
@@ -242,33 +254,117 @@ def aggregate_q7_sentiment(raw_items: list[dict[str, Any]]) -> dict:
 
 def aggregate_q8_temporal(raw_items: list[dict[str, Any]]) -> dict:
     """
-    Q8: Temporal Evolution (simplified - 5 weeks).
-    TODO: Implement real date grouping from posted_at field.
+    Q8: Temporal Evolution using real posted_at dates.
+    Groups comments by week and tracks sentiment/topics over time.
     """
-    # For now, split into 5 equal parts as "weeks"
+    if not raw_items:
+        return {
+            "results": {
+                "serie_temporal_semanal": [],
+                "resumen_global": {"tendencia": "Sin datos"}
+            }
+        }
+    
+    try:
+        import pandas as pd
+        from datetime import datetime
+        
+        # Convert to DataFrame for easier date manipulation
+        df = pd.DataFrame(raw_items)
+        
+        # Parse posted_at to datetime
+        df['posted_at'] = pd.to_datetime(df['posted_at'], errors='coerce')
+        
+        # Filter out items without valid dates
+        df = df.dropna(subset=['posted_at'])
+        
+        if df.empty:
+            logger.warning("No valid dates found in posted_at field, using fallback")
+            return _aggregate_q8_fallback(raw_items)
+        
+        # Sort by date
+        df = df.sort_values('posted_at')
+        
+        # Group by week (using Monday as start of week)
+        df['week'] = df['posted_at'].dt.to_period('W-MON')
+        
+        weeks = []
+        for week_period, group in df.groupby('week'):
+            avg_sentiment = group['ai_sentiment_score'].fillna(0).mean()
+            
+            # Find most common topic in this week
+            topics = group['ai_topic'].value_counts()
+            top_topic = topics.index[0] if len(topics) > 0 else "General"
+            
+            # Calculate engagement as comment count
+            engagement = len(group)
+            
+            weeks.append({
+                "fecha_semana": str(week_period),
+                "porcentaje_positivo": round((avg_sentiment + 1) / 2, 2),  # Normalize -1,1 to 0,1
+                "engagement": engagement,
+                "topico_principal": top_topic
+            })
+        
+        # Take last 5 weeks if there are more
+        weeks = weeks[-5:] if len(weeks) > 5 else weeks
+        
+        # Determine trend
+        if len(weeks) >= 2:
+            first_sentiment = weeks[0]['porcentaje_positivo']
+            last_sentiment = weeks[-1]['porcentaje_positivo']
+            if last_sentiment > first_sentiment + 0.1:
+                tendencia = "Mejorando"
+            elif last_sentiment < first_sentiment - 0.1:
+                tendencia = "Declinando"
+            else:
+                tendencia = "Estable"
+        else:
+            tendencia = "Insuficiente data"
+        
+        return {
+            "results": {
+                "serie_temporal_semanal": weeks,
+                "resumen_global": {"tendencia": tendencia}
+            }
+        }
+        
+    except ImportError:
+        logger.warning("pandas not available, using fallback temporal grouping")
+        return _aggregate_q8_fallback(raw_items)
+    except Exception as e:
+        logger.error(f"Error in temporal aggregation: {e}, using fallback")
+        return _aggregate_q8_fallback(raw_items)
+
+
+def _aggregate_q8_fallback(raw_items: list[dict[str, Any]]) -> dict:
+    """
+    Fallback Q8 implementation when pandas is unavailable or dates are invalid.
+    Uses 5 equal chunks as before.
+    """
     chunk_size = max(1, len(raw_items) // 5)
     weeks = []
     
     for i in range(5):
         start = i * chunk_size
-        end = start + chunk_size
+        end = start + chunk_size if i < 4 else len(raw_items)  # Last chunk gets remainder
         chunk = raw_items[start:end]
         
         if chunk:
             avg_sentiment = sum(item.get("ai_sentiment_score", 0) for item in chunk) / len(chunk)
-            # Find most common topic in chunk
+            from collections import Counter
             topics = Counter(item.get("ai_topic", "Otro") for item in chunk)
             top_topic = topics.most_common(1)[0][0] if topics else "General"
             
             weeks.append({
-                "fecha_semana": f"Sem {i + 1}",
-                "porcentaje_positivo": round((avg_sentiment + 1) / 2, 2),  # Normalize to 0-1
-                "engagement": len(chunk) * 10,  # Placeholder
+                "fecha_semana": f"Grupo {i + 1}",
+                "porcentaje_positivo": round((avg_sentiment + 1) / 2, 2),
+                "engagement": len(chunk) * 10,
                 "topico_principal": top_topic
             })
         else:
             weeks.append({
-                "fecha_semana": f"Sem {i + 1}",
+                "fecha_semana": f"Grupo {i + 1}",
                 "porcentaje_positivo": 0.5,
                 "engagement": 0,
                 "topico_principal": "Sin datos"

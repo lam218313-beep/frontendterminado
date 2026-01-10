@@ -195,23 +195,13 @@ async def scrape_instagram_profile_with_posts_and_comments(
         logger.warning("⚠️ No posts found")
         return {"posts": [], "all_comments": [], "stats": {}}
     
-    # Step 2: Collect comments from posts that have them
+    # Step 2: Collect ALL comments from each post
     all_comments = []
     
-    for post in posts:
-        # Get comments embedded in post (latestComments field)
-        latest = post.get("latestComments", [])
-        for comment in latest:
-            all_comments.append({
-                "id": None,
-                "postId": post.get("shortCode"),
-                "text": comment.get("text", ""),
-                "ownerUsername": comment.get("ownerUsername", ""),
-                "timestamp": post.get("timestamp"),
-                "source": "embedded"
-            })
+    for i, post in enumerate(posts):
+        logger.info(f"📝 Processing post {i+1}/{len(posts)}: {post.get('shortCode', 'N/A')}")
         
-        # Also extract caption as content for analysis
+        # First, add the post caption as content for analysis
         caption = post.get("caption", "")
         if caption:
             all_comments.append({
@@ -225,6 +215,30 @@ async def scrape_instagram_profile_with_posts_and_comments(
                 "hashtags": post.get("hashtags", []),
                 "mentions": post.get("mentions", [])
             })
+        
+        # Then, fetch FULL comments for this post (not just latestComments)
+        post_url = post.get("url")
+        if post_url and comments_per_post > 0:
+            try:
+                full_comments = await scrape_instagram_comments(post_url, limit=comments_per_post)
+                
+                for comment in full_comments:
+                    all_comments.append({
+                        "id": comment.get("id"),
+                        "postId": post.get("shortCode"),
+                        "text": comment.get("text", ""),
+                        "ownerUsername": comment.get("ownerUsername", ""),
+                        "timestamp": comment.get("timestamp"),
+                        "ownerIsVerified": comment.get("ownerIsVerified", False),
+                        "source": "full_scrape"
+                    })
+                
+                logger.info(f"   ✅ Retrieved {len(full_comments)} comments from post")
+                
+            except Exception as e:
+                logger.error(f"   ❌ Error fetching comments for post {post_url}: {e}")
+                # Continue with next post even if one fails
+                continue
     
     # Calculate stats
     total_likes = sum(p.get("likesCount", 0) for p in posts)
@@ -246,6 +260,7 @@ async def scrape_instagram_profile_with_posts_and_comments(
         "all_comments": all_comments,
         "stats": stats
     }
+
 
 
 # Utility function to normalize comment format for classification
