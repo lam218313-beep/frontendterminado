@@ -801,7 +801,7 @@ export const PixelyTutorial: React.FC = () => {
             try {
                 // Determine preferred voice based on previous user input or default
                 // Using a neutral Spanish voice that supports methodology-focused tone
-                const voice = "es-ES-AlvaroNeural";
+                const voice = "es-MX-DaliaNeural";
 
                 const response = await fetch(`${import.meta.env.VITE_API_URL}/tts/generate`, {
                     method: 'POST',
