@@ -400,25 +400,25 @@ const VisualStep4 = () => {
                 ))}
             </div>
 
-            <div className="grid grid-cols-7 gap-2 flex-1 min-h-0">
+            <div className="grid grid-cols-7 gap-1 md:gap-2 flex-1 min-h-0">
                 {Array.from({ length: 31 }).map((_, i) => (
-                    <div key={i} className="rounded-lg bg-white/40 border border-white/60 flex items-start justify-center pt-2 relative overflow-hidden group hover:border-primary-200 transition-colors">
+                    <div key={i} className="rounded-lg bg-white/40 border border-white/60 flex flex-col items-center justify-between pt-6 pb-1 relative overflow-hidden group hover:border-primary-200 transition-colors">
                         <span className="text-[10px] text-slate-400 font-medium z-10 absolute top-1 left-2">{i + 1}</span>
 
                         {activeDays.includes(i) && (
                             <motion.div
                                 initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "60%", opacity: 1 }}
+                                animate={{ height: "auto", opacity: 1 }}
                                 transition={{
                                     duration: 0.6,
                                     delay: i * 0.08, // Sequential fill
                                     ease: "circOut"
                                 }}
-                                className="w-full mx-1.5 mt-5 bg-primary-100 rounded-md shadow-sm border border-primary-200 flex flex-col gap-1 p-1"
+                                className="w-[90%] bg-primary-100 rounded-md shadow-sm border border-primary-200 flex flex-col gap-1 p-1"
                             >
                                 <div className="h-1.5 w-3/4 bg-primary-300 rounded-full"></div>
                                 <div className="h-1.5 w-1/2 bg-primary-200 rounded-full"></div>
-                                <div className="mt-auto self-end text-primary-400">
+                                <div className="mt-1 self-end text-primary-400">
                                     {i % 2 === 0 ? <ImageIconLucide size={8} /> : <FileText size={8} />}
                                 </div>
                             </motion.div>
@@ -440,7 +440,7 @@ const VisualStep5 = () => (
             className="w-64 aspect-[4/5] bg-white rounded-2xl shadow-xl border border-gray-100 p-3 flex flex-col gap-3 relative z-10"
         >
             <div className="w-full flex-1 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center text-gray-400">
-                <ImageIcon size={32} />
+                {/* Image Placeholder removed as requested */}
             </div>
             <div className="space-y-2">
                 <div className="h-2 w-3/4 bg-gray-100 rounded-full"></div>
