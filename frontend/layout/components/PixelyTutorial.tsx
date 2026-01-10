@@ -813,22 +813,22 @@ export const PixelyTutorial: React.FC = () => {
                         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                         className="w-full max-w-6xl flex flex-col items-center h-full justify-center"
                     >
-                        {/* Visual Container - SCALED DOWN ON MOBILE */}
-                        <div className="w-full flex items-center justify-center transform scale-[0.65] md:scale-100 origin-center transition-transform duration-500 -my-10 md:my-0 flex-shrink-0">
+                        {/* Visual Container - SCALED DOWN ON MOBILE & TABLETS */}
+                        <div className="w-full flex items-center justify-center transform scale-[0.65] lg:scale-75 xl:scale-100 origin-center transition-transform duration-500 -my-10 lg:-my-6 xl:my-0 flex-shrink-0">
                             {slides[currentSlide].component}
                         </div>
 
-                        {/* Text Content - SMALLER TEXT ON MOBILE */}
-                        <div className="text-center max-w-3xl space-y-2 md:space-y-4 px-4 glass-panel rounded-3xl p-4 md:p-6 shadow-sm bg-white/30 z-20 mt-auto md:mt-8">
+                        {/* Text Content - SMALLER TEXT ON MOBILE/TABLET */}
+                        <div className="text-center max-w-3xl space-y-2 xl:space-y-4 px-4 glass-panel rounded-3xl p-4 xl:p-6 shadow-sm bg-white/30 z-20 mt-auto xl:mt-8">
                             {slides[currentSlide].subtitle && (
                                 <motion.span
                                     initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                                    className="text-primary-600 font-bold tracking-widest text-[10px] md:text-xs uppercase"
+                                    className="text-primary-600 font-bold tracking-widest text-[10px] xl:text-xs uppercase"
                                 >
                                     {slides[currentSlide].subtitle}
                                 </motion.span>
                             )}
-                            <h2 className="text-2xl md:text-5xl font-display font-bold text-slate-800 leading-tight">
+                            <h2 className="text-2xl lg:text-3xl xl:text-5xl font-display font-bold text-slate-800 leading-tight">
                                 {slides[currentSlide].title}
                             </h2>
                             <motion.p
