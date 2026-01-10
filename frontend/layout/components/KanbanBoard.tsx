@@ -1,4 +1,3 @@
-```
 import React, { useState } from 'react';
 import {
   Layout,
@@ -51,7 +50,7 @@ const ImpactBadge: React.FC<{ score: number | null }> = ({ score }) => {
     score >= 4 ? 'text-yellow-600 bg-yellow-50' :
       'text-red-600 bg-red-50';
   return (
-    <span className={`px - 2 py - 0.5 rounded text - [10px] font - bold ${ color } `}>
+    <span className={`px - 2 py - 0.5 rounded text - [10px] font - bold ${color} `}>
       Impacto: {score}/10
     </span>
   );
@@ -73,13 +72,13 @@ const TaskCard: React.FC<{
       onDragEnd={onDragEnd}
       onClick={() => onClick(task)}
       className={`bg - white p - 4 rounded - xl shadow - sm border border - gray - 100 hover: shadow - md hover: border - primary - 200 transition - all cursor - grab active: cursor - grabbing group select - none
-          ${ isDragging ? 'opacity-40 grayscale shadow-none border-dashed border-gray-300' : 'opacity-100' }
+          ${isDragging ? 'opacity-40 grayscale shadow-none border-dashed border-gray-300' : 'opacity-100'}
 `}
     >
       <div className="flex justify-between items-start mb-2 pointer-events-none">
         <div className="flex items-center gap-2">
           {task.area_estrategica && (
-            <span className={`px - 2 py - 0.5 rounded text - [10px] font - bold uppercase tracking - wide border ${ urgencyColor } `}>
+            <span className={`px - 2 py - 0.5 rounded text - [10px] font - bold uppercase tracking - wide border ${urgencyColor} `}>
               {task.area_estrategica}
             </span>
           )}
@@ -130,12 +129,12 @@ const TaskDetailModal: React.FC<{ task: Task; onClose: () => void; onStatusChang
           <div>
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               {task.area_estrategica && (
-                <span className={`px - 2 py - 0.5 rounded text - [10px] font - bold uppercase tracking - wide border ${ urgencyColor } `}>
+                <span className={`px - 2 py - 0.5 rounded text - [10px] font - bold uppercase tracking - wide border ${urgencyColor} `}>
                   {task.area_estrategica}
                 </span>
               )}
               {statusCol && (
-                <span className={`px - 2 py - 0.5 rounded text - [10px] font - bold uppercase tracking - wide ${ statusCol.badge } `}>
+                <span className={`px - 2 py - 0.5 rounded text - [10px] font - bold uppercase tracking - wide ${statusCol.badge} `}>
                   {statusCol.label}
                 </span>
               )}
@@ -389,7 +388,7 @@ export const KanbanBoard: React.FC = () => {
           >
             <div className="flex items-center justify-between mb-4 px-1 pointer-events-none">
               <div className="flex items-center gap-2">
-                <div className={`w - 2 h - 2 rounded - full ${ col.color } `} />
+                <div className={`w - 2 h - 2 rounded - full ${col.color} `} />
                 <span className="font-bold text-gray-700 text-sm">{col.label}</span>
                 <span className="bg-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
                   {columnTasks.length}
@@ -398,7 +397,7 @@ export const KanbanBoard: React.FC = () => {
             </div>
             <div
               className={`flex - 1 bg - gray - 50 / 50 rounded - 2xl p - 2 space - y - 3 min - h - [150px] border - 2 transition - all duration - 200
-                  ${ activeDropZone === col.id ? 'border-primary-300 bg-primary-50/20' : 'border-transparent' }
+                  ${activeDropZone === col.id ? 'border-primary-300 bg-primary-50/20' : 'border-transparent'}
 `}
             >
               {columnTasks.map(task => (
@@ -434,12 +433,12 @@ export const KanbanBoard: React.FC = () => {
               key={col.id}
               onDragOver={(e) => handleDragOver(e, col.id)}
               onDrop={(e) => handleDropToStatus(e, col.id)}
-              className={`transition - colors duration - 200 ${ activeDropZone === col.id ? 'bg-primary-50/30' : '' } `}
+              className={`transition - colors duration - 200 ${activeDropZone === col.id ? 'bg-primary-50/30' : ''} `}
             >
               {/* Group Header */}
               <div className="bg-gray-50 px-6 py-2 flex items-center justify-between pointer-events-none">
                 <div className="flex items-center gap-2">
-                  <div className={`w - 2 h - 2 rounded - full ${ col.color } `} />
+                  <div className={`w - 2 h - 2 rounded - full ${col.color} `} />
                   <span className="text-xs font-bold text-gray-600 uppercase tracking-wide">{col.label}</span>
                 </div>
                 <span className="text-[10px] bg-white px-2 py-0.5 rounded-full text-gray-400 font-bold border border-gray-200">
@@ -461,7 +460,7 @@ export const KanbanBoard: React.FC = () => {
                           onDragEnd={handleDragEnd}
                           onClick={() => setSelectedTask(task)}
                           className={`hover: bg - gray - 50 transition - colors cursor - grab active: cursor - grabbing group
-                              ${ draggedTaskId === task.id ? 'opacity-40 grayscale bg-gray-50' : '' }
+                              ${draggedTaskId === task.id ? 'opacity-40 grayscale bg-gray-50' : ''}
 `}
                         >
                           <td className="px-6 py-3 w-[40%]">
@@ -476,7 +475,7 @@ export const KanbanBoard: React.FC = () => {
                             </div>
                           </td>
                           <td className="px-6 py-3 w-[20%] pointer-events-none">
-                            <span className={`text - [10px] uppercase font - bold px - 2 py - 1 rounded border ${ urgencyColor } `}>
+                            <span className={`text - [10px] uppercase font - bold px - 2 py - 1 rounded border ${urgencyColor} `}>
                               {task.urgencia || 'media'}
                             </span>
                           </td>
@@ -600,19 +599,19 @@ export const KanbanBoard: React.FC = () => {
           <div className="flex bg-gray-50 p-1 rounded-xl">
             <button
               onClick={() => setView('board')}
-              className={`flex items - center gap - 2 px - 4 py - 2 rounded - lg text - xs font - bold transition - all ${ view === 'board' ? 'bg-white text-primary-500 shadow-sm' : 'text-gray-400 hover:text-gray-600' } `}
+              className={`flex items - center gap - 2 px - 4 py - 2 rounded - lg text - xs font - bold transition - all ${view === 'board' ? 'bg-white text-primary-500 shadow-sm' : 'text-gray-400 hover:text-gray-600'} `}
             >
               <Layout size={16} /> Tablero
             </button>
             <button
               onClick={() => setView('list')}
-              className={`flex items - center gap - 2 px - 4 py - 2 rounded - lg text - xs font - bold transition - all ${ view === 'list' ? 'bg-white text-primary-500 shadow-sm' : 'text-gray-400 hover:text-gray-600' } `}
+              className={`flex items - center gap - 2 px - 4 py - 2 rounded - lg text - xs font - bold transition - all ${view === 'list' ? 'bg-white text-primary-500 shadow-sm' : 'text-gray-400 hover:text-gray-600'} `}
             >
               <List size={16} /> Lista
             </button>
             <button
               onClick={() => setView('calendar')}
-              className={`flex items - center gap - 2 px - 4 py - 2 rounded - lg text - xs font - bold transition - all ${ view === 'calendar' ? 'bg-white text-primary-500 shadow-sm' : 'text-gray-400 hover:text-gray-600' } `}
+              className={`flex items - center gap - 2 px - 4 py - 2 rounded - lg text - xs font - bold transition - all ${view === 'calendar' ? 'bg-white text-primary-500 shadow-sm' : 'text-gray-400 hover:text-gray-600'} `}
             >
               <CalendarIcon size={16} /> Semanas
             </button>
