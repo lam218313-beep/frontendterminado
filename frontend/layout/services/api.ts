@@ -833,15 +833,4 @@ export async function getBrand(clientId: string): Promise<{ status: string; data
   }
 }
 
-/**
- * Generate Brand Identity using AI
- * POST /clients/{client_id}/brand/generate
- */
-export async function generateBrand(clientId: string): Promise<{ status: string; data: any }> {
-  const response = await fetch(`${API_BASE_URL}/clients/${clientId}/brand/generate`, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-  });
-  const data = await handleResponse<any>(response);
-  return { status: "success", data };
-}
+

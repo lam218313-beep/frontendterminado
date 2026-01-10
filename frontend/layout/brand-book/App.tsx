@@ -20,7 +20,6 @@ const App: React.FC = () => {
     // --- Data State ---
     const [brandData, setBrandData] = React.useState<any>(null);
     const [isLoading, setIsLoading] = React.useState(true);
-    const [isGenerating, setIsGenerating] = React.useState(false);
 
     // Use real ClientID from Auth Context
     const { user } = useAuth();
@@ -39,11 +38,8 @@ const App: React.FC = () => {
 
             if (json.status === "success" && json.data) {
                 setBrandData(json.data);
-            } else if (json.status === "empty") {
-                // If empty, trigger auto-generation request
-                generateBrand();
-                return;
             }
+            // Removed auto-generation on empty
         } catch (e) {
             console.error("Failed to load brand:", e);
         } finally {
@@ -51,25 +47,18 @@ const App: React.FC = () => {
         }
     };
 
-    const generateBrand = async () => {
-        if (!CLIENT_ID) return;
-
-        setIsGenerating(true);
-        try {
-            const json = await api.generateBrand(CLIENT_ID);
-            if (json.status === "success") {
-                setBrandData(json.data);
-            }
-        } catch (e) {
-            console.error("Gen failed", e);
-        } finally {
-            setIsGenerating(false);
-        }
-    };
-
     React.useEffect(() => {
         fetchBrand();
     }, []);
+
+    const handleDownload = () => {
+        if (brandData?.download_url) {
+            window.open(brandData.download_url, '_blank');
+        } else {
+            // Optional: Alert user if no link exists, or just do nothing
+            // alert("No se ha configurado un enlace de descarga para esta marca.");
+        }
+    };
 
     return (
         <div className="min-h-screen bg-[#F4F7FE] font-sans selection:bg-primary-500 selection:text-white pb-20">
@@ -87,19 +76,7 @@ const App: React.FC = () => {
 
                         <div className="flex justify-between items-center mt-6">
                             <h2 className="text-lg font-bold text-gray-400">Dashboard de Identidad</h2>
-                            <div className="flex gap-2">
-                                {isGenerating && (
-                                    <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg animate-pulse">
-                                        <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                                        <span className="text-xs font-bold">Generando Identidad...</span>
-                                    </div>
-                                )}
-                                {!brandData && !isGenerating && !isLoading && (
-                                    <button onClick={generateBrand} className="px-4 py-2 bg-brand-dark text-white rounded-lg text-xs font-bold">
-                                        Regenerar Identidad
-                                    </button>
-                                )}
-                            </div>
+                            {/* Regenerate button removed */}
                         </div>
                     </div>
 
@@ -163,12 +140,15 @@ const App: React.FC = () => {
 
                     {/* Download Button */}
                     <div className="mt-8 flex justify-end pb-8">
-                        <button className="flex items-center gap-2 px-6 py-3 bg-primary-500 text-white rounded-xl font-bold text-sm hover:bg-primary-600 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                        // onClick={() => window.print()} // Optional: Print functionality
-                        >
-                            <Download size={20} />
-                            Descargar versión impresa
-                        </button>
+                        {brandData?.download_url && (
+                            <button
+                                className="flex items-center gap-2 px-6 py-3 bg-primary-500 text-white rounded-xl font-bold text-sm hover:bg-primary-600 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                                onClick={handleDownload}
+                            >
+                                <Download size={20} />
+                                Descargar versión impresa
+                            </button>
+                        )}
                     </div>
                 </div>
             </main>
