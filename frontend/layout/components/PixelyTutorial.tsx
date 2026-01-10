@@ -706,41 +706,34 @@ const slides: SlideContent[] = [
     },
     {
         id: 6,
-        title: "Paso 4: Planificación",
+        title: "Paso 4: Planificación y Validación",
         subtitle: "Calendario Inteligente",
-        narration: "Del 'qué' al 'cuándo'. Organiza tu calendario de contenido, definiendo la frecuencia y momentos óptimos de publicación para maximizar el alcance orgánico.",
+        narration: "Del 'qué' al 'cuándo'. Organiza tu contenido y valida cada pieza antes de publicar. Un flujo unificado para asegurar calidad sin perder ritmo.",
         component: <VisualStep4 />
     },
     {
         id: 7,
-        title: "Paso 5: Validación",
-        subtitle: "Control de Calidad",
-        narration: "Antes de publicar, todo pasa por un estricto control. Revisa, aprueba o solicita cambios. Garantizamos que cada pieza cumpla con los estándares de tu marca.",
-        component: <VisualStep5 />
-    },
-    {
-        id: 8,
         title: "Beneficios",
         subtitle: "Ecosistema de Herramientas",
         narration: "Cuanto más tiempo estés con nosotros, accedes a herramientas más avanzadas: redacción persuasiva, análisis comparativo de competencia y proyección de tendencias.",
         component: <VisualStep6 />
     },
     {
-        id: 9,
+        id: 8,
         title: "Gestión de Tareas",
         subtitle: "Organización de Equipo",
         narration: "Mantén tu operación organizada. Nuestra metodología Kanban te permite asignar, priorizar y dar seguimiento al flujo de trabajo desde un solo panel de control.",
         component: <VisualStep7 />
     },
     {
-        id: 10,
+        id: 9,
         title: "Tu Plan",
         subtitle: "Transparencia Total",
         narration: "En tu header siempre verás tu insignia de plan actual y tus accesos disponibles. Si necesitas escalar tu capacidad, tu asesor está a un clic.",
         component: <VisualStep8 />
     },
     {
-        id: 11,
+        id: 10,
         title: "¡Estás Listo!",
         subtitle: "Comencemos",
         narration: "¡Eso es todo! Ahora tienes una metodología probada para transformar tu marketing. ¿Listo para comenzar? Te recomendamos empezar por la Entrevista.",
