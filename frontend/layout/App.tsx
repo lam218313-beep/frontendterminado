@@ -11,7 +11,6 @@ import { AdminView } from './components/AdminView.tsx';
 import { InterviewView } from './components/InterviewView.tsx';
 import { BrandView } from './components/BrandView.tsx';
 import { ContentPlanView } from './components/ContentPlanView.tsx';
-import { ValidationView } from './components/ValidationView.tsx';
 import { StrategyView } from './components/StrategyView.tsx';
 import { BenefitsView } from './components/BenefitsView.tsx';
 import { AlertCircle, Calendar } from 'lucide-react';
@@ -68,7 +67,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
 
 // Transition States
 type FlowState = 'LOGIN_ACTIVE' | 'LOGIN_EXITING' | 'ANIMATION_ENTRY' | 'ANIMATION_EXITING' | 'DASHBOARD_ACTIVE';
-type ViewType = 'dashboard' | 'partners' | 'lab' | 'work' | 'wiki' | 'admin' | 'interview' | 'brand' | 'strategy' | 'benefits' | 'validation';
+type ViewType = 'dashboard' | 'partners' | 'lab' | 'work' | 'wiki' | 'admin' | 'interview' | 'brand' | 'strategy' | 'benefits';
 
 // ... imports
 import { TutorialModal } from './components/TutorialModal.tsx';
