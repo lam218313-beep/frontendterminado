@@ -194,12 +194,6 @@ const AppContent: React.FC = () => {
         );
       // case 'dashboard': Removed
       // case 'content-plan': Keeping just in case but seems redundant with 'work' now? Stepper has 'work' for Planificación.Sidebar has 'work'. So content-plan is unused by stepper/sidebar.
-      case 'validation':
-        return (
-          <ErrorBoundary>
-            <ValidationView onNavigate={setActiveView} />
-          </ErrorBoundary>
-        );
       default:
         return null;
     }

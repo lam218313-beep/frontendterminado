@@ -94,15 +94,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isExpanded, setIsExpanded, act
                     onClick={setActiveView}
                 />
 
-                {/* 8. Validación */}
-                <SidebarItem
-                    icon={CheckCircle2}
-                    label="Validación"
-                    viewId="validation"
-                    isActive={activeView === 'validation'}
-                    onClick={setActiveView}
-                />
-
                 {/* 9. Wiki */}
                 <SidebarItem
                     icon={BookOpen}
