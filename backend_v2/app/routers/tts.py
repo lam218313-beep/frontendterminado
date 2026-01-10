@@ -16,12 +16,12 @@ router = APIRouter(prefix="/tts", tags=["Text-to-Speech"])
 
 class TTSRequest(BaseModel):
     text: str
-    voice: str = "es-ES-AlvaroNeural"  # Default Spanish voice (Male)
+    voice: str = "es-MX-DaliaNeural"  # Default Professional Spanish Voice
     # Options: 
-    # es-ES-AlvaroNeural (Male)
-    # es-ES-ElviraNeural (Female)
-    # es-MX-DaliaNeural (Female)
-    # es-MX-JorgeNeural (Male)
+    # es-ES-AlvaroNeural (Male - Spain)
+    # es-MX-DaliaNeural (Female - Mexico/Neutral - Professional)
+    # es-US-AlonsoNeural (Male - US/Neutral)
+    # es-ES-ElviraNeural (Female - Spain)
 
 @router.post("/generate")
 async def generate_speech(request: TTSRequest):
