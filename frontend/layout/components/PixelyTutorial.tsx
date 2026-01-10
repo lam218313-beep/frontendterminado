@@ -67,7 +67,7 @@ const VisualWelcome = () => {
 
 // 2. INTRO: CONNECTED FLOATING CARDS (LOOP)
 const VisualIntro = () => (
-    <div className="flex items-center justify-center gap-4 md:gap-12 h-[350px] xl:h-[450px] w-full relative">
+    <div className="hidden md:flex items-center justify-center gap-4 md:gap-12 h-[350px] xl:h-[450px] w-full relative">
         {/* Connecting Line Pulse */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-2 bg-slate-200 rounded-full overflow-hidden z-0">
             <motion.div
@@ -123,7 +123,7 @@ const VisualWorkflow = () => {
     ];
 
     return (
-        <div className="w-full max-w-5xl flex flex-col justify-center h-[400px]">
+        <div className="hidden md:flex w-full max-w-5xl flex-col justify-center h-[400px]">
             <div className="grid grid-cols-6 gap-6 relative">
                 {/* Connecting Line */}
                 <div className="absolute top-12 left-0 w-full h-1 bg-slate-200 -z-10 rounded-full"></div>
@@ -166,7 +166,7 @@ const VisualStep1 = () => {
     ];
 
     return (
-        <div className="w-full max-w-lg glass-card rounded-[40px] p-8 shadow-2xl h-[400px] flex flex-col justify-center relative">
+        <div className="hidden md:flex w-full max-w-lg glass-card rounded-[40px] p-8 shadow-2xl h-[400px] flex-col justify-center relative">
             <div className="absolute top-6 right-6">
                 <div className="flex gap-1">
                     <div className="w-3 h-3 rounded-full bg-red-400"></div>
@@ -215,7 +215,7 @@ const VisualStep1 = () => {
 
 // 5. STEP 2: DASHBOARD COLORS (UPDATED: Green, Yellow, Red, Orange)
 const VisualStep2 = () => (
-    <div className="w-full max-w-3xl md:max-w-4xl lg:max-w-5xl h-[280px] md:h-[380px] lg:h-[450px] flex items-center justify-center">
+    <div className="hidden md:flex w-full max-w-3xl md:max-w-4xl lg:max-w-5xl h-[280px] md:h-[380px] lg:h-[450px] items-center justify-center">
         <div className="w-full h-full grid grid-cols-1 md:grid-cols-3 grid-rows-2 gap-2 md:gap-4 p-1 md:p-2">
 
             {/* Widget 1: Main Bar Chart - ONLY REQUESTED COLORS */}
@@ -330,7 +330,7 @@ const VisualStep2 = () => (
 
 // 6. STEP 3: ORBIT (UPDATED: PIXELY LOGO CENTER, FIXED CARD)
 const VisualStep3 = () => (
-    <div className="w-full h-[400px] flex items-center justify-center relative">
+    <div className="hidden md:flex w-full h-[400px] items-center justify-center relative">
         {/* Center: Pixely Logo */}
         <motion.div
             animate={{ scale: [1, 1.05, 1], boxShadow: ["0 0 0px rgba(236, 72, 153, 0)", "0 0 30px rgba(236, 72, 153, 0.2)", "0 0 0px rgba(236, 72, 153, 0)"] }}
@@ -382,7 +382,7 @@ const VisualStep3 = () => (
 // 7. STEP 4: PLANNING (NEW: CONTENT TIMELINE)
 const VisualStep4 = () => {
     return (
-        <div className="w-full max-w-lg h-[400px] flex items-center justify-center p-4">
+        <div className="hidden md:flex w-full max-w-lg h-[400px] items-center justify-center p-4">
             <div className="relative w-full max-w-sm ml-8">
                 {/* Vertical Timeline Line */}
                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-slate-100 rounded-full"></div>
@@ -464,7 +464,7 @@ const VisualStep4 = () => {
 
 // 8. STEP 5: VALIDATION (POST PREVIEW)
 const VisualStep5 = () => (
-    <div className="flex flex-col justify-center h-[400px] items-center w-full gap-8">
+    <div className="hidden md:flex flex-col justify-center h-[400px] items-center w-full gap-8">
         {/* Post Preview Card */}
         <motion.div
             initial={{ y: 20, opacity: 0 }}
@@ -517,7 +517,7 @@ const VisualStep5 = () => (
 
 // 9. STEP 6: BENEFITS (UPDATED: TRANSLATED TEXT)
 const VisualStep6 = () => (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-6 w-full max-w-4xl">
+    <div className="hidden md:grid grid-cols-2 md:grid-cols-3 gap-6 w-full max-w-4xl">
         {[
             { label: "Redacción", icon: Sparkles },
             { label: "Tendencias", icon: TrendingUp },
@@ -585,7 +585,7 @@ const VisualStep7 = () => (
 
 // 11. STEP 8: PLAN (NEW: HEADER WIDGET)
 const VisualStep8 = () => (
-    <div className="flex flex-col items-center justify-center h-[400px]">
+    <div className="hidden md:flex flex-col items-center justify-center h-[400px]">
         {/* Mock Header Interface */}
         <motion.div
             initial={{ y: 20, opacity: 0 }}
@@ -670,7 +670,7 @@ const VisualStep9 = () => {
     }, []);
 
     return (
-        <div className="text-center relative h-[400px] flex flex-col items-center justify-center">
+        <div className="hidden md:flex text-center relative h-[400px] flex-col items-center justify-center">
             <motion.div
                 animate={{ scale: [1, 1.1, 1], boxShadow: ["0 0 0px rgba(34,197,94,0)", "0 0 50px rgba(34,197,94,0.4)", "0 0 0px rgba(34,197,94,0)"] }}
                 transition={{ duration: 2, repeat: Infinity }}
