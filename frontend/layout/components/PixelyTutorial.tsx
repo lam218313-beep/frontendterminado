@@ -462,50 +462,65 @@ const VisualStep4 = () => {
     );
 };
 
-// 8. STEP 5: VALIDATION (NEW: CARD REVIEW INTERFACE)
+// 8. STEP 5: VALIDATION (NEW: POST PREVIEW)
 const VisualStep5 = () => (
     <div className="flex flex-col justify-center h-[400px] items-center w-full gap-8">
-        {/* Content Card */}
+        {/* Post Preview Card */}
         <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="w-64 aspect-[4/5] bg-white rounded-2xl shadow-xl border border-gray-100 p-3 flex flex-col gap-3 relative z-10"
+            className="w-72 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden relative z-10"
         >
-            <div className="w-full flex-1 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center text-gray-400">
-                {/* Image Placeholder removed as requested */}
-            </div>
-            <div className="space-y-2">
-                <div className="h-2 w-3/4 bg-gray-100 rounded-full"></div>
-                <div className="h-2 w-1/2 bg-gray-100 rounded-full"></div>
-            </div>
-            {/* Stamp Overlay */}
-            <motion.div
-                animate={{ opacity: [0, 1, 0] }}
-                transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 1 }}
-                className="absolute inset-0 flex items-center justify-center z-20 bg-white/80 backdrop-blur-[1px] rounded-2xl"
-            >
-                <div className="border-4 border-green-500 text-green-500 font-black text-2xl px-4 py-2 rounded-lg -rotate-12 uppercase tracking-widest shadow-lg">
-                    Aprobado
+            {/* Header */}
+            <div className="p-3 flex items-center gap-3 border-b border-slate-50">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary-400 to-accent-400"></div>
+                <div>
+                    <div className="h-2 w-24 bg-slate-200 rounded-full mb-1"></div>
+                    <div className="h-1.5 w-16 bg-slate-100 rounded-full"></div>
                 </div>
-            </motion.div>
+            </div>
+
+            {/* Content Area */}
+            <div className="aspect-square bg-slate-50 flex items-center justify-center relative group">
+                <ImageIcon size={48} className="text-slate-200" />
+
+                {/* Stamp Overlay */}
+                <motion.div
+                    animate={{ scale: [0.8, 1, 0.8], opacity: [1, 0.8, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-[2px]"
+                >
+                    <div className="border-4 border-green-500 text-green-500 font-black text-xl px-4 py-2 rounded-lg -rotate-12 uppercase tracking-widest shadow-lg bg-white/80">
+                        Aprobado
+                    </div>
+                </motion.div>
+            </div>
+
+            {/* Actions Footer */}
+            <div className="p-3">
+                <div className="flex gap-3 mb-3 text-slate-300">
+                    <Heart size={20} />
+                    <MessageSquare size={20} />
+                    <Gift size={20} />
+                </div>
+                <div className="space-y-2">
+                    <div className="h-2 w-full bg-slate-100 rounded-full"></div>
+                    <div className="h-2 w-2/3 bg-slate-100 rounded-full"></div>
+                </div>
+            </div>
         </motion.div>
 
-        {/* Review Buttons */}
+        {/* Review Controls */}
         <div className="flex items-center gap-12">
+            <button className="w-14 h-14 rounded-full bg-white border border-slate-200 text-slate-300 flex items-center justify-center cursor-not-allowed">
+                <X size={24} strokeWidth={2.5} />
+            </button>
             <motion.button
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity, delay: 0 }}
-                className="w-16 h-16 rounded-full bg-white border border-gray-200 text-gray-400 shadow-lg flex items-center justify-center hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors"
+                animate={{ scale: [1, 1.1, 1], boxShadow: ["0 10px 15px -3px rgba(34, 197, 94, 0.2)", "0 20px 25px -5px rgba(34, 197, 94, 0.4)", "0 10px 15px -3px rgba(34, 197, 94, 0.2)"] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 text-white flex items-center justify-center shadow-xl shadow-green-500/30"
             >
-                <X size={28} strokeWidth={2.5} />
-            </motion.button>
-
-            <motion.button
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
-                className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 text-white shadow-xl shadow-green-500/30 flex items-center justify-center transform hover:scale-105 transition-transform"
-            >
-                <Heart size={36} fill="white" />
+                <Check size={36} strokeWidth={3} />
             </motion.button>
         </div>
     </div>
@@ -579,32 +594,60 @@ const VisualStep7 = () => (
     </div>
 );
 
-// 11. STEP 8: PLAN (UPDATED: SIMPLIFIED BADGE ONLY)
+// 11. STEP 8: PLAN (NEW: HEADER WIDGET)
 const VisualStep8 = () => (
     <div className="flex flex-col items-center justify-center h-[400px]">
+        {/* Mock Header Interface */}
         <motion.div
-            animate={{ scale: [1, 1.05, 1], rotate: [0, 2, -2, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="relative"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="w-full max-w-md bg-white rounded-full p-2 pr-6 shadow-2xl border border-slate-100 flex items-center gap-4 relative overflow-hidden"
         >
-            {/* Gold Badge Background */}
-            <div className="w-64 h-64 bg-gradient-to-br from-yellow-300 via-yellow-500 to-amber-600 rounded-full flex items-center justify-center shadow-2xl shadow-yellow-500/40 relative overflow-hidden border-4 border-yellow-200">
-                <motion.div
-                    animate={{ x: ["-100%", "200%"] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12 z-10"
-                />
-                <div className="flex flex-col items-center text-white z-20">
-                    <Crown size={64} fill="white" className="mb-2 drop-shadow-md" />
-                    <span className="text-3xl font-black tracking-widest drop-shadow-md">PREMIUM</span>
+            {/* User Avatar Group */}
+            <div className="flex items-center gap-3 pl-2">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 border-2 border-white shadow-md"></div>
+                <div>
+                    <div className="h-2.5 w-24 bg-slate-800 rounded-full mb-1.5"></div>
+                    <div className="h-2 w-16 bg-slate-300 rounded-full"></div>
                 </div>
             </div>
 
-            {/* Active Pill */}
-            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-white px-6 py-2 rounded-full shadow-lg border border-gray-100 flex items-center gap-2 z-30">
-                <div className="w-3 h-3 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)] animate-pulse"></div>
-                <span className="text-sm font-bold text-slate-700 uppercase tracking-wider">Activo</span>
+            <div className="h-8 w-px bg-slate-100 mx-2"></div>
+
+            {/* Plan Badge */}
+            <div className="flex items-center gap-2 bg-yellow-50 px-3 py-1.5 rounded-full border border-yellow-100">
+                <Crown size={14} className="text-yellow-600" fill="currentColor" />
+                <span className="text-xs font-bold text-yellow-700 uppercase tracking-wider">Premium</span>
             </div>
+
+            {/* Credits/Usage Indicator */}
+            <div className="ml-auto flex flex-col items-end gap-1">
+                <div className="flex items-center gap-1.5">
+                    <Zap size={12} className="text-slate-400" />
+                    <span className="text-[10px] font-bold text-slate-500">CONSUMO</span>
+                </div>
+                <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: "60%" }}
+                        transition={{ duration: 1.5, delay: 0.5 }}
+                        className="h-full bg-green-500 rounded-full"
+                    />
+                </div>
+            </div>
+
+            {/* Glow Effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none"></div>
+        </motion.div>
+
+        {/* Floating Tooltip */}
+        <motion.div
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            className="mt-8 bg-slate-800 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-xl relative"
+        >
+            <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-800 rotate-45"></div>
+            Tu estado actual siempre visible
         </motion.div>
     </div>
 );
