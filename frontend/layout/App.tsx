@@ -70,7 +70,7 @@ type FlowState = 'LOGIN_ACTIVE' | 'LOGIN_EXITING' | 'ANIMATION_ENTRY' | 'ANIMATI
 type ViewType = 'dashboard' | 'partners' | 'lab' | 'work' | 'wiki' | 'admin' | 'interview' | 'brand' | 'strategy' | 'benefits';
 
 // ... imports
-import { TutorialModal } from './components/TutorialModal.tsx';
+
 
 // ... ErrorBoundary ...
 
@@ -290,8 +290,7 @@ const AppContent: React.FC = () => {
           </div>
         </div>
       )}
-      {/* 4. TUTORIAL MODAL */}
-      <TutorialModal isOpen={showTutorial} onClose={handleTutorialClose} />
+
 
     </div>
   );
