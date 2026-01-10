@@ -215,11 +215,11 @@ const VisualStep1 = () => {
 
 // 5. STEP 2: DASHBOARD COLORS (UPDATED: Green, Yellow, Red, Orange)
 const VisualStep2 = () => (
-    <div className="w-full max-w-5xl h-[450px] flex items-center justify-center">
-        <div className="w-full h-full grid grid-cols-1 md:grid-cols-3 grid-rows-2 gap-4 p-2">
+    <div className="w-full max-w-3xl md:max-w-4xl lg:max-w-5xl h-[280px] md:h-[380px] lg:h-[450px] flex items-center justify-center">
+        <div className="w-full h-full grid grid-cols-1 md:grid-cols-3 grid-rows-2 gap-2 md:gap-4 p-1 md:p-2">
 
             {/* Widget 1: Main Bar Chart - ONLY REQUESTED COLORS */}
-            <div className="col-span-2 row-span-2 glass-card rounded-[32px] p-6 flex flex-col relative overflow-hidden bg-white/60 min-w-0">
+            <div className="md:col-span-2 md:row-span-2 glass-card rounded-[32px] p-4 md:p-6 flex flex-col relative overflow-hidden bg-white/60 min-w-0">
                 <div className="flex justify-between items-center mb-6 z-10">
                     <div className="flex items-center gap-3">
                         <div className="p-2.5 bg-slate-50 rounded-xl text-slate-500"><BarChart3 size={20} /></div>
@@ -262,7 +262,7 @@ const VisualStep2 = () => (
             </div>
 
             {/* Widget 2: Donut Chart - Green/Yellow/Orange/Red */}
-            <div className="glass-card rounded-[32px] p-5 flex flex-col items-center justify-center relative overflow-hidden bg-white/60 min-w-0">
+            <div className="glass-card rounded-[32px] p-3 md:p-5 flex flex-col items-center justify-center relative overflow-hidden bg-white/60 min-w-0">
                 <div className="w-full flex justify-between items-center mb-2">
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Salud</span>
                     <Activity size={14} className="text-emerald-500" />
@@ -284,7 +284,7 @@ const VisualStep2 = () => (
             </div>
 
             {/* Widget 3: Sparkline - Orange */}
-            <div className="glass-card rounded-[32px] p-5 flex flex-col justify-between relative overflow-hidden bg-white/60 min-w-0">
+            <div className="glass-card rounded-[32px] p-3 md:p-5 flex flex-col justify-between relative overflow-hidden bg-white/60 min-w-0">
                 <div className="flex justify-between items-start">
                     <div>
                         <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Conversión</span>
@@ -837,7 +837,7 @@ export const PixelyTutorial: React.FC = () => {
                         className="w-full max-w-6xl flex flex-col items-center h-full justify-center"
                     >
                         {/* Visual Container - SCALED DOWN ON MOBILE & TABLETS */}
-                        <div className="w-full flex items-center justify-center transform scale-[0.65] lg:scale-75 xl:scale-100 origin-center transition-transform duration-500 -my-10 lg:-my-6 xl:my-0 flex-shrink-0">
+                        <div className="w-full flex items-center justify-center flex-shrink-0">
                             {slides[currentSlide].component}
                         </div>
 
