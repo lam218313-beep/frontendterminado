@@ -12,8 +12,13 @@ import {
     Network,
     AlignLeft,
     ChevronRight,
-    Layers
+    ChevronLeft,
+    Layers,
+    Rocket
 } from 'lucide-react';
+import { useAuth } from '../layout/contexts/AuthContext';
+import * as api from '../layout/services/api';
+import { StrategyInsightsSidebar } from './components/StrategyInsightsSidebar';
 
 // --- Constants & Config ---
 const MAX_MAIN_OBJECTIVES = 6;
@@ -62,6 +67,115 @@ const App: React.FC = () => {
     const panStart = useRef({ x: 0, y: 0 });
     const panStartOffset = useRef({ x: 0, y: 0 });
 
+    const [sidebarOpen, setSidebarOpen] = useState(true);
+
+    // --- DRAG & DROP FROM SIDEBAR ---
+    const handleSidebarDragStart = (e: React.DragEvent, type: string, text: string) => {
+        e.dataTransfer.setData('type', type);
+        e.dataTransfer.setData('text', text);
+        e.dataTransfer.effectAllowed = 'copy';
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        const type = e.dataTransfer.getData('type');
+        const text = e.dataTransfer.getData('text');
+
+        if (type && text && canvasRef.current) {
+            const rect = canvasRef.current.getBoundingClientRect();
+            // Calculate position relative to canvas center and pan/scale
+            const dropX = (e.clientX - rect.left - pan.x) / scale;
+            const dropY = (e.clientY - rect.top - pan.y) / scale;
+
+            if (type === 'objective') {
+                // Check limit
+                const mainNodes = nodes.filter(n => n.type === 'main');
+                if (mainNodes.length >= MAX_MAIN_OBJECTIVES) {
+                    alert('Máximo de objetivos alcanzado');
+                    return;
+                }
+                const newNode: NodeData = {
+                    id: generateId(),
+                    type: 'main',
+                    label: text, // Use the text dropped
+                    description: 'Importado de Análisis',
+                    parentId: null,
+                    x: dropX,
+                    y: dropY,
+                };
+                setNodes(prev => [...prev, newNode]);
+            } else if (type === 'strategy') {
+                // For now, dropping a strategy creates a Main Node if dropped on empty space, 
+                // OR we could try to detect if dropped ON a node. 
+                // Let's keep it simple: Create Main Node with tag "Recomendación"
+                const newNode: NodeData = {
+                    id: generateId(),
+                    type: 'main',
+                    label: text,
+                    description: 'Recomendación Táctica',
+                    parentId: null,
+                    x: dropX,
+                    y: dropY,
+                };
+                setNodes(prev => [...prev, newNode]);
+            }
+        }
+    };
+
+    // --- SYNC TO TASKS ---
+    const handleSyncToTasks = async () => {
+        if (!CLIENT_ID) return;
+
+        const posts = nodes.filter(n => n.type === 'post');
+        if (posts.length === 0) {
+            alert("No hay publicaciones para sincronizar.");
+            return;
+        }
+
+        if (!window.confirm(`Se crearán ${posts.length} tareas basadas en las publicaciones. ¿Continuar?`)) return;
+
+        setIsSaving(true);
+        try {
+            let createdCount = 0;
+            for (const post of posts) {
+                // Basic check to see if already synced? 
+                // Currently missing metadata on NodeData to store 'taskId'.
+                // Ideally we update the node with the task ID after creation so we don't dupe it.
+                // For this implementation, we will just create them.
+
+                // Find parent (Strategy) and Grandparent (Objective) for context
+                const strategy = nodes.find(n => n.id === post.parentId);
+                const objective = strategy ? nodes.find(n => n.id === strategy.parentId) : null;
+
+                const taskData = {
+                    title: post.label,
+                    description: `${post.description || ''}\n\nEstrategia: ${strategy?.label || '-'}\nObjetivo: ${objective?.label || '-'}`,
+                    week: 1, // Default to Week 1
+                    status: 'PENDIENTE',
+                    area_estrategica: objective?.label || 'General',
+                    urgencia: 'Media',
+                    score_impacto: 5,
+                    score_esfuerzo: 3,
+                    prioridad: 50
+                };
+                // @ts-ignore
+                await api.createTask(CLIENT_ID, taskData);
+                createdCount++;
+            }
+            alert(`${createdCount} tareas creadas exitosamente en Planificación.`);
+        } catch (e) {
+            console.error("Sync error", e);
+            alert("Error al sincronizar tareas.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     // --- Logic: Data Management ---
     const updateNodeData = (id: string, field: keyof NodeData, value: any) => {
         setNodes(prev => prev.map(n => n.id === id ? { ...n, [field]: value } : n));
@@ -85,45 +199,38 @@ const App: React.FC = () => {
     }, [nodes, selectedNodeIds]);
 
     // --- Backend Integration ---
-    const CLIENT_ID = "demo-client-123"; // TODO: Get from params/context
-    const API_URL = "http://localhost:8000/strategy";
+    const { user } = useAuth();
+    const CLIENT_ID = user?.fichaClienteId;
+
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
     // 1. Load on Mount
     useEffect(() => {
         const fetchNodes = async () => {
+            if (!CLIENT_ID) return;
+
             try {
-                const res = await fetch(`${API_URL}/${CLIENT_ID}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (Array.isArray(data) && data.length > 0) {
-                        setNodes(data);
-                    }
+                const data = await api.getStrategy(CLIENT_ID);
+                if (Array.isArray(data) && data.length > 0) {
+                    setNodes(data);
                 }
             } catch (e) {
                 console.error("Failed to load strategy nodes:", e);
             }
         };
         fetchNodes();
-    }, []);
+    }, [CLIENT_ID]);
 
     // 2. Auto-Save Logic (Debounced)
     useEffect(() => {
         const timer = setTimeout(async () => {
-            if (nodes.length === 0) return; // Don't save empty if initial load hasn't happened maybe? 
-            // Better check: only save if dirtied? For now, simple auto-save is fine.
+            if (!CLIENT_ID) return;
+            if (nodes.length === 0) return;
 
             setIsSaving(true);
             try {
-                await fetch(`${API_URL}/sync`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        client_id: CLIENT_ID,
-                        nodes: nodes
-                    })
-                });
+                await api.saveStrategy(CLIENT_ID, nodes);
                 setLastSaved(new Date());
             } catch (e) {
                 console.error("Failed to save nodes:", e);
@@ -133,7 +240,7 @@ const App: React.FC = () => {
         }, 2000); // 2 second debounce
 
         return () => clearTimeout(timer);
-    }, [nodes]);
+    }, [nodes, CLIENT_ID]);
 
     // --- Interaction Handlers (Map View) ---
 
@@ -549,9 +656,9 @@ const App: React.FC = () => {
 
             <main className="flex-1 relative overflow-hidden flex flex-col">
 
-                {/* Floating Glass Header */}
+                {/* Header content unchanged except added button */}
                 <header className="absolute top-6 left-1/2 -translate-x-1/2 h-16 glass-panel rounded-full shadow-float flex items-center gap-4 px-2 z-40 transition-all hover:shadow-glow">
-                    {/* Switcher */}
+                    {/* ... Switcher ... */}
                     <div className="flex items-center bg-gray-100/50 p-1 rounded-full border border-gray-200/50 backdrop-blur-sm">
                         <button
                             onClick={() => setViewMode('map')}
@@ -582,68 +689,94 @@ const App: React.FC = () => {
                             <Hand size={18} />
                         </button>
                     </div>
+
+                    <div className="w-px h-8 bg-gray-300 mx-1"></div>
+
+                    <button
+                        onClick={handleSyncToTasks}
+                        className="p-3 bg-brand-dark text-white rounded-full hover:bg-black transition-colors shadow-lg"
+                        title="Sincronizar con Tareas"
+                    >
+                        <Rocket size={18} />
+                    </button>
                 </header>
 
                 {/* Content Area */}
-                <div className="flex-1 relative h-full bg-brand-bg">
+                <div className="flex-1 relative h-full bg-brand-bg flex">
 
-                    {/* MAP VIEW */}
-                    <div
-                        ref={canvasRef}
-                        onMouseDown={handleCanvasMouseDown}
-                        className={`absolute inset-0 w-full h-full overflow-hidden bg-dot-pattern ${viewMode === 'map' ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'} ${mode === 'pan' ? (isPanning ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'}`}
-                    >
-                        <div className="absolute inset-0 w-full h-full origin-center transition-transform duration-75 ease-out will-change-transform pointer-events-none"
-                            style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})` }}>
+                    {/* CANVAS AREA */}
+                    <div className="flex-1 relative h-full overflow-hidden">
 
-                            {/* Connections Layer */}
-                            <svg className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible">
-                                {nodes.map(node => {
-                                    if (!node.parentId) return null;
-                                    const parent = nodes.find(n => n.id === node.parentId);
-                                    if (!parent) return null;
-                                    return (
-                                        <path
-                                            key={`edge-${node.id}`}
-                                            d={getPath(parent, node)}
-                                            fill="none"
-                                            stroke="#CBD5E1"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            className="transition-all duration-500 opacity-60"
-                                        />
-                                    );
-                                })}
-                            </svg>
 
-                            {nodes.map(node => renderMapNode(node))}
+                        {/* MAP VIEW */}
+                        <div
+                            ref={canvasRef}
+                            onMouseDown={handleCanvasMouseDown}
+                            onDragOver={handleDragOver}
+                            onDrop={handleDrop}
+                            className={`absolute inset-0 w-full h-full overflow-hidden bg-dot-pattern ${viewMode === 'map' ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'} ${mode === 'pan' ? (isPanning ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'}`}
+                        >
+                            {/* ... Existing Canvas Content ... */}
+                            <div className="absolute inset-0 w-full h-full origin-center transition-transform duration-75 ease-out will-change-transform pointer-events-none"
+                                style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})` }}>
+                                {/* Connections */}
+                                <svg className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-visible">
+                                    {nodes.map(node => {
+                                        if (!node.parentId) return null;
+                                        const parent = nodes.find(n => n.id === node.parentId);
+                                        if (!parent) return null;
+                                        return (
+                                            <path
+                                                key={`edge-${node.id}`}
+                                                d={getPath(parent, node)}
+                                                fill="none"
+                                                stroke="#CBD5E1"
+                                                strokeWidth="2"
+                                                strokeLinecap="round"
+                                                className="transition-all duration-500 opacity-60"
+                                            />
+                                        );
+                                    })}
+                                </svg>
+                                {nodes.map(node => renderMapNode(node))}
 
-                            {/* Empty State */}
-                            {nodes.length === 0 && (
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none select-none opacity-50">
-                                    <GripHorizontal size={80} className="mx-auto mb-6 text-gray-200" />
-                                    <h2 className="text-4xl font-extrabold text-brand-dark tracking-tight">Lienzo Infinito</h2>
-                                    <p className="text-sm text-gray-400 mt-3 font-medium">Diseña tu estrategia de forma visual.</p>
-                                </div>
+                                {nodes.length === 0 && ( /* Empty State */
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none select-none opacity-50">
+                                        <GripHorizontal size={80} className="mx-auto mb-6 text-gray-200" />
+                                        <h2 className="text-4xl font-extrabold text-brand-dark tracking-tight">Lienzo Infinito</h2>
+                                        <p className="text-sm text-gray-400 mt-3 font-medium">Arrastra insights del panel derecho o crea nodos manualmente.</p>
+                                    </div>
+                                )}
+                            </div>
+                            {/* Selection Box */}
+                            {selectionBox && (
+                                <div className="absolute bg-accent-500/10 border border-accent-500/40 rounded-lg z-50 pointer-events-none"
+                                    style={{
+                                        left: Math.min(selectionBox.startX, selectionBox.currentX) * scale + pan.x,
+                                        top: Math.min(selectionBox.startY, selectionBox.currentY) * scale + pan.y,
+                                        width: Math.abs(selectionBox.currentX - selectionBox.startX) * scale,
+                                        height: Math.abs(selectionBox.currentY - selectionBox.startY) * scale
+                                    }}
+                                />
                             )}
                         </div>
 
-                        {/* Selection Box */}
-                        {selectionBox && (
-                            <div className="absolute bg-accent-500/10 border border-accent-500/40 rounded-lg z-50 pointer-events-none"
-                                style={{
-                                    left: Math.min(selectionBox.startX, selectionBox.currentX) * scale + pan.x,
-                                    top: Math.min(selectionBox.startY, selectionBox.currentY) * scale + pan.y,
-                                    width: Math.abs(selectionBox.currentX - selectionBox.startX) * scale,
-                                    height: Math.abs(selectionBox.currentY - selectionBox.startY) * scale
-                                }}
-                            />
-                        )}
+                        {/* LIST VIEW */}
+                        <div className={`absolute inset-0 w-full h-full overflow-hidden bg-brand-bg ${viewMode === 'list' ? 'opacity-100 visible z-10' : 'opacity-0 invisible pointer-events-none'}`}>
+                            {renderListView()}
+                        </div>
+
                     </div>
 
-                    {/* LIST VIEW */}
-                    <div className={`absolute inset-0 w-full h-full overflow-hidden bg-brand-bg ${viewMode === 'list' ? 'opacity-100 visible z-10' : 'opacity-0 invisible pointer-events-none'}`}>
-                        {renderListView()}
+                    {/* RIGHT SIDEBAR (INSIGHTS) */}
+                    <div className={`border-l border-gray-200 bg-white transition-all duration-300 relative ${sidebarOpen ? 'w-80' : 'w-0'}`}>
+                        <button
+                            onClick={() => setSidebarOpen(!sidebarOpen)}
+                            className="absolute top-1/2 -left-3 w-6 h-12 bg-white border border-gray-200 rounded-l-lg flex items-center justify-center shadow-lg text-gray-400 hover:text-brand-dark z-50"
+                        >
+                            {sidebarOpen ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+                        </button>
+                        <StrategyInsightsSidebar onDragStart={handleSidebarDragStart} />
                     </div>
 
                 </div>

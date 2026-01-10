@@ -1,5 +1,7 @@
 import React from 'react';
 import { Download } from 'lucide-react';
+import { useAuth } from '../layout/contexts/AuthContext';
+import * as api from '../layout/services/api';
 
 import {
     CardMission,
@@ -18,40 +20,43 @@ const App: React.FC = () => {
     const [brandData, setBrandData] = React.useState<any>(null);
     const [isLoading, setIsLoading] = React.useState(true);
     const [isGenerating, setIsGenerating] = React.useState(false);
-    const CLIENT_ID = "demo-client-123";
+
+    // Use real ClientID from Auth Context
+    const { user } = useAuth();
+    const CLIENT_ID = user?.fichaClienteId;
 
     const fetchBrand = async () => {
+        if (!CLIENT_ID) {
+            setIsLoading(false);
+            return;
+        }
+
         try {
-            const res = await fetch(`http://localhost:8000/brand/${CLIENT_ID}`);
-            if (res.ok) {
-                const json = await res.json();
-                if (json.status === "success" && json.data) {
-                    setBrandData(json.data);
-                } else if (json.status === "empty") {
-                    // Auto-generate if empty? Or wait for user?
-                    // Let's auto-generate for "wow" effect, but strictly it might be better to show a button.
-                    // Given the user wants "Real Data", let's generate it.
-                    generateBrand();
-                    return;
-                }
+            // Updated to use centralized API
+            // Note: The API returns { status: "success", data: ... }
+            const json = await api.getBrand(CLIENT_ID);
+
+            if (json.status === "success" && json.data) {
+                setBrandData(json.data);
+            } else if (json.status === "empty") {
+                // If empty, trigger auto-generation request
+                generateBrand();
+                return;
             }
         } catch (e) {
-            console.error(e);
+            console.error("Failed to load brand:", e);
         } finally {
             setIsLoading(false);
         }
     };
 
     const generateBrand = async () => {
+        if (!CLIENT_ID) return;
+
         setIsGenerating(true);
         try {
-            const res = await fetch(`http://localhost:8000/brand/generate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ client_id: CLIENT_ID })
-            });
-            if (res.ok) {
-                const json = await res.json();
+            const json = await api.generateBrand(CLIENT_ID);
+            if (json.status === "success") {
                 setBrandData(json.data);
             }
         } catch (e) {

@@ -619,9 +619,72 @@ export const MultiStepForm: React.FC = () => {
         }));
     };
 
+    // --- Persistence Logic ---
+    const { user } = useAuth();
+    const clientId = user?.fichaClienteId;
+    const STORAGE_KEY = `interview_draft_${clientId}`;
+
+    // Load draft on mount
+    useEffect(() => {
+        if (!clientId) return;
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                // Merge with default structure to avoid missing keys if schema changes
+                setFormData(prev => ({
+                    ...prev,
+                    ...parsed,
+                    // Re-initialize nested objects if missing in saved data
+                    audience: { ...prev.audience, ...(parsed.audience || {}) },
+                    market: { ...prev.market, ...(parsed.market || {}) },
+                    brand: { ...prev.brand, ...(parsed.brand || {}) },
+                    goals: { ...prev.goals, ...(parsed.goals || {}) }
+                }));
+            } catch (e) {
+                console.error("Failed to load draft:", e);
+            }
+        }
+    }, [clientId]);
+
+    // Save draft on change (debounced)
+    useEffect(() => {
+        if (!clientId) return;
+        const timer = setTimeout(() => {
+            // Don't save large files in localStorage, just the metadata
+            const { productFile, ...dataToSave } = formData;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+        }, 1000);
+        return () => clearTimeout(timer);
+    }, [formData, clientId]);
+
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setFormData(prev => ({ ...prev, productFile: e.target.files![0] }));
+            const file = e.target.files[0];
+
+            // Validation
+            const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+            const ALLOWED_TYPES = [
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'text/plain'
+            ];
+
+            if (file.size > MAX_SIZE) {
+                alert("El archivo es demasiado grande (Máx 10MB)");
+                e.target.value = ''; // Reset input
+                return;
+            }
+
+            if (!ALLOWED_TYPES.includes(file.type)) {
+                alert("Formato no válido. Solo PDF, DOC, DOCX, TXT");
+                e.target.value = '';
+                return;
+            }
+
+            setFormData(prev => ({ ...prev, productFile: file }));
         }
     };
 
@@ -680,6 +743,12 @@ export const MultiStepForm: React.FC = () => {
         setIsSubmitting(true);
         try {
             await saveInterview(clientId, formData, formData.productFile);
+
+            // Clear draft on success
+            if (clientId) {
+                localStorage.removeItem(`interview_draft_${clientId}`);
+            }
+
             setIsFinished(true);
         } catch (error) {
             console.error("Error saving data:", error);
@@ -739,12 +808,12 @@ export const MultiStepForm: React.FC = () => {
                                 key={step.id}
                                 onClick={() => isClickable && jumpToStep(step.id)}
                                 className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 ${isActive
-                                        ? 'bg-white shadow-md border border-gray-100 scale-105'
-                                        : isClickable ? 'cursor-pointer hover:bg-white/50 text-gray-500' : 'opacity-50 cursor-not-allowed text-gray-300'
+                                    ? 'bg-white shadow-md border border-gray-100 scale-105'
+                                    : isClickable ? 'cursor-pointer hover:bg-white/50 text-gray-500' : 'opacity-50 cursor-not-allowed text-gray-300'
                                     }`}
                             >
                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-colors ${isActive ? 'bg-primary-500 text-white shadow-md' :
-                                        isCompleted ? 'bg-primary-100 text-primary-600' : 'bg-gray-200 text-gray-400'
+                                    isCompleted ? 'bg-primary-100 text-primary-600' : 'bg-gray-200 text-gray-400'
                                     }`}>
                                     {isCompleted ? <CheckCircle2 size={20} /> : <step.icon size={20} />}
                                 </div>
@@ -1398,8 +1467,8 @@ export const MultiStepForm: React.FC = () => {
                                 onClick={prevStep}
                                 disabled={(currentStep === 1 && audienceStep === 0) || isLoading || isAnalyzing || isSubmitting}
                                 className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all ${(currentStep === 1) || isSubmitting
-                                        ? 'text-gray-300 cursor-not-allowed'
-                                        : 'text-gray-600 hover:bg-gray-100'
+                                    ? 'text-gray-300 cursor-not-allowed'
+                                    : 'text-gray-600 hover:bg-gray-100'
                                     }`}
                             >
                                 <ArrowLeft size={18} />
