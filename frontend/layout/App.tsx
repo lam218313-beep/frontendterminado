@@ -242,27 +242,43 @@ const AppContent: React.FC = () => {
 
       {/* 3. DASHBOARD LAYOUT (Final State) */}
       {flow === 'DASHBOARD_ACTIVE' && (
-        <div className="absolute inset-0 z-0 h-screen w-full bg-brand-bg flex animate-[fade-in_0.8s_ease-out]">
+        <div className="flex h-screen w-full bg-brand-bg animate-[fade-in_0.8s_ease-out] overflow-hidden">
 
-          {/* Sidebar Left (Fixed Floating Card) */}
-          <Sidebar
-            isExpanded={sidebarExpanded}
-            setIsExpanded={setSidebarExpanded}
-            activeView={activeView}
-            setActiveView={setActiveView}
-            onLogout={handleLogout}
-          />
+          {/* Sidebar Left (Responsive) */}
+          <div className={`
+                fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 ease-in-out
+                ${rightSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
+                lg:relative lg:translate-x-0 lg:z-0
+                ${sidebarExpanded ? 'lg:w-[320px]' : 'lg:w-[120px]'}
+                shrink-0 h-full
+            `}>
+            {/* Mobile Sidebar Close Overlay (optional, usually handled inside sidebar or by an overlay div) */}
+            <Sidebar
+              isExpanded={sidebarExpanded}
+              setIsExpanded={setSidebarExpanded}
+              activeView={activeView}
+              setActiveView={(view) => {
+                setActiveView(view);
+                // Close mobile sidebar on selection if we had one
+              }}
+              onLogout={handleLogout}
+            />
+          </div>
 
           {/* Main Layout Area */}
-          <div className={`flex-1 flex ${sidebarExpanded ? 'pl-[320px]' : 'pl-[120px]'} h-full overflow-hidden transition-all duration-300 ease-in-out`}>
+          <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden relative transition-all duration-300">
+
+            {/* Mobile Header (Hamburger) - To be added if not present in Views */}
+            {/* For now, assuming Views have headers or we add a global mobile trigger here if needed. 
+                Sidebar usually has the trigger, but on mobile it's hidden. 
+                We need a way to open it. Adding a temporary mobile trigger here or inside Sidebar logic. 
+            */}
 
             {/* Center Content */}
-            <main className="flex-1 flex flex-col relative h-full overflow-hidden py-4 pr-4">
-
-
+            <main className="flex-1 flex flex-col relative h-full overflow-hidden p-4 lg:py-4 lg:pr-4">
 
               {/* Dynamic Card Container */}
-              <div className="flex-1 min-h-0 bg-transparent rounded-[40px] relative overflow-y-auto group flex flex-col items-stretch justify-start mb-2">
+              <div className="flex-1 min-h-0 bg-transparent rounded-[30px] lg:rounded-[40px] relative overflow-y-auto group flex flex-col items-stretch justify-start mb-0 scroll-smooth">
 
                 {/* Subtle grid background */}
                 <div className="absolute inset-0 pointer-events-none opacity-[0.03] z-0"
@@ -274,8 +290,6 @@ const AppContent: React.FC = () => {
                   {renderContent()}
                 </div>
               </div>
-
-
             </main>
 
             {/* Sidebar Right (Floating Card) */}

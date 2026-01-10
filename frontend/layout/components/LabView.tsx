@@ -21,11 +21,12 @@ import {
   CardLabs_SemanticDistribution
 } from './lab';
 import { WorkflowStepper } from './WorkflowStepper';
+import { InteractiveHeader } from './InteractiveHeader';
 
 export const LabView: React.FC<{ onNavigate: (view: string) => void }> = ({ onNavigate }) => {
   const { data, isLoading } = useAnalysisContext();
 
-  const hasData = data?.Q1 && data.Q1.emociones?.some(e => e.value > 0);
+  const hasData = data?.Q1 && data.Q1.emociones?.some((e: any) => e.value > 0);
 
   // Loading state
   if (isLoading) {
@@ -64,6 +65,13 @@ export const LabView: React.FC<{ onNavigate: (view: string) => void }> = ({ onNa
 
           {/* Workflow Stepper */}
           <WorkflowStepper currentStep={3} onNavigate={onNavigate} />
+
+          {/* Premium Header */}
+          <InteractiveHeader
+            title="Lab."
+            subtitle="Market Intelligence"
+            colors={['#F20F79', '#465362']}
+          />
 
           {/* Grid Layout */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-8">
@@ -119,7 +127,6 @@ export const LabView: React.FC<{ onNavigate: (view: string) => void }> = ({ onNa
               <div className="h-[450px]">
                 <CardLabsQ7_SentimentBars data={data.Q7!} />
               </div>
-
 
             </div>
 

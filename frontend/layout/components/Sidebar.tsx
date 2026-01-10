@@ -18,7 +18,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isExpanded, setIsExpanded, act
         <aside
             onMouseEnter={() => setIsExpanded(true)}
             onMouseLeave={() => setIsExpanded(false)}
-            className={`fixed left-4 top-4 h-[calc(100vh-2rem)] bg-brand-dark text-white flex flex-col py-6 z-40 transition-all duration-300 ease-in-out group overflow-hidden shadow-2xl rounded-[30px] border border-white/5 font-sans ${isExpanded ? 'w-72' : 'w-[88px]'}`}
+            className={`
+                relative flex flex-col z-40 transition-all duration-300 ease-in-out group overflow-hidden shadow-2xl 
+                rounded-[30px] border border-white/5 font-sans bg-brand-dark text-white
+                m-4 h-[calc(100vh-2rem)]
+                ${isExpanded ? 'w-full' : 'w-full'} 
+            `}
+        /* Note: Width is now controlled by the parent container in App.tsx */
         >
 
             {/* Logo Area */}

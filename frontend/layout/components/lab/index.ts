@@ -1,5 +1,5 @@
 // Lab Components Index
-export { CardLabsHeader } from './CardLabsHeader';
+// export { CardLabsHeader } from './CardLabsHeader'; // Deleted and replaced by InteractiveHeader
 export { CardLabsQ1_Emotions } from './CardLabsQ1_Emotions';
 export { CardLabsQ2_Personality } from './CardLabsQ2_Personality';
 export { CardLabsQ3_TopTopics } from './CardLabsQ3_TopTopics';
