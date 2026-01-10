@@ -803,7 +803,7 @@ export const PixelyTutorial: React.FC = () => {
             </div>
 
             {/* --- MAIN STAGE --- */}
-            <div className="flex-1 flex flex-col items-center justify-start md:justify-center p-4 md:p-6 relative z-10 overflow-y-auto custom-scrollbar scroll-smooth">
+            <div className="flex-1 flex flex-col items-center justify-center p-2 md:p-6 relative z-10 overflow-hidden">
                 <AnimatePresence mode='wait'>
                     <motion.div
                         key={currentSlide}
@@ -811,30 +811,30 @@ export const PixelyTutorial: React.FC = () => {
                         animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
                         exit={{ opacity: 0, scale: 1.05, filter: "blur(10px)" }}
                         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                        className="w-full max-w-6xl flex flex-col items-center py-4"
+                        className="w-full max-w-6xl flex flex-col items-center h-full justify-center"
                     >
-                        {/* Visual Container */}
-                        <div className="flex-1 w-full flex items-center justify-center mb-4 md:mb-8 min-h-[300px] md:min-h-[500px]">
+                        {/* Visual Container - SCALED DOWN ON MOBILE */}
+                        <div className="w-full flex items-center justify-center transform scale-[0.65] md:scale-100 origin-center transition-transform duration-500 -my-10 md:my-0 flex-shrink-0">
                             {slides[currentSlide].component}
                         </div>
 
-                        {/* Text Content */}
-                        <div className="text-center max-w-3xl space-y-4 px-4 glass-panel rounded-3xl p-6 shadow-sm bg-white/30">
+                        {/* Text Content - SMALLER TEXT ON MOBILE */}
+                        <div className="text-center max-w-3xl space-y-2 md:space-y-4 px-4 glass-panel rounded-3xl p-4 md:p-6 shadow-sm bg-white/30 z-20 mt-auto md:mt-8">
                             {slides[currentSlide].subtitle && (
                                 <motion.span
                                     initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                                    className="text-primary-600 font-bold tracking-widest text-xs uppercase"
+                                    className="text-primary-600 font-bold tracking-widest text-[10px] md:text-xs uppercase"
                                 >
                                     {slides[currentSlide].subtitle}
                                 </motion.span>
                             )}
-                            <h2 className="text-3xl md:text-5xl font-display font-bold text-slate-800">
+                            <h2 className="text-2xl md:text-5xl font-display font-bold text-slate-800 leading-tight">
                                 {slides[currentSlide].title}
                             </h2>
                             <motion.p
                                 key={`text-${currentSlide}`}
                                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-                                className="text-lg md:text-xl text-slate-600 font-medium leading-relaxed"
+                                className="text-sm md:text-xl text-slate-600 font-medium leading-relaxed max-h-[80px] md:max-h-none overflow-y-auto custom-scrollbar"
                             >
                                 {slides[currentSlide].narration}
                             </motion.p>
@@ -843,8 +843,8 @@ export const PixelyTutorial: React.FC = () => {
                 </AnimatePresence>
             </div>
 
-            {/* --- MODERN CONTROLS BAR (GRID LAYOUT FOR PERFECT CENTERING) --- */}
-            <div className="w-full p-6 md:px-12 md:py-8 grid grid-cols-1 md:grid-cols-3 items-center z-20 relative glass-panel border-t border-white/60 bg-white/40 backdrop-blur-md gap-4">
+            {/* --- MODERN CONTROLS BAR --- */}
+            <div className="w-full p-4 md:px-12 md:py-8 grid grid-cols-3 items-center z-20 relative glass-panel border-t border-white/60 bg-white/40 backdrop-blur-md gap-2 md:gap-4 shrink-0">
 
                 {/* Left: Skip & Progress (Aligned Start) */}
                 <div className="flex items-center gap-6 justify-self-center md:justify-self-start">
