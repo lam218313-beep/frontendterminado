@@ -21,8 +21,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isExpanded, setIsExpanded, act
             className={`
                 relative flex flex-col z-40 transition-all duration-300 ease-in-out group overflow-hidden shadow-2xl 
                 rounded-[30px] border border-white/5 font-sans bg-brand-dark text-white
-                m-4 h-[calc(100vh-2rem)]
-                ${isExpanded ? 'w-full' : 'w-full'} 
+                my-4 mx-2 h-[calc(100vh-2rem)]
+                w-full
             `}
         /* Note: Width is now controlled by the parent container in App.tsx */
         >
@@ -35,7 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isExpanded, setIsExpanded, act
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 flex flex-col justify-center space-y-2 px-3 w-full overflow-y-auto custom-scrollbar">
+            <nav className="flex-1 flex flex-col justify-center space-y-2 px-2 w-full overflow-y-auto custom-scrollbar">
 
                 {/* 1. Partners */}
                 <SidebarItem
@@ -184,7 +184,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon: Icon, label, viewId, is
             : 'text-gray-400 hover:text-white hover:bg-white/5'
             }`}>
         {/* Icon container */}
-        <div className="w-[64px] flex items-center justify-center shrink-0">
+        <div className="w-[50px] flex items-center justify-center shrink-0">
             <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
         </div>
 

@@ -249,7 +249,7 @@ const AppContent: React.FC = () => {
                 fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 ease-in-out
                 ${rightSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
                 lg:relative lg:translate-x-0 lg:z-0
-                ${sidebarExpanded ? 'lg:w-[320px]' : 'lg:w-[120px]'}
+                ${sidebarExpanded ? 'lg:w-[260px]' : 'lg:w-[88px]'}
                 shrink-0 h-full
             `}>
             {/* Mobile Sidebar Close Overlay (optional, usually handled inside sidebar or by an overlay div) */}
