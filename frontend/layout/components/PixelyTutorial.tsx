@@ -219,7 +219,7 @@ const VisualStep2 = () => (
         <div className="w-full h-full grid grid-cols-1 md:grid-cols-3 grid-rows-2 gap-4 p-2">
 
             {/* Widget 1: Main Bar Chart - ONLY REQUESTED COLORS */}
-            <div className="col-span-2 row-span-2 glass-card rounded-[32px] p-6 flex flex-col relative overflow-hidden bg-white/60">
+            <div className="col-span-2 row-span-2 glass-card rounded-[32px] p-6 flex flex-col relative overflow-hidden bg-white/60 min-w-0">
                 <div className="flex justify-between items-center mb-6 z-10">
                     <div className="flex items-center gap-3">
                         <div className="p-2.5 bg-slate-50 rounded-xl text-slate-500"><BarChart3 size={20} /></div>
@@ -262,7 +262,7 @@ const VisualStep2 = () => (
             </div>
 
             {/* Widget 2: Donut Chart - Green/Yellow/Orange/Red */}
-            <div className="glass-card rounded-[32px] p-5 flex flex-col items-center justify-center relative overflow-hidden bg-white/60">
+            <div className="glass-card rounded-[32px] p-5 flex flex-col items-center justify-center relative overflow-hidden bg-white/60 min-w-0">
                 <div className="w-full flex justify-between items-center mb-2">
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Salud</span>
                     <Activity size={14} className="text-emerald-500" />
@@ -284,7 +284,7 @@ const VisualStep2 = () => (
             </div>
 
             {/* Widget 3: Sparkline - Orange */}
-            <div className="glass-card rounded-[32px] p-5 flex flex-col justify-between relative overflow-hidden bg-white/60">
+            <div className="glass-card rounded-[32px] p-5 flex flex-col justify-between relative overflow-hidden bg-white/60 min-w-0">
                 <div className="flex justify-between items-start">
                     <div>
                         <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Conversión</span>
