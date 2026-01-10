@@ -41,13 +41,15 @@ class SupabaseService:
         except Exception as e:
             logger.error(f"DB Insert Error (Report): {e}")
 
-    def update_report_status(self, report_id: str, status: str, result: Optional[dict] = None, error: Optional[str] = None):
+    def update_report_status(self, report_id: str, status: str, result: Optional[dict] = None, error: Optional[str] = None, audit_log: Optional[dict] = None):
         if not self.client: return
         data = {"status": status}
         if result:
             data["frontend_compatible_json"] = result
         if error:
             data["error_message"] = error
+        if audit_log:
+            data["audit_log"] = audit_log
             
         try:
             self.client.table("analysis_reports").update(data).eq("id", report_id).execute()
@@ -281,5 +283,71 @@ class SupabaseService:
         except Exception as e:
             logger.error(f"DB Get Interview Error: {e}")
             return None
+
+    # ============================================================================
+    # Strategy (Visual Editor)
+    # ============================================================================
+
+    def get_strategy_nodes(self, client_id: str) -> list[dict]:
+        if not self.client: return []
+        try:
+            response = self.client.table("strategy_nodes").select("*").eq("client_id", client_id).execute()
+            return response.data if response.data else []
+        except Exception as e:
+            logger.error(f"DB Get Strategy Error: {e}")
+            return []
+
+    def sync_strategy_nodes(self, client_id: str, nodes: list[dict]):
+        """
+        Full sync: Delete all existing nodes for client and re-insert.
+        Ideal for "Save" button or Auto-save on specific intervals.
+        """
+        if not self.client: return
+        try:
+            # 1. Delete all current nodes for this client
+            self.client.table("strategy_nodes").delete().eq("client_id", client_id).execute()
+            
+            # 2. Bulk Insert new nodes
+            if nodes:
+                # Ensure client_id is set on all
+                for n in nodes:
+                    n["client_id"] = client_id
+                
+                self.client.table("strategy_nodes").insert(nodes).execute()
+                
+            logger.info(f"✅ Strategy nodes synced for {client_id} ({len(nodes)} nodes)")
+        except Exception as e:
+            logger.error(f"DB Sync Strategy Error: {e}")
+            raise e
+
+    # ============================================================================
+    # Brand Identity (Brand Book)
+    # ============================================================================
+
+    def get_brand_identity(self, client_id: str) -> dict:
+        if not self.client: return {}
+        try:
+            response = self.client.table("brand_identities").select("*").eq("client_id", client_id).single().execute()
+            return response.data if response.data else {}
+        except Exception as e:
+            # It's okay if it doesn't exist yet
+            return {}
+
+    def update_brand_identity(self, client_id: str, data: dict):
+        if not self.client: return
+        try:
+            # Check if exists
+            exists = self.get_brand_identity(client_id)
+            data["client_id"] = client_id
+            
+            if exists:
+                self.client.table("brand_identities").update(data).eq("client_id", client_id).execute()
+            else:
+                self.client.table("brand_identities").insert(data).execute()
+                
+            logger.info(f"✅ Brand identity updated for {client_id}")
+        except Exception as e:
+            logger.error(f"DB Update Brand Error: {e}")
+            raise e
 
 db = SupabaseService()

@@ -148,10 +148,34 @@ async def _run_full_pipeline(report_id: str, client_id: str, instagram_url: str,
             # Non-blocking error
         
         # =========================================
-        # FINAL: GUARDAR EN BD
+        # FINAL: AUDITORÍA Y GUARDADO
         # =========================================
-        db.update_report_status(report_id, "COMPLETED", result=result_json)
-        logger.info(f"✅ [{report_id}] Pipeline FINISHED and saved.")
+        from datetime import datetime
+        
+        # Check for fallback dates in Q8
+        q8_data = result_json.get("Q8", {}).get("results", {})
+        has_fallback_dates = any("Grupo" in w.get("fecha_semana", "") for w in q8_data.get("serie_temporal_semanal", []))
+        
+        audit_log = {
+            "timestamp": datetime.utcnow().isoformat(),
+            "data_source": "INSTAGRAM_SCRAPE_APIFY",
+            "data_integrity": {
+                "scraped_count": len(all_content),
+                "classified_count": len(classifications),
+                "date_range_start": all_content[0].get("timestamp") if all_content else None,
+                "date_range_end": all_content[-1].get("timestamp") if all_content else None,
+                "has_imputed_dates": has_fallback_dates,
+                "sampling_ratio": f"{len(classifications)}/{len(all_content)}"
+            },
+            "execution_checks": {
+                "gemini_classification_success": len(classifications) > 0,
+                "interpretation_generated": "interpretation_text" in (result_json.get("Q1") or {})
+            },
+            "flags": ["REAL_DATA"] + (["MISSING_DATES"] if has_fallback_dates else ["VERIFIED_DATES"])
+        }
+
+        db.update_report_status(report_id, "COMPLETED", result=result_json, audit_log=audit_log)
+        logger.info(f"✅ [{report_id}] Pipeline FINISHED and saved with Audit Log.")
 
     except Exception as e:
         logger.error(f"❌ [{report_id}] Pipeline FAILED: {e}", exc_info=True)

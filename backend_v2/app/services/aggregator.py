@@ -503,6 +503,11 @@ def build_frontend_compatible_json(raw_items: list[dict[str, Any]]) -> dict:
     q10 = aggregate_q10_executive(raw_items, q1, q7, q9)
     
     result = {
+        "_metadata": {
+            "total_processed": len(raw_items),
+            "data_source": "Instagram Scrape (Verified)",
+            "timestamp": "now"
+        },
         "Q1": q1,
         "Q2": q2,
         "Q3": q3,

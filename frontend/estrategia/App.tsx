@@ -84,6 +84,57 @@ const App: React.FC = () => {
         setSelectedNodeIds(new Set());
     }, [nodes, selectedNodeIds]);
 
+    // --- Backend Integration ---
+    const CLIENT_ID = "demo-client-123"; // TODO: Get from params/context
+    const API_URL = "http://localhost:8000/strategy";
+    const [isSaving, setIsSaving] = useState(false);
+    const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+    // 1. Load on Mount
+    useEffect(() => {
+        const fetchNodes = async () => {
+            try {
+                const res = await fetch(`${API_URL}/${CLIENT_ID}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data) && data.length > 0) {
+                        setNodes(data);
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to load strategy nodes:", e);
+            }
+        };
+        fetchNodes();
+    }, []);
+
+    // 2. Auto-Save Logic (Debounced)
+    useEffect(() => {
+        const timer = setTimeout(async () => {
+            if (nodes.length === 0) return; // Don't save empty if initial load hasn't happened maybe? 
+            // Better check: only save if dirtied? For now, simple auto-save is fine.
+
+            setIsSaving(true);
+            try {
+                await fetch(`${API_URL}/sync`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_id: CLIENT_ID,
+                        nodes: nodes
+                    })
+                });
+                setLastSaved(new Date());
+            } catch (e) {
+                console.error("Failed to save nodes:", e);
+            } finally {
+                setIsSaving(false);
+            }
+        }, 2000); // 2 second debounce
+
+        return () => clearTimeout(timer);
+    }, [nodes]);
+
     // --- Interaction Handlers (Map View) ---
 
     const handleNodeMouseDown = (e: React.MouseEvent, id: string) => {

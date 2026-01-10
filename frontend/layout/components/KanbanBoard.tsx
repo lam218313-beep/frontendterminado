@@ -50,7 +50,7 @@ const ImpactBadge: React.FC<{ score: number | null }> = ({ score }) => {
     score >= 4 ? 'text-yellow-600 bg-yellow-50' :
       'text-red-600 bg-red-50';
   return (
-    <span className={`px - 2 py - 0.5 rounded text - [10px] font - bold ${color} `}>
+    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${color}`}>
       Impacto: {score}/10
     </span>
   );
@@ -71,7 +71,7 @@ const TaskCard: React.FC<{
       onDragStart={(e) => onDragStart(e, task.id)}
       onDragEnd={onDragEnd}
       onClick={() => onClick(task)}
-      className={`bg - white p - 4 rounded - xl shadow - sm border border - gray - 100 hover: shadow - md hover: border - primary - 200 transition - all cursor - grab active: cursor - grabbing group select - none
+      className={`bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-primary-200 transition-all cursor-grab active:cursor-grabbing group select-none
           ${isDragging ? 'opacity-40 grayscale shadow-none border-dashed border-gray-300' : 'opacity-100'}
 `}
     >
