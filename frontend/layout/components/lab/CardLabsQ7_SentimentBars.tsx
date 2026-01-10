@@ -29,13 +29,13 @@ const CATEGORIES = [
 export const CardLabsQ7_SentimentBars: React.FC<CardLabsQ7_SentimentBarsProps> = ({ data }) => {
    const [isFlipped, setIsFlipped] = useState(false);
    const cardRef = useRef<HTMLDivElement>(null);
-   const [rotation, setRotation] = useState({ x: 0, y: 0 });
+   const contentRef = useRef<HTMLDivElement>(null);
    const [hoveredKey, setHoveredKey] = useState<string | null>(null);
 
    const stats = data.results.analisis_agregado;
 
-   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-      if (!cardRef.current || isFlipped) return;
+   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!cardRef.current || !contentRef.current || isFlipped) return;
       const rect = cardRef.current.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
@@ -44,27 +44,37 @@ export const CardLabsQ7_SentimentBars: React.FC<CardLabsQ7_SentimentBarsProps> =
 
       const rotateX = ((y - centerY) / centerY) * -5;
       const rotateY = ((x - centerX) / centerX) * 5;
-      setRotation({ x: rotateX, y: rotateY });
-   }, [isFlipped]);
+
+      contentRef.current.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+   };
 
    const handleMouseLeave = () => {
-      setRotation({ x: 0, y: 0 });
+      if (contentRef.current && !isFlipped) {
+         contentRef.current.style.transform = `rotateX(0deg) rotateY(0deg)`;
+      }
       setHoveredKey(null);
    };
 
+   // Reset transform when flipped changes
+   React.useEffect(() => {
+      if (contentRef.current) {
+         contentRef.current.style.transform = isFlipped
+            ? 'rotateX(0deg) rotateY(180deg)'
+            : 'rotateX(0deg) rotateY(0deg)';
+      }
+   }, [isFlipped]);
+
    return (
       <div
+         ref={cardRef}
          className="relative w-full h-full min-h-[400px] [perspective:1000px] group cursor-pointer"
          onMouseMove={handleMouseMove}
          onMouseLeave={handleMouseLeave}
          onClick={() => setIsFlipped(!isFlipped)}
       >
          <div
-            ref={cardRef}
-            className="w-full h-full relative transition-all duration-500 ease-out [transform-style:preserve-3d]"
-            style={{
-               transform: `rotateX(${isFlipped ? 0 : rotation.x}deg) rotateY(${isFlipped ? 180 : rotation.y}deg)`
-            }}
+            ref={contentRef}
+            className="w-full h-full relative transition-transform duration-100 ease-out [transform-style:preserve-3d]"
          >
             {/* FRONT FACE */}
             <div className="absolute inset-0 bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 [backface-visibility:hidden] flex flex-col z-10">
