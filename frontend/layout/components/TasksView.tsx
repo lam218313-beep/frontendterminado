@@ -17,7 +17,7 @@ export const TasksView: React.FC<{ onNavigate: (view: string) => void }> = ({ on
   return (
     <div className="h-full w-full flex flex-col p-6 animate-fade-in-up bg-brand-bg">
       <div className="max-w-7xl mx-auto w-full">
-        <WorkflowStepper currentStep={6} onNavigate={onNavigate} />
+        <WorkflowStepper currentStep={5} onNavigate={onNavigate} />
         <KanbanBoard />
       </div>
     </div>

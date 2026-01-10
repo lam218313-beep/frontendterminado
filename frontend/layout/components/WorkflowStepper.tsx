@@ -20,8 +20,8 @@ const TABS = [
     { id: 'brand', label: 'Manual', icon: Palette, desc: 'Definición de identidad visual' },
     { id: 'lab', label: 'Análisis', icon: Layers, desc: 'Análisis semántico y de mercado' },
     { id: 'strategy', label: 'Estrategia', icon: LayoutGrid, desc: 'Definición de estrategia' },
-    { id: 'benefits', label: 'Beneficios', icon: CheckCircle2, desc: 'Beneficios y valor' },
     { id: 'work', label: 'Planificación', icon: CalendarRange, desc: 'Calendario y aprobaciones' },
+    { id: 'benefits', label: 'Beneficios', icon: CheckCircle2, desc: 'Beneficios y valor' },
 ];
 
 export const WorkflowStepper: React.FC<WorkflowStepperProps> = ({ currentStep, onNavigate }) => {

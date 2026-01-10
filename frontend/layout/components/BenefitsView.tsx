@@ -57,8 +57,8 @@ const BenefitCard: React.FC<{ benefit: typeof BENEFITS[0] }> = ({ benefit }) => 
         <div className="relative group">
             {/* Card */}
             <div className={`relative overflow-hidden rounded-3xl border transition-all duration-300 ${hasAccess
-                    ? 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-xl cursor-pointer'
-                    : 'bg-gray-50/80 border-gray-100'
+                ? 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-xl cursor-pointer'
+                : 'bg-gray-50/80 border-gray-100'
                 }`}>
 
                 {/* Gradient Background (subtle) */}
@@ -114,7 +114,7 @@ export const BenefitsView: React.FC<{ onNavigate: (view: string) => void }> = ({
     return (
         <div className='p-8 h-full overflow-y-auto custom-scrollbar animate-fade-in-up bg-brand-bg'>
             <div className="max-w-7xl mx-auto">
-                <WorkflowStepper currentStep={5} onNavigate={onNavigate} />
+                <WorkflowStepper currentStep={6} onNavigate={onNavigate} />
 
                 <div className='mb-8'>
                     <h2 className='text-3xl font-black text-brand-dark mb-2 tracking-tight flex items-center gap-3'>
