@@ -157,32 +157,26 @@ def map_classification_to_raw_item(
 INTERPRETATION_PROMPT = """
 Actúa como un Consultor Senior de Estrategia de Marca. Tu cliente no es técnico.
 
-CONTEXTO DEL CLIENTE:
+CONTEXTO ESTRATÉGICO DEL CLIENTE:
 {context_str}
 
-Tienes el siguiente reporte de datos de sus redes sociales:
+TIENES EL SIGUIENTE REPORTE DE DATOS (Q1-Q10):
 {aggregated_json}
 
+INSTRUCCIONES CRÍTICAS:
 Tu tarea es generar una interpretación breve (máximo 3 frases) para CADA bloque (Q1 a Q10).
+Para cada interpretación, DEBES cruzar los datos encontrados con la IDENTIDAD DE MARCA definida en el contexto.
 
-Reglas:
-1. NO repitas los números exactos (ellos ya ven el gráfico).
-2. Explica QUÉ SIGNIFICA ese resultado para su negocio, usando el CONTEXTO dado (ej. si venden lujo, analiza los precios desde esa óptica).
-3. Usa un lenguaje alentador pero realista.
-4. Si puedes, usa negritas (markdown **) para destacar palabras clave.
-5. Cada explicación debe dar un insight accionable o una perspectiva estratégica alineada a sus objetivos.
+1. **Alineación**: ¿Los resultados reflejan la Misión, Visión o Valores de la marca? Si no, señálalo suavemente.
+2. **Personalidad**: ¿El tono de los comentarios coincide con el Arquetipo de la marca?
+3. **Accionable**: Explica qué significa el dato para SU negocio específico.
+4. **Formato**: Usa un lenguaje alentador pero estratégico. Usa **negritas** para conceptos clave.
 
 Devuelve un JSON estricto con este formato:
 {{
     "Q1_interpretation": "Texto explicativo aquí...",
     "Q2_interpretation": "Texto explicativo aquí...",
-    "Q3_interpretation": "Texto explicativo aquí...",
-    "Q4_interpretation": "Texto explicativo aquí...",
-    "Q5_interpretation": "Texto explicativo aquí...",
-    "Q6_interpretation": "Texto explicativo aquí...",
-    "Q7_interpretation": "Texto explicativo aquí...",
-    "Q8_interpretation": "Texto explicativo aquí...",
-    "Q9_interpretation": "Texto explicativo aquí...",
+    ...
     "Q10_interpretation": "Texto explicativo aquí..."
 }}
 """
@@ -190,26 +184,56 @@ Devuelve un JSON estricto con este formato:
 
 async def generate_interpretations(aggregated_json: dict, context: dict = None) -> dict:
     """
-    Takes the aggregated Q1-Q10 data AND client context to generate human-readable explanations.
+    Takes the aggregated Q1-Q10 data AND full client context (Interview + Brand) 
+    to generate human-readable explanations.
     """
     if not settings.GEMINI_API_KEY:
         logger.warning("GEMINI_API_KEY not configured, skipping interpretations")
         return {}
     
     # Format Context String
-    context_str = "No hay información previa disponible. Asume un e-commerce general."
+    context_str = "No hay información estratégica previa disponible. Asume un e-commerce general."
+    
     if context:
-        c = context
-        business = c.get("businessName", "La Marca")
-        industry = c.get("history", "")[:200]
-        audience = c.get("audience", {})
-        goals = c.get("goals", {})
+        # Extract parts
+        interview = context.get("interview") or {}
+        brand = context.get("brand") or {}
         
+        # Interview Data
+        business = interview.get("businessName", "La Marca")
+        history = interview.get("history", "")[:300]
+        audience_obj = interview.get("audience", {})
+        audience_str = f"{audience_obj.get('ageRange', '')}, {audience_obj.get('gender', '')}. Intereses: {audience_obj.get('interests', '')}"
+        goals = ", ".join(interview.get("goals", {}).get("brandGoals", []))
+        
+        # Brand Book Data
+        mission = brand.get("mission", "No definida")
+        vision = brand.get("vision", "No definida")
+        archetype = brand.get("archetype", "No definido")
+        values_list = [v.get("title", "") for v in brand.get("values", [])]
+        values_str = ", ".join(filter(None, values_list))
+        
+        # Parse Tone
+        tone_traits = brand.get("tone_traits", [])
+        # Handle if tone_traits is list of dicts or strings (schema varies)
+        tone_str = ""
+        if tone_traits and isinstance(tone_traits[0], dict):
+             tone_str = ", ".join([t.get("trait", "") for t in tone_traits])
+        elif tone_traits:
+             tone_str = ", ".join(str(t) for t in tone_traits)
+
         context_str = (
-            f"- Nombre: {business}\n"
-            f"- Historia/Industria: {industry}\n"
-            f"- Audiencia: {audience.get('ageRange', '')}, {audience.get('gender', '')}. Intereses: {audience.get('interests', '')}\n"
-            f"- Objetivos: {', '.join(goals.get('brandGoals', []))}"
+            f"--- PERFIL DE NEGOCIO ---\n"
+            f"Nombre: {business}\n"
+            f"Historia/Contexto: {history}\n"
+            f"Audiencia Objetivo: {audience_str}\n"
+            f"Objetivos: {goals}\n\n"
+            f"--- IDENTIDAD DE MARCA (BRAND BOOK) ---\n"
+            f"Misión: {mission}\n"
+            f"Visión: {vision}\n"
+            f"Valores Centrales: {values_str}\n"
+            f"Arquetipo: {archetype}\n"
+            f"Tono de Voz: {tone_str}\n"
         )
 
     client = genai.Client(api_key=settings.GEMINI_API_KEY)
