@@ -483,17 +483,6 @@ const VisualStep5 = () => (
             {/* Content Area */}
             <div className="aspect-square bg-slate-50 flex items-center justify-center relative group">
                 <ImageIcon size={48} className="text-slate-200" />
-
-                {/* Stamp Overlay */}
-                <motion.div
-                    animate={{ scale: [0.8, 1, 0.8], opacity: [1, 0.8, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-[2px]"
-                >
-                    <div className="border-4 border-green-500 text-green-500 font-black text-xl px-4 py-2 rounded-lg -rotate-12 uppercase tracking-widest shadow-lg bg-white/80">
-                        Aprobado
-                    </div>
-                </motion.div>
             </div>
 
             {/* Actions Footer */}
@@ -516,7 +505,7 @@ const VisualStep5 = () => (
                 <X size={24} strokeWidth={2.5} />
             </button>
             <motion.button
-                animate={{ scale: [1, 1.1, 1], boxShadow: ["0 10px 15px -3px rgba(34, 197, 94, 0.2)", "0 20px 25px -5px rgba(34, 197, 94, 0.4)", "0 10px 15px -3px rgba(34, 197, 94, 0.2)"] }}
+                animate={{ boxShadow: ["0 0 0 0px rgba(34, 197, 94, 0)", "0 0 0 6px rgba(34, 197, 94, 0.2)", "0 0 0 0px rgba(34, 197, 94, 0)"] }}
                 transition={{ duration: 2, repeat: Infinity }}
                 className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 text-white flex items-center justify-center shadow-xl shadow-green-500/30"
             >
