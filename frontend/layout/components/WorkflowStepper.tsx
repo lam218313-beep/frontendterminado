@@ -32,7 +32,7 @@ export const WorkflowStepper: React.FC<WorkflowStepperProps> = ({ currentStep, o
         <div className="w-full mb-8">
 
             {/* --- TAB NAVIGATION BAR --- */}
-            <div className="relative bg-white rounded-[24px] px-8 py-6 shadow-xl shadow-brand-dark/5 border border-white/50 w-full">
+            <div className="relative px-8 py-6 w-full">
 
                 {/* Progress Line Background */}
                 <div className="absolute top-[45px] left-[60px] right-[60px] h-1.5 bg-gray-100 rounded-full z-0 overflow-hidden">
@@ -88,15 +88,7 @@ export const WorkflowStepper: React.FC<WorkflowStepperProps> = ({ currentStep, o
                                         }`}>
                                         {tab.label}
                                     </p>
-                                    {isActive && (
-                                        <motion.span
-                                            initial={{ opacity: 0, y: -5 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            className="text-[10px] text-gray-400 font-medium absolute w-32 -ml-16 mt-1"
-                                        >
-                                            Paso {index + 1} de {TABS.length}
-                                        </motion.span>
-                                    )}
+
                                 </div>
                             </div>
                         );
