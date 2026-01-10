@@ -4,15 +4,13 @@ import json
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from typing import Optional, List, Any
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from ..config import settings
 from ..services.database import db
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/brand", tags=["Brand Identity"])
-
-if settings.GEMINI_API_KEY:
-    genai.configure(api_key=settings.GEMINI_API_KEY)
 
 # --- Models ---
 class BrandColors(BaseModel):
@@ -84,8 +82,6 @@ Responde ÚNICAMENTE con este JSON:
 async def get_brand(client_id: str):
     data = db.get_brand_identity(client_id)
     if not data:
-        # If no data, return empty structure or 404? 
-        # Let's return empty structure to avoid frontend crash, but with flag
         return {"status": "empty", "data": None}
     return {"status": "success", "data": data}
 
@@ -95,7 +91,6 @@ async def generate_brand(request: GenerateBrandRequest):
     
     # 1. Fetch Context (Interview + Analysis if available)
     interview = db.get_interview(client_id)
-    # We could also fetch analysis topics if we wanted deeper context
     
     context_str = "Información no disponible."
     if interview and interview.get("data"):
@@ -109,12 +104,21 @@ async def generate_brand(request: GenerateBrandRequest):
     
     # 2. Call Gemini
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash") # Use flash for speed
-        response = model.generate_content(BRAND_PROMPT.format(context=context_str))
+        if not settings.GEMINI_API_KEY:
+             raise ValueError("GEMINI API KEY not set")
+
+        client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        
+        response = await client.aio.models.generate_content(
+            model="gemini-1.5-flash", 
+            contents=BRAND_PROMPT.format(context=context_str),
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+            )
+        )
         
         # Clean & Parse
-        cleaned = response.text.replace("```json", "").replace("```", "").strip()
-        result = json.loads(cleaned)
+        result = json.loads(response.text)
         
         # 3. Save to DB
         db.update_brand_identity(client_id, result)

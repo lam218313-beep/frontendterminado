@@ -1,22 +1,19 @@
 """
 Gemini Classification Service
 =============================
-Batch classification of comments using Gemini 1.5 Flash.
+Batch classification of comments using Gemini.
 """
 
 import json
 import logging
 from typing import Any
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 from ..config import settings
 
 logger = logging.getLogger(__name__)
-
-# Configure Gemini
-if settings.GEMINI_API_KEY:
-    genai.configure(api_key=settings.GEMINI_API_KEY)
 
 # 10 Tópicos de Comercio General
 COMMERCE_TOPICS = [
@@ -86,7 +83,7 @@ async def classify_comments_batch(comments: list[str], batch_size: int = 50) -> 
     if not settings.GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY not configured")
     
-    model = genai.GenerativeModel("gemini-3-flash-preview")
+    client = genai.Client(api_key=settings.GEMINI_API_KEY)
     all_results: list[dict] = []
     
     # Process in batches
@@ -107,12 +104,13 @@ async def classify_comments_batch(comments: list[str], batch_size: int = 50) -> 
         )
         
         try:
-            response = await model.generate_content_async(
-                prompt,
-                generation_config={
-                    "response_mime_type": "application/json",
-                    "temperature": 0.2,  # Lower temperature for consistency
-                }
+            response = await client.aio.models.generate_content(
+                model="gemini-1.5-flash", 
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    temperature=0.2
+                )
             )
             
             batch_results = json.loads(response.text)
@@ -122,8 +120,7 @@ async def classify_comments_batch(comments: list[str], batch_size: int = 50) -> 
             
         except json.JSONDecodeError as e:
             logger.error(f"❌ JSON parse error in batch: {e}")
-            logger.error(f"   Raw response: {response.text[:500]}")
-            # Skip invalid batch instead of failing completely
+            logger.error(f"   Raw response: {response.text[:500] if response and response.text else 'Empty'}")
             continue
             
         except Exception as e:
@@ -139,13 +136,6 @@ def map_classification_to_raw_item(
 ) -> dict[str, Any]:
     """
     Merge original comment data with classification results.
-    
-    Args:
-        comment: Original Apify comment object
-        classification: Gemini classification result
-        
-    Returns:
-        Dictionary ready for database insertion
     """
     return {
         "platform": "instagram",
@@ -201,13 +191,6 @@ Devuelve un JSON estricto con este formato:
 async def generate_interpretations(aggregated_json: dict, context: dict = None) -> dict:
     """
     Takes the aggregated Q1-Q10 data AND client context to generate human-readable explanations.
-    
-    Args:
-        aggregated_json: The full Q1-Q10 analysis results
-        context: Optional dictionary with interview data (Business info, Audience, etc.)
-        
-    Returns:
-        Dictionary with Q1_interpretation through Q10_interpretation keys
     """
     if not settings.GEMINI_API_KEY:
         logger.warning("GEMINI_API_KEY not configured, skipping interpretations")
@@ -218,7 +201,7 @@ async def generate_interpretations(aggregated_json: dict, context: dict = None) 
     if context:
         c = context
         business = c.get("businessName", "La Marca")
-        industry = c.get("history", "")[:200] # Truncate for token efficiency
+        industry = c.get("history", "")[:200]
         audience = c.get("audience", {})
         goals = c.get("goals", {})
         
@@ -229,8 +212,7 @@ async def generate_interpretations(aggregated_json: dict, context: dict = None) 
             f"- Objetivos: {', '.join(goals.get('brandGoals', []))}"
         )
 
-    # Use Pro model for better writing quality
-    model_pro = genai.GenerativeModel("gemini-3-flash-preview")
+    client = genai.Client(api_key=settings.GEMINI_API_KEY)
     
     prompt = INTERPRETATION_PROMPT.format(
         context_str=context_str,
@@ -240,12 +222,13 @@ async def generate_interpretations(aggregated_json: dict, context: dict = None) 
     try:
         logger.info(f"🗣️ Generating interpretations with context ({len(context_str)} chars)...")
         
-        response = await model_pro.generate_content_async(
-            prompt,
-            generation_config={
-                "response_mime_type": "application/json",
-                "temperature": 0.7, 
-            }
+        response = await client.aio.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.7
+            )
         )
         
         interpretations = json.loads(response.text)
