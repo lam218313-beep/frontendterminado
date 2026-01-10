@@ -113,6 +113,13 @@ const AppContent: React.FC = () => {
     localStorage.setItem('pixely_tutorial_seen_v2', 'true');
   };
 
+  // Handler for logout
+  const handleLogout = () => {
+    logout();
+    setDisplayUser('');
+    setFlow('LOGIN_ACTIVE');
+  };
+
   // ... handleLogin ...
   const handleLogin = (username: string) => {
     setDisplayUser(username);
