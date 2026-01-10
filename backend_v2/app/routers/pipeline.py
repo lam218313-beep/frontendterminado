@@ -146,15 +146,16 @@ async def _run_full_pipeline(report_id: str, client_id: str, instagram_url: str,
             # Non-blocking - continue without interpretations
         
         # =========================================
-        # PASO 5: GENERAR TAREAS SUGERIDAS
+        # PASO 5: GENERAR TAREAS SUGERIDAS (DESHABILITADO POR REQUERIMIENTO USER)
         # =========================================
-        try:
-            suggested_tasks = aggregator.generate_suggested_tasks(client_id, result_json)
-            db.create_tasks_batch(suggested_tasks)
-            logger.info(f"✅ Generated {len(suggested_tasks)} tasks for client {client_id}")
-        except Exception as e:
-            logger.error(f"⚠️ Task Generation Failed: {e}", exc_info=True)
-            # Non-blocking error
+        # El flujo ahora es: Análisis -> Estrategia (Canvas) -> Tareas
+        # try:
+        #     suggested_tasks = aggregator.generate_suggested_tasks(client_id, result_json)
+        #     db.create_tasks_batch(suggested_tasks)
+        #     logger.info(f"✅ Generated {len(suggested_tasks)} tasks for client {client_id}")
+        # except Exception as e:
+        #     logger.error(f"⚠️ Task Generation Failed: {e}", exc_info=True)
+        #     # Non-blocking error
         
         # =========================================
         # FINAL: AUDITORÍA Y GUARDADO
