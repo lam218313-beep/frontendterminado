@@ -1,8 +1,8 @@
 import React from 'react';
 import { Download } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
-import * as api from '../../services/api';
-import { InteractiveHeader } from '../../components/InteractiveHeader';
+import { useAuth } from '../contexts/AuthContext';
+import * as api from '../services/api';
+import { InteractiveHeader } from '../components/InteractiveHeader';
 
 import {
     CardMission,

@@ -805,3 +805,43 @@ export async function generatePersonas(clientId: string, data: any): Promise<any
   });
   return handleResponse(response);
 }
+
+// =============================================================================
+// BRAND BOOK ENDPOINTS
+// =============================================================================
+
+/**
+ * Get Brand Identity
+ * GET /clients/{client_id}/brand
+ */
+export async function getBrand(clientId: string): Promise<{ status: string; data: any }> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/clients/${clientId}/brand`, {
+      headers: getAuthHeaders(),
+    });
+
+    // Handle 404 specially as "empty"
+    if (response.status === 404) {
+      return { status: "empty", data: null };
+    }
+
+    const data = await handleResponse<any>(response);
+    return { status: "success", data };
+  } catch (error) {
+    console.error("Error fetching brand:", error);
+    return { status: "error", data: null };
+  }
+}
+
+/**
+ * Generate Brand Identity using AI
+ * POST /clients/{client_id}/brand/generate
+ */
+export async function generateBrand(clientId: string): Promise<{ status: string; data: any }> {
+  const response = await fetch(`${API_BASE_URL}/clients/${clientId}/brand/generate`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  const data = await handleResponse<any>(response);
+  return { status: "success", data };
+}
