@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { KanbanBoard } from '../../tareas/components/KanbanBoard.tsx';
+import { KanbanBoard } from './KanbanBoard';
 
 import { WorkflowStepper } from './WorkflowStepper';
 
