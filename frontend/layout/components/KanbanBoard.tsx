@@ -78,7 +78,7 @@ const TaskCard: React.FC<{
       <div className="flex justify-between items-start mb-2 pointer-events-none">
         <div className="flex items-center gap-2">
           {task.area_estrategica && (
-            <span className={`px - 2 py - 0.5 rounded text - [10px] font - bold uppercase tracking - wide border ${urgencyColor} `}>
+            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${urgencyColor}`}>
               {task.area_estrategica}
             </span>
           )}
