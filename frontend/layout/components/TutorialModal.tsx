@@ -5,7 +5,7 @@ import { X, ChevronRight, ChevronLeft, Volume2, VolumeX, Play, Pause, Sparkles, 
 interface TutorialSlide {
     title: string;
     description: string;
-    icon: any; // Lucide icon component
+    icon: any;
     audioUrl?: string;
     duration?: number;
 }
@@ -16,61 +16,96 @@ interface TutorialModalProps {
     slides: TutorialSlide[];
 }
 
-// Icon Graphic Component with decorative elements
-const SlideGraphic: React.FC<{ Icon: any; isActive: boolean }> = ({ Icon, isActive }) => {
+// Premium Icon Graphic Component with corporate colors
+const SlideGraphic: React.FC<{ Icon: any; isActive: boolean; slideIndex: number }> = ({ Icon, isActive, slideIndex }) => {
+    // Corporate gradient colors per slide
+    const gradients = [
+        'from-blue-400 via-cyan-400 to-blue-500',      // Intro
+        'from-indigo-400 via-purple-400 to-indigo-500', // Entrevista
+        'from-violet-400 via-fuchsia-400 to-violet-500', // Manual
+        'from-blue-500 via-sky-400 to-blue-600',        // Análisis
+        'from-cyan-400 via-teal-400 to-cyan-500',       // Estrategia
+        'from-indigo-500 via-blue-500 to-indigo-600',   // Planificación
+        'from-purple-500 via-pink-500 to-purple-600',   // Beneficios
+        'from-emerald-400 via-teal-400 to-emerald-500'  // Cierre
+    ];
+
+    const currentGradient = gradients[slideIndex] || gradients[0];
+
     return (
-        <div className="relative w-full h-full flex items-center justify-center">
-            {/* Background decorative circles */}
+        <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+            {/* Animated gradient orbs - glassmorphism style */}
             <motion.div
-                animate={{ scale: isActive ? [1, 1.2, 1] : 1, opacity: isActive ? [0.3, 0.5, 0.3] : 0.3 }}
-                transition={{ duration: 3, repeat: Infinity }}
-                className="absolute w-64 h-64 rounded-full bg-gradient-to-br from-indigo-200/40 to-purple-200/40 blur-3xl"
+                animate={{
+                    scale: isActive ? [1, 1.3, 1] : 1,
+                    opacity: isActive ? [0.15, 0.25, 0.15] : 0.15,
+                    rotate: [0, 180, 360]
+                }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className={`absolute w-96 h-96 rounded-full bg-gradient-to-br ${currentGradient} blur-3xl`}
             />
             <motion.div
-                animate={{ scale: isActive ? [1, 1.15, 1] : 1, opacity: isActive ? [0.2, 0.4, 0.2] : 0.2 }}
-                transition={{ duration: 2.5, repeat: Infinity, delay: 0.3 }}
-                className="absolute w-48 h-48 rounded-full bg-gradient-to-br from-purple-200/30 to-pink-200/30 blur-2xl"
+                animate={{
+                    scale: isActive ? [1, 1.2, 1] : 1,
+                    opacity: isActive ? [0.1, 0.2, 0.1] : 0.1,
+                    rotate: [360, 180, 0]
+                }}
+                transition={{ duration: 25, repeat: Infinity, ease: "linear", delay: 0.5 }}
+                className={`absolute w-80 h-80 rounded-full bg-gradient-to-tr ${currentGradient} blur-3xl`}
             />
 
-            {/* Main Icon */}
+            {/* Main Icon with glassmorphism container */}
             <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5, ease: "backOut" }}
+                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                 className="relative z-10"
             >
                 <div className="relative">
-                    {/* Icon glow effect */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl blur-2xl opacity-40" />
-
-                    {/* Icon container */}
+                    {/* Icon glassmorphism card */}
                     <motion.div
-                        animate={{ rotate: [0, 5, -5, 0] }}
-                        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                        className="relative bg-gradient-to-br from-indigo-100 to-purple-100 rounded-3xl p-8 shadow-2xl border-2 border-white/50"
+                        animate={{
+                            y: isActive ? [0, -8, 0] : 0,
+                        }}
+                        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                        className="relative bg-white/20 backdrop-blur-xl rounded-[32px] p-12 border-2 border-white/30"
+                        style={{
+                            boxShadow: '0 20px 60px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.6)',
+                            background: 'linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.1))'
+                        }}
                     >
-                        <Icon size={80} className="text-indigo-600" strokeWidth={1.5} />
+                        <div className="relative">
+                            {/* Icon glow */}
+                            <div className={`absolute inset-0 bg-gradient-to-br ${currentGradient} rounded-2xl blur-xl opacity-50`} />
+
+                            {/* Icon */}
+                            <Icon size={100} className="relative text-white drop-shadow-2xl" strokeWidth={1.5} />
+                        </div>
                     </motion.div>
                 </div>
 
-                {/* Floating particles */}
-                {[...Array(6)].map((_, i) => (
+                {/* Floating sparkles */}
+                {[...Array(8)].map((_, i) => (
                     <motion.div
                         key={i}
                         animate={{
-                            y: [0, -30, 0],
-                            x: [0, Math.sin(i) * 20, 0],
-                            opacity: [0.4, 0.8, 0.4]
+                            y: [0, -40, 0],
+                            x: [0, Math.sin(i) * 25, 0],
+                            opacity: [0.3, 0.8, 0.3],
+                            scale: [0.8, 1.2, 0.8]
                         }}
                         transition={{
-                            duration: 3 + i * 0.5,
+                            duration: 3 + i * 0.4,
                             repeat: Infinity,
-                            delay: i * 0.3
+                            delay: i * 0.2,
+                            ease: "easeInOut"
                         }}
-                        className="absolute w-2 h-2 rounded-full bg-gradient-to-r from-indigo-400 to-purple-400"
+                        className={`absolute w-2 h-2 rounded-full bg-gradient-to-r ${currentGradient}`}
                         style={{
-                            top: `${20 + i * 10}%`,
-                            left: `${15 + i * 12}%`
+                            top: `${10 + i * 11}%`,
+                            left: `${5 + i * 11}%`,
+                            filter: 'blur(1px)',
+                            boxShadow: '0 0 10px rgba(255,255,255,0.8)'
                         }}
                     />
                 ))}
@@ -114,7 +149,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose, s
     const handleNext = () => {
         if (currentIndex < slides.length - 1) {
             setCurrentIndex(prev => prev + 1);
-            setIsPlaying(true); // Auto-play audio on slide change
+            setIsPlaying(true);
         } else {
             onClose();
         }
@@ -123,7 +158,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose, s
     const handlePrev = () => {
         if (currentIndex > 0) {
             setCurrentIndex(prev => prev - 1);
-            setIsPlaying(true); // Auto-play audio on slide change
+            setIsPlaying(true);
         }
     };
 
@@ -149,71 +184,101 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose, s
         <AnimatePresence>
             {isOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    {/* Backdrop */}
+                    {/* Backdrop with subtle gradient */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="absolute inset-0 bg-black/10 backdrop-blur-md"
+                        className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-slate-800/30 to-slate-900/40 backdrop-blur-md"
                     />
 
-                    {/* Modal Card */}
+                    {/* Premium Glassmorphism Modal Card */}
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="relative w-full max-w-4xl bg-white/85 border-2 border-white/60 rounded-[40px] overflow-hidden shadow-2xl flex flex-col md:flex-row h-auto md:h-[520px] backdrop-blur-2xl"
+                        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                        className="relative w-full max-w-5xl flex flex-col md:flex-row h-auto md:h-[560px] rounded-[40px] overflow-hidden"
                         style={{
-                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255,255,255,0.6) inset',
-                            background: 'linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.85))'
+                            background: 'linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.85))',
+                            backdropFilter: 'blur(40px)',
+                            boxShadow: '0 25px 60px -10px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255,255,255,0.8) inset',
+                            border: '2px solid rgba(255,255,255,0.5)'
                         }}
                     >
-                        {/* Graphic Section */}
-                        <div className="relative w-full md:w-1/2 h-[300px] md:h-full bg-gradient-to-br from-indigo-50/60 via-purple-50/40 to-pink-50/60 flex items-center justify-center overflow-hidden">
+                        {/* Left Panel - Graphic Section with premium glassmorphism */}
+                        <div
+                            className="relative w-full md:w-[45%] h-[320px] md:h-full flex items-center justify-center overflow-hidden"
+                            style={{
+                                background: 'linear-gradient(135deg, rgba(245,248,255,0.8), rgba(237,242,255,0.6))',
+                            }}
+                        >
+                            {/* Subtle grid pattern overlay */}
+                            <div className="absolute inset-0 opacity-[0.03]" style={{
+                                backgroundImage: 'radial-gradient(circle at 1px 1px, rgb(0,0,0) 1px, transparent 0)',
+                                backgroundSize: '24px 24px'
+                            }} />
+
                             <AnimatePresence mode="wait">
                                 <motion.div
                                     key={currentIndex}
                                     initial={{ opacity: 0, scale: 0.9 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.9 }}
-                                    transition={{ duration: 0.4 }}
+                                    transition={{ duration: 0.5 }}
                                     className="absolute inset-0"
                                 >
                                     <SlideGraphic
                                         Icon={slides[currentIndex].icon}
                                         isActive={isOpen}
+                                        slideIndex={currentIndex}
                                     />
                                 </motion.div>
                             </AnimatePresence>
 
-                            {/* Audio Visualizer */}
+                            {/* Premium Audio Visualizer */}
                             {isPlaying && !isMuted && (
-                                <div className="absolute bottom-6 left-6 flex gap-1.5 items-end h-12 bg-white/40 backdrop-blur-sm px-3 py-2 rounded-full border border-white/60">
-                                    {[1, 2, 3, 4, 5, 3, 2].map((i, idx) => (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="absolute bottom-7 left-7 flex gap-2 items-end h-14 px-4 py-3 rounded-2xl"
+                                    style={{
+                                        background: 'rgba(255,255,255,0.35)',
+                                        backdropFilter: 'blur(20px)',
+                                        border: '1.5px solid rgba(255,255,255,0.5)',
+                                        boxShadow: '0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)'
+                                    }}
+                                >
+                                    {[1, 2, 3, 4, 5, 4, 3, 2].map((i, idx) => (
                                         <motion.div
                                             key={idx}
-                                            animate={{ height: [10, 16 + i * 5, 10] }}
-                                            transition={{ repeat: Infinity, duration: 0.5 + idx * 0.08 }}
-                                            className="w-1.5 bg-gradient-to-t from-indigo-600 to-purple-500 rounded-full"
+                                            animate={{ height: [12, 18 + i * 4, 12] }}
+                                            transition={{ repeat: Infinity, duration: 0.5 + idx * 0.07 }}
+                                            className="w-1.5 rounded-full bg-gradient-to-t from-blue-600 via-cyan-500 to-blue-400"
                                         />
                                     ))}
-                                </div>
+                                </motion.div>
                             )}
                         </div>
 
-                        {/* Content Section */}
-                        <div className="flex-1 p-8 md:p-10 flex flex-col relative">
-                            {/* Close Button */}
+                        {/* Right Panel - Content Section with glassmorphism */}
+                        <div className="flex-1 p-10 md:p-12 flex flex-col relative">
+                            {/* Close Button - Premium style */}
                             <button
                                 onClick={onClose}
-                                className="absolute top-6 right-6 p-2.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100/80 transition-all"
+                                className="absolute top-7 right-7 p-3 rounded-full text-slate-500 hover:text-slate-800 transition-all"
+                                style={{
+                                    background: 'rgba(255,255,255,0.4)',
+                                    backdropFilter: 'blur(10px)',
+                                    border: '1.5px solid rgba(255,255,255,0.6)'
+                                }}
                             >
-                                <X size={22} />
+                                <X size={20} strokeWidth={2.5} />
                             </button>
 
                             {/* Text Content */}
-                            <div className="flex-1 flex flex-col justify-center mt-4 md:mt-0 pr-8">
+                            <div className="flex-1 flex flex-col justify-center pr-6">
                                 <AnimatePresence mode="wait">
                                     <motion.div
                                         key={currentIndex}
@@ -222,46 +287,56 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose, s
                                         exit={{ opacity: 0, y: -10 }}
                                         transition={{ duration: 0.3 }}
                                     >
-                                        <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-5 leading-tight tracking-tight">
+                                        <h2 className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 mb-6 leading-tight tracking-tight">
                                             {slides[currentIndex].title}
                                         </h2>
-                                        <p className="text-slate-600 text-base md:text-lg leading-relaxed font-medium">
+                                        <p className="text-slate-600 text-lg md:text-xl leading-relaxed font-medium">
                                             {slides[currentIndex].description}
                                         </p>
                                     </motion.div>
                                 </AnimatePresence>
                             </div>
 
-                            {/* Controls */}
-                            <div className="mt-8 flex items-center justify-between">
+                            {/* Controls - Premium glassmorphism */}
+                            <div className="mt-10 flex items-center justify-between">
                                 {/* Audio Controls */}
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2.5">
                                     <button
                                         onClick={toggleAudio}
-                                        className="p-2.5 rounded-full text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all"
+                                        className="p-3 rounded-full text-slate-600 hover:text-blue-600 transition-all"
+                                        style={{
+                                            background: 'rgba(255,255,255,0.5)',
+                                            backdropFilter: 'blur(10px)',
+                                            border: '1.5px solid rgba(255,255,255,0.7)'
+                                        }}
                                         title={isPlaying ? "Pausar" : "Reproducir"}
                                     >
-                                        {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+                                        {isPlaying ? <Pause size={18} strokeWidth={2.5} /> : <Play size={18} strokeWidth={2.5} />}
                                     </button>
                                     <button
                                         onClick={toggleMute}
-                                        className="p-2.5 rounded-full text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all"
+                                        className="p-3 rounded-full text-slate-600 hover:text-blue-600 transition-all"
+                                        style={{
+                                            background: 'rgba(255,255,255,0.5)',
+                                            backdropFilter: 'blur(10px)',
+                                            border: '1.5px solid rgba(255,255,255,0.7)'
+                                        }}
                                         title={isMuted ? "Activar" : "Silenciar"}
                                     >
-                                        {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                                        {isMuted ? <VolumeX size={18} strokeWidth={2.5} /> : <Volume2 size={18} strokeWidth={2.5} />}
                                     </button>
                                 </div>
 
                                 {/* Navigation */}
-                                <div className="flex items-center gap-3">
-                                    {/* Dots */}
-                                    <div className="flex gap-2 mr-4">
+                                <div className="flex items-center gap-4">
+                                    {/* Progress Dots */}
+                                    <div className="flex gap-2.5 mr-3">
                                         {slides.map((_, idx) => (
                                             <div
                                                 key={idx}
-                                                className={`h-2 rounded-full transition-all duration-300 ${idx === currentIndex
-                                                    ? 'w-8 bg-gradient-to-r from-indigo-600 to-purple-600'
-                                                    : 'w-2 bg-slate-300'
+                                                className={`h-2 rounded-full transition-all duration-500 ${idx === currentIndex
+                                                        ? 'w-10 bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600'
+                                                        : 'w-2 bg-slate-300/60'
                                                     }`}
                                             />
                                         ))}
@@ -270,21 +345,30 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose, s
                                     <button
                                         onClick={handlePrev}
                                         disabled={currentIndex === 0}
-                                        className={`p-3 rounded-full border-2 transition-all ${currentIndex === 0
-                                            ? 'text-slate-300 border-slate-200 cursor-not-allowed'
-                                            : 'text-slate-700 border-slate-300 hover:bg-slate-50 hover:border-slate-400'
+                                        className={`p-3.5 rounded-full transition-all ${currentIndex === 0
+                                                ? 'text-slate-300 cursor-not-allowed'
+                                                : 'text-slate-700 hover:text-blue-600'
                                             }`}
+                                        style={{
+                                            background: currentIndex === 0 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.5)',
+                                            backdropFilter: 'blur(10px)',
+                                            border: `1.5px solid ${currentIndex === 0 ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.7)'}`
+                                        }}
                                     >
-                                        <ChevronLeft size={20} />
+                                        <ChevronLeft size={20} strokeWidth={2.5} />
                                     </button>
 
                                     <button
                                         onClick={handleNext}
-                                        className="flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-full transition-all shadow-xl shadow-indigo-500/30 group"
+                                        className="flex items-center gap-2.5 px-8 py-4 text-white font-bold rounded-2xl transition-all shadow-xl group"
+                                        style={{
+                                            background: 'linear-gradient(135deg, #2563eb 0%, #06b6d4 100%)',
+                                            boxShadow: '0 10px 40px rgba(37, 99, 235, 0.4), inset 0 1px 0 rgba(255,255,255,0.3)'
+                                        }}
                                     >
-                                        <span>{currentIndex === slides.length - 1 ? 'Empezar' : 'Siguiente'}</span>
+                                        <span className="text-base">{currentIndex === slides.length - 1 ? 'Empezar' : 'Siguiente'}</span>
                                         {currentIndex < slides.length - 1 && (
-                                            <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                            <ChevronRight size={20} strokeWidth={2.5} className="group-hover:translate-x-1 transition-transform" />
                                         )}
                                     </button>
                                 </div>
