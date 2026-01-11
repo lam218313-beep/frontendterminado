@@ -11,21 +11,51 @@ interface PartnersViewProps {
 const TUTORIAL_SLIDES = [
   {
     title: "Bienvenido a Pixely Partners",
-    description: "Descubre cómo nuestra tecnología de IA valida tu mercado y minimiza la incertidumbre en tus decisiones estratégicas.",
-    image: "https://images.unsplash.com/photo-1639322537228-ad7117a767f1?q=80&w=1000&auto=format&fit=crop", // Abstract Tech
-    audioUrl: "/assets/audio/tutorial_welcome.mp3" // Placeholder
+    description: "Somos una agencia de marketing que pone a tu disposición todo nuestro ecosistema tecnológico. No vendemos herramientas... ofrecemos resultados. Validamos tu mercado, identificamos oportunidades reales y eliminamos la incertidumbre de tus decisiones.",
+    animationType: 'particles' as const,
+    audioUrl: "/assets/audio/tutorial_step1_intro.mp3"
   },
   {
-    title: "Análisis Profundo",
-    description: "Utilizamos agentes autónomos para escanear redes sociales, identificar tendencias y entender a tu audiencia real.",
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1000&auto=format&fit=crop", // Analytics
-    audioUrl: "/assets/audio/tutorial_analysis.mp3"
+    title: "Fase 1: Tu Identidad (Entrevista)",
+    description: "Fase 01.- La entrevista: En esta etapa, nos centraremos en conocerte, saber sobre tu marca, tus productos y sus precios, tus clientes usuales y tu forma de competir en tu mercado. Aprovecharemos esa información para sentar las bases de los posteriores análisis y estrategias a desarrollar. Además, conoceremos a tu cliente ideal y al no deseado, es importante saber para quién trabajamos!",
+    animationType: 'neural' as const,
+    audioUrl: "/assets/audio/tutorial_step2_interview.mp3"
   },
   {
-    title: "Estrategia y Planificación",
-    description: "Transformamos datos en estrategias accionables. Desde la definición de marca hasta el plan de contenidos diario.",
-    image: "https://images.unsplash.com/photo-1553877615-30c73a63b4d4?q=80&w=1000&auto=format&fit=crop", // Strategy
-    audioUrl: "/assets/audio/tutorial_strategy.mp3"
+    title: "Fase 2: Manual de Marca",
+    description: "Fase 02: En esta etapa, tras conocer tu empresa, los valores que la definen y el cliente que esperamos recibir, creamos una marca: un diseño específico para transmitir exactamente lo que tu empresa representa. De esta manera, tu marca acumulará valor con cada estrategia desarrollada.",
+    animationType: 'dna' as const,
+    audioUrl: "/assets/audio/tutorial_step3_brand.mp3"
+  },
+  {
+    title: "Fase 3: Análisis Profundo",
+    description: "Fase 03: Nuestros sistemas de análisis, recopilan la información de tus redes sociales y tendencias de mercado en tiempo real. Cruzamos miles de datos con metodologías estadísticas para encontrar oportunidades de crecimiento y mejora. Gracias a este sistema, obtendrás siempre una respuesta a cada estrategia virtual que implementes.",
+    animationType: 'network' as const,
+    audioUrl: "/assets/audio/tutorial_step4_analysis.mp3"
+  },
+  {
+    title: "Fase 4: Estrategia Accionable",
+    description: "Fase 04: Ya conocimos a detalle tu mercado y tu lugar en él, lo que sigue, es trazar estrategias para cumplir con tus objetivos. Desarrollaremos estrategias que te permitan crecer sin adivinar ni cometer errores de novatos. Todo basado en evidencia real.",
+    animationType: 'grid' as const,
+    audioUrl: "/assets/audio/tutorial_step5_strategy.mp3"
+  },
+  {
+    title: "Fase 5: Ejecución (Planificación)",
+    description: "Finalmente, convertimos la estrategia en tareas diarias en tu tablero Kanban. Sabrás exactamente qué hacer y cuándo. Si tenemos que publicar un vídeo, podrás aprobarlo en un click ¡Olvídate de publicaciones que no se hacen!",
+    animationType: 'waves' as const,
+    audioUrl: "/assets/audio/tutorial_step6_planning.mp3"
+  },
+  {
+    title: "Desbloquea Más Poder con el Tiempo",
+    description: "Fase 06: A más tiempo trabajamos juntos, más desbloqueamos. Accede a análisis más profundos, estrategias más avanzadas y herramientas exclusivas. Por ejemplo: análisis predictivo de tendencias, campañas automatizadas personalizadas, y consultoría estratégica prioritaria. Tu crecimiento acelera con cada mes.",
+    animationType: 'pulse' as const,
+    audioUrl: "/assets/audio/tutorial_step7_benefits.mp3"
+  },
+  {
+    title: "¡Estamos Listos para Ti!",
+    description: "Gracias por conocer Pixely Partners. Estamos emocionados de trabajar contigo. El primer paso es sencillo: completa la entrevista inicial para que conozcamos tu marca a fondo. Desde ahí, construiremos juntos tu camino hacia el éxito. ¡Empecemos!",
+    animationType: 'sparkles' as const,
+    audioUrl: "/assets/audio/tutorial_step8_closing.mp3"
   }
 ];
 
