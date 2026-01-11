@@ -434,14 +434,14 @@ const App: React.FC = () => {
     };
 
     return (
-        <div className="flex h-full min-h-[600px] bg-brand-bg font-sans overflow-hidden text-brand-dark selection:bg-accent-100 selection:text-accent-700">
+        <div className="relative flex h-full min-h-[600px] bg-brand-bg font-sans overflow-hidden text-brand-dark selection:bg-accent-100 selection:text-accent-700">
             <main className="flex-1 relative overflow-hidden flex flex-col">
 
                 {/* Header Toggle */}
                 <header className="absolute top-6 left-1/2 -translate-x-1/2 h-16 glass-panel rounded-full shadow-float flex items-center gap-4 px-2 z-40">
                     <div className="flex items-center bg-gray-100/50 p-1 rounded-full border border-gray-200/50">
-                        <button onClick={() => setViewMode('map')} className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold transition-all ${viewMode === 'map' ? 'bg-white shadow-sm' : 'text-gray-400'}`}>Map</button>
-                        <button onClick={() => setViewMode('list')} className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold transition-all ${viewMode === 'list' ? 'bg-white shadow-sm' : 'text-gray-400'}`}>List</button>
+                        <button onClick={() => setViewMode('map')} className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold transition-all ${viewMode === 'map' ? 'bg-white shadow-sm' : 'text-gray-400'}`}>Mapa</button>
+                        <button onClick={() => setViewMode('list')} className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold transition-all ${viewMode === 'list' ? 'bg-white shadow-sm' : 'text-gray-400'}`}>Lista</button>
                     </div>
                 </header>
 
@@ -469,6 +469,19 @@ const App: React.FC = () => {
                             </svg>
 
                             {nodes.map(node => renderMapNode(node))}
+
+                            {/* Selection Box Overlay */}
+                            {selectionBox && (
+                                <div
+                                    className="absolute border border-accent-500 bg-accent-500/10 pointer-events-none z-50 rounded-sm"
+                                    style={{
+                                        left: Math.min(selectionBox.startX, selectionBox.currentX),
+                                        top: Math.min(selectionBox.startY, selectionBox.currentY),
+                                        width: Math.abs(selectionBox.currentX - selectionBox.startX),
+                                        height: Math.abs(selectionBox.currentY - selectionBox.startY)
+                                    }}
+                                />
+                            )}
                         </div>
                     </div>
 
@@ -512,7 +525,7 @@ const App: React.FC = () => {
 
             {/* RECOMMENDATIONS SIDEBAR */}
             <aside
-                className={`fixed right-8 top-32 bottom-8 w-80 glass-panel border border-white/40 shadow-2xl rounded-[32px] p-6 flex flex-col transition-all duration-300 transform z-50 
+                className={`absolute right-6 top-6 bottom-6 w-80 glass-panel border border-white/40 shadow-2xl rounded-[32px] p-6 flex flex-col transition-all duration-300 transform z-50 
                 ${showRecs ? 'translate-x-0 opacity-100' : 'translate-x-[120%] opacity-0 pointer-events-none'}`}
             >
                 <div className="flex items-center justify-between mb-6">
