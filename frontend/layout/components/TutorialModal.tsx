@@ -16,25 +16,14 @@ interface TutorialModalProps {
     slides: TutorialSlide[];
 }
 
-// Premium Icon Graphic Component with corporate colors
+// Premium Icon Graphic Component with Pixely corporate colors
 const SlideGraphic: React.FC<{ Icon: any; isActive: boolean; slideIndex: number }> = ({ Icon, isActive, slideIndex }) => {
-    // Corporate gradient colors per slide
-    const gradients = [
-        'from-blue-400 via-cyan-400 to-blue-500',      // Intro
-        'from-indigo-400 via-purple-400 to-indigo-500', // Entrevista
-        'from-violet-400 via-fuchsia-400 to-violet-500', // Manual
-        'from-blue-500 via-sky-400 to-blue-600',        // Análisis
-        'from-cyan-400 via-teal-400 to-cyan-500',       // Estrategia
-        'from-indigo-500 via-blue-500 to-indigo-600',   // Planificación
-        'from-purple-500 via-pink-500 to-purple-600',   // Beneficios
-        'from-emerald-400 via-teal-400 to-emerald-500'  // Cierre
-    ];
-
-    const currentGradient = gradients[slideIndex] || gradients[0];
+    // Pixely corporate cyan/turquoise gradient (same for all slides for brand consistency)
+    const pixelyGradient = 'from-cyan-400 via-teal-400 to-cyan-500';
 
     return (
         <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
-            {/* Animated gradient orbs - glassmorphism style */}
+            {/* Animated gradient orbs - glassmorphism style with Pixely colors */}
             <motion.div
                 animate={{
                     scale: isActive ? [1, 1.3, 1] : 1,
@@ -42,7 +31,7 @@ const SlideGraphic: React.FC<{ Icon: any; isActive: boolean; slideIndex: number 
                     rotate: [0, 180, 360]
                 }}
                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                className={`absolute w-96 h-96 rounded-full bg-gradient-to-br ${currentGradient} blur-3xl`}
+                className={`absolute w-96 h-96 rounded-full bg-gradient-to-br ${pixelyGradient} blur-3xl`}
             />
             <motion.div
                 animate={{
@@ -51,7 +40,7 @@ const SlideGraphic: React.FC<{ Icon: any; isActive: boolean; slideIndex: number 
                     rotate: [360, 180, 0]
                 }}
                 transition={{ duration: 25, repeat: Infinity, ease: "linear", delay: 0.5 }}
-                className={`absolute w-80 h-80 rounded-full bg-gradient-to-tr ${currentGradient} blur-3xl`}
+                className={`absolute w-80 h-80 rounded-full bg-gradient-to-tr ${pixelyGradient} blur-3xl`}
             />
 
             {/* Main Icon with glassmorphism container */}
@@ -75,40 +64,14 @@ const SlideGraphic: React.FC<{ Icon: any; isActive: boolean; slideIndex: number 
                         }}
                     >
                         <div className="relative">
-                            {/* Icon glow */}
-                            <div className={`absolute inset-0 bg-gradient-to-br ${currentGradient} rounded-2xl blur-xl opacity-50`} />
+                            {/* Icon glow with Pixely colors */}
+                            <div className={`absolute inset-0 bg-gradient-to-br ${pixelyGradient} rounded-2xl blur-xl opacity-50`} />
 
                             {/* Icon */}
                             <Icon size={100} className="relative text-white drop-shadow-2xl" strokeWidth={1.5} />
                         </div>
                     </motion.div>
                 </div>
-
-                {/* Floating sparkles */}
-                {[...Array(8)].map((_, i) => (
-                    <motion.div
-                        key={i}
-                        animate={{
-                            y: [0, -40, 0],
-                            x: [0, Math.sin(i) * 25, 0],
-                            opacity: [0.3, 0.8, 0.3],
-                            scale: [0.8, 1.2, 0.8]
-                        }}
-                        transition={{
-                            duration: 3 + i * 0.4,
-                            repeat: Infinity,
-                            delay: i * 0.2,
-                            ease: "easeInOut"
-                        }}
-                        className={`absolute w-2 h-2 rounded-full bg-gradient-to-r ${currentGradient}`}
-                        style={{
-                            top: `${10 + i * 11}%`,
-                            left: `${5 + i * 11}%`,
-                            filter: 'blur(1px)',
-                            boxShadow: '0 0 10px rgba(255,255,255,0.8)'
-                        }}
-                    />
-                ))}
             </motion.div>
         </div>
     );
@@ -255,7 +218,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose, s
                                             key={idx}
                                             animate={{ height: [12, 18 + i * 4, 12] }}
                                             transition={{ repeat: Infinity, duration: 0.5 + idx * 0.07 }}
-                                            className="w-1.5 rounded-full bg-gradient-to-t from-blue-600 via-cyan-500 to-blue-400"
+                                            className="w-1.5 rounded-full bg-gradient-to-t from-cyan-600 via-teal-500 to-cyan-400"
                                         />
                                     ))}
                                 </motion.div>
@@ -335,8 +298,8 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose, s
                                             <div
                                                 key={idx}
                                                 className={`h-2 rounded-full transition-all duration-500 ${idx === currentIndex
-                                                        ? 'w-10 bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600'
-                                                        : 'w-2 bg-slate-300/60'
+                                                    ? 'w-10 bg-gradient-to-r from-cyan-500 via-teal-400 to-cyan-500'
+                                                    : 'w-2 bg-slate-300/60'
                                                     }`}
                                             />
                                         ))}
@@ -346,8 +309,8 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose, s
                                         onClick={handlePrev}
                                         disabled={currentIndex === 0}
                                         className={`p-3.5 rounded-full transition-all ${currentIndex === 0
-                                                ? 'text-slate-300 cursor-not-allowed'
-                                                : 'text-slate-700 hover:text-blue-600'
+                                            ? 'text-slate-300 cursor-not-allowed'
+                                            : 'text-slate-700 hover:text-cyan-600'
                                             }`}
                                         style={{
                                             background: currentIndex === 0 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.5)',
@@ -362,8 +325,8 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose, s
                                         onClick={handleNext}
                                         className="flex items-center gap-2.5 px-8 py-4 text-white font-bold rounded-2xl transition-all shadow-xl group"
                                         style={{
-                                            background: 'linear-gradient(135deg, #2563eb 0%, #06b6d4 100%)',
-                                            boxShadow: '0 10px 40px rgba(37, 99, 235, 0.4), inset 0 1px 0 rgba(255,255,255,0.3)'
+                                            background: 'linear-gradient(135deg, #06b6d4 0%, #14b8a6 100%)',
+                                            boxShadow: '0 10px 40px rgba(6, 182, 212, 0.4), inset 0 1px 0 rgba(255,255,255,0.3)'
                                         }}
                                     >
                                         <span className="text-base">{currentIndex === slides.length - 1 ? 'Empezar' : 'Siguiente'}</span>
