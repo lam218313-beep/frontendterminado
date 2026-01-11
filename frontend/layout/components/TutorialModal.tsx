@@ -18,8 +18,8 @@ interface TutorialModalProps {
 
 // Premium Icon Graphic Component with Pixely corporate colors
 const SlideGraphic: React.FC<{ Icon: any; isActive: boolean; slideIndex: number }> = ({ Icon, isActive, slideIndex }) => {
-    // Pixely corporate cyan/turquoise gradient (same for all slides for brand consistency)
-    const pixelyGradient = 'from-cyan-400 via-teal-400 to-cyan-500';
+    // Pixely corporate magenta/pink gradient (rgb(242, 15, 121))
+    const pixelyGradient = 'from-pink-500 via-rose-500 to-pink-600';
 
     return (
         <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
@@ -218,7 +218,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose, s
                                             key={idx}
                                             animate={{ height: [12, 18 + i * 4, 12] }}
                                             transition={{ repeat: Infinity, duration: 0.5 + idx * 0.07 }}
-                                            className="w-1.5 rounded-full bg-gradient-to-t from-cyan-600 via-teal-500 to-cyan-400"
+                                            className="w-1.5 rounded-full bg-gradient-to-t from-pink-600 via-rose-500 to-pink-400"
                                         />
                                     ))}
                                 </motion.div>
@@ -298,8 +298,8 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose, s
                                             <div
                                                 key={idx}
                                                 className={`h-2 rounded-full transition-all duration-500 ${idx === currentIndex
-                                                    ? 'w-10 bg-gradient-to-r from-cyan-500 via-teal-400 to-cyan-500'
-                                                    : 'w-2 bg-slate-300/60'
+                                                        ? 'w-10 bg-gradient-to-r from-pink-500 via-rose-500 to-pink-500'
+                                                        : 'w-2 bg-slate-300/60'
                                                     }`}
                                             />
                                         ))}
@@ -309,8 +309,8 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose, s
                                         onClick={handlePrev}
                                         disabled={currentIndex === 0}
                                         className={`p-3.5 rounded-full transition-all ${currentIndex === 0
-                                            ? 'text-slate-300 cursor-not-allowed'
-                                            : 'text-slate-700 hover:text-cyan-600'
+                                                ? 'text-slate-300 cursor-not-allowed'
+                                                : 'text-slate-700 hover:text-pink-600'
                                             }`}
                                         style={{
                                             background: currentIndex === 0 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.5)',
@@ -325,8 +325,8 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose, s
                                         onClick={handleNext}
                                         className="flex items-center gap-2.5 px-8 py-4 text-white font-bold rounded-2xl transition-all shadow-xl group"
                                         style={{
-                                            background: 'linear-gradient(135deg, #06b6d4 0%, #14b8a6 100%)',
-                                            boxShadow: '0 10px 40px rgba(6, 182, 212, 0.4), inset 0 1px 0 rgba(255,255,255,0.3)'
+                                            background: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)',
+                                            boxShadow: '0 10px 40px rgba(236, 72, 153, 0.4), inset 0 1px 0 rgba(255,255,255,0.3)'
                                         }}
                                     >
                                         <span className="text-base">{currentIndex === slides.length - 1 ? 'Empezar' : 'Siguiente'}</span>
