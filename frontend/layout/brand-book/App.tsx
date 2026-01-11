@@ -2,7 +2,6 @@ import React from 'react';
 import { Download } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import * as api from '../services/api';
-import { InteractiveHeader } from '../components/InteractiveHeader';
 
 import {
     CardMission,
@@ -61,97 +60,77 @@ const App: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F4F7FE] font-sans selection:bg-primary-500 selection:text-white pb-20">
-            <main className="w-full p-4 md:p-8">
-                <div className="max-w-7xl mx-auto">
+        <div className="font-sans selection:bg-primary-500 selection:text-white pb-12">
+            {/* Grid Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 auto-rows-auto">
 
-                    {/* Header / Actions */}
-                    <div className="mb-8">
-                        <InteractiveHeader
-                            title="Regenetix"
-                            subtitle="El futuro de la regeneración celular."
-                            supertitle="Brand Guidelines v2.0"
-                            colors={['#F20F79', '#465362']}
-                        />
+                {/* --- ROW 1: STRATEGY (Verbal Identity) --- */}
 
-                        <div className="flex justify-between items-center mt-6">
-                            <h2 className="text-lg font-bold text-gray-400">Dashboard de Identidad</h2>
-                            {/* Regenerate button removed */}
-                        </div>
-                    </div>
-
-                    {/* Grid Layout */}
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 auto-rows-auto">
-
-                        {/* --- ROW 1: STRATEGY (Verbal Identity) --- */}
-
-                        {/* 2. Mission & Vision (Large) */}
-                        <div className="col-span-12 md:col-span-8 min-h-[300px]">
-                            <CardMission data={brandData} />
-                        </div>
-
-                        {/* 3. Personality & Tone (Tall/Narrow) */}
-                        <div className="col-span-12 md:col-span-4 min-h-[300px]">
-                            <CardTone data={brandData} />
-                        </div>
-
-                        {/* --- ROW 2: CORE VISUALS --- */}
-
-                        {/* 4. Logo Construction */}
-                        <div className="col-span-12 md:col-span-6 min-h-[340px]">
-                            <CardLogo />
-                        </div>
-
-                        {/* 5. Color Palette */}
-                        <div className="col-span-12 md:col-span-6 min-h-[340px]">
-                            <CardColors data={brandData} />
-                        </div>
-
-                        {/* --- ROW 3: DETAILS --- */}
-
-                        {/* 6. Typography (Wide) */}
-                        <div className="col-span-12 md:col-span-8 min-h-[280px]">
-                            <CardTypography />
-                        </div>
-
-                        {/* 7. Iconography */}
-                        <div className="col-span-12 md:col-span-4 min-h-[280px]">
-                            <CardIconography />
-                        </div>
-
-                        {/* --- ROW 4: APPLICATIONS --- */}
-
-                        {/* 8. Patterns & Graphics */}
-                        <div className="col-span-12 md:col-span-4 min-h-[320px]">
-                            <CardPatterns />
-                        </div>
-
-                        {/* 9. Stationery & Applications */}
-                        <div className="col-span-12 md:col-span-4 min-h-[320px]">
-                            <CardStationery />
-                        </div>
-
-                        {/* 10. Core Values (Pillars) */}
-                        <div className="col-span-12 md:col-span-4 min-h-[320px]">
-                            <CardValues data={brandData} />
-                        </div>
-
-                    </div>
-
-                    {/* Download Button */}
-                    <div className="mt-8 flex justify-end pb-8">
-                        {brandData?.download_url && (
-                            <button
-                                className="flex items-center gap-2 px-6 py-3 bg-primary-500 text-white rounded-xl font-bold text-sm hover:bg-primary-600 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                                onClick={handleDownload}
-                            >
-                                <Download size={20} />
-                                Descargar versión impresa
-                            </button>
-                        )}
-                    </div>
+                {/* 2. Mission & Vision (Large) */}
+                <div className="col-span-12 md:col-span-8 min-h-[300px]">
+                    <CardMission data={brandData} />
                 </div>
-            </main>
+
+                {/* 3. Personality & Tone (Tall/Narrow) */}
+                <div className="col-span-12 md:col-span-4 min-h-[300px]">
+                    <CardTone data={brandData} />
+                </div>
+
+                {/* --- ROW 2: CORE VISUALS --- */}
+
+                {/* 4. Logo Construction */}
+                <div className="col-span-12 md:col-span-6 min-h-[340px]">
+                    <CardLogo />
+                </div>
+
+                {/* 5. Color Palette */}
+                <div className="col-span-12 md:col-span-6 min-h-[340px]">
+                    <CardColors data={brandData} />
+                </div>
+
+                {/* --- ROW 3: DETAILS --- */}
+
+                {/* 6. Typography (Wide) */}
+                <div className="col-span-12 md:col-span-8 min-h-[280px]">
+                    <CardTypography />
+                </div>
+
+                {/* 7. Iconography */}
+                <div className="col-span-12 md:col-span-4 min-h-[280px]">
+                    <CardIconography />
+                </div>
+
+                {/* --- ROW 4: APPLICATIONS --- */}
+
+                {/* 8. Patterns & Graphics */}
+                <div className="col-span-12 md:col-span-4 min-h-[320px]">
+                    <CardPatterns />
+                </div>
+
+                {/* 9. Stationery & Applications */}
+                <div className="col-span-12 md:col-span-4 min-h-[320px]">
+                    <CardStationery />
+                </div>
+
+                {/* 10. Core Values (Pillars) */}
+                <div className="col-span-12 md:col-span-4 min-h-[320px]">
+                    <CardValues data={brandData} />
+                </div>
+
+            </div>
+
+            {/* Download Button */}
+            <div className="mt-8 flex justify-end pb-8">
+                {brandData?.download_url && (
+                    <button
+                        className="flex items-center gap-2 px-6 py-3 bg-primary-500 text-white rounded-xl font-bold text-sm hover:bg-primary-600 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                        onClick={handleDownload}
+                    >
+                        <Download size={20} />
+                        Descargar versión impresa
+                    </button>
+                )}
+            </div>
         </div>
     );
 };

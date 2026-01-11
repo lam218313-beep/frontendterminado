@@ -6,9 +6,9 @@
 
 import React from 'react';
 import { WorkflowStepper } from './WorkflowStepper';
+import { AnimatedHeaderCard } from './AnimatedHeaderCard';
 import { useBenefitAccess } from '../hooks/usePlanAccess';
 import { Sparkles, Brain, Target, TrendingUp, Wand2, Lock, Crown } from 'lucide-react';
-import { InteractiveHeader } from './InteractiveHeader';
 
 // Benefit definitions
 const BENEFITS = [
@@ -117,14 +117,11 @@ export const BenefitsView: React.FC<{ onNavigate: (view: string) => void }> = ({
             <div className="max-w-7xl mx-auto">
                 <WorkflowStepper currentStep={6} onNavigate={onNavigate} />
 
-                <div className='mb-8'>
-                    <InteractiveHeader
-                        title="Beneficios"
-                        subtitle="Estimación de impacto y ROI."
-                        supertitle="Fase 6: Resultados"
-                        colors={['#F20F79', '#465362']}
-                    />
-                </div>
+                <AnimatedHeaderCard
+                    supertitle="Fase 6: Resultados"
+                    title="Beneficios"
+                    subtitle="Más beneficios esperan por ti."
+                />
 
                 {/* Benefits Grid */}
                 <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>

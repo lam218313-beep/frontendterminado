@@ -96,7 +96,7 @@ export const InteractiveHeader: React.FC<InteractiveHeaderProps> = ({
             }
         };
 
-        const animate = () => {
+        const drawStatic = () => {
             if (!ctx) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -126,43 +126,38 @@ export const InteractiveHeader: React.FC<InteractiveHeaderProps> = ({
             }
 
             particles.forEach(p => {
-                p.update();
+                // Removed update() call to keep static
                 p.draw();
             });
-
-            animationFrameId = requestAnimationFrame(animate);
         };
 
         const handleMouseMove = (e: MouseEvent) => {
-            const rect = canvas.getBoundingClientRect();
-            mouse.x = e.clientX - rect.left;
-            mouse.y = e.clientY - rect.top;
+            // Interaction removed for static request
         };
 
         const handleMouseLeave = () => {
-            mouse.x = -9999;
-            mouse.y = -9999;
+            // Interaction removed
         }
 
         window.addEventListener('resize', resize);
-        container.addEventListener('mousemove', handleMouseMove);
-        container.addEventListener('mouseleave', handleMouseLeave);
+        // container.addEventListener('mousemove', handleMouseMove);
+        // container.addEventListener('mouseleave', handleMouseLeave);
 
         resize();
-        animate();
+        drawStatic(); // Call once instead of animate loop
 
         return () => {
             window.removeEventListener('resize', resize);
-            container.removeEventListener('mousemove', handleMouseMove);
-            container.removeEventListener('mouseleave', handleMouseLeave);
-            cancelAnimationFrame(animationFrameId);
+            // container.removeEventListener('mousemove', handleMouseMove);
+            // container.removeEventListener('mouseleave', handleMouseLeave);
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
         };
     }, [colors, particleCount]);
 
     return (
         <div
             ref={containerRef}
-            className="relative w-full h-[280px] bg-white/40 backdrop-blur-[80px] rounded-[40px] shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] border border-white/50 overflow-hidden mb-12 group transition-all duration-500 hover:bg-white/50 hover:shadow-[0_8px_40px_0_rgba(242,15,121,0.1)] shrink-0"
+            className="relative w-full h-[280px] rounded-[40px] overflow-hidden mb-12 shrink-0"
         >
             <canvas
                 ref={canvasRef}

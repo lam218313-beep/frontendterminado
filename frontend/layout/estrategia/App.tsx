@@ -453,7 +453,7 @@ const App: React.FC = () => {
                         onMouseDown={handleCanvasMouseDown}
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
-                        className={`absolute inset-0 w-full h-full overflow-hidden bg-dot-pattern ${viewMode === 'map' ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'} ${mode === 'pan' ? (isPanning ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'}`}
+                        className={`absolute inset-0 w-full h-full overflow-hidden bg-white ${viewMode === 'map' ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'} ${mode === 'pan' ? (isPanning ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'}`}
                     >
                         <div className="absolute inset-0 w-full h-full origin-center transition-transform duration-75 ease-out will-change-transform pointer-events-none"
                             style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})` }}>
@@ -467,6 +467,20 @@ const App: React.FC = () => {
                                     return <path key={`edge-${node.id}`} d={getPath(parent, node)} fill="none" stroke="#CBD5E1" strokeWidth="2" strokeLinecap="round" className="opacity-60" />;
                                 })}
                             </svg>
+
+                            {/* Empty State Placeholder */}
+                            {nodes.length === 0 && (
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                                    <div className="text-center">
+                                        <h2 className="text-4xl font-extrabold text-gray-200 tracking-tight mb-3">
+                                            Lienzo Infinito
+                                        </h2>
+                                        <p className="text-gray-300 text-sm">
+                                            Haz clic en "Nuevo Objetivo" para comenzar
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
 
                             {nodes.map(node => renderMapNode(node))}
 

@@ -35,7 +35,7 @@ export const WorkflowStepper: React.FC<WorkflowStepperProps> = ({ currentStep, o
             <div className="relative px-8 py-6 w-full">
 
                 {/* Progress Line Background */}
-                <div className="absolute top-[45px] left-[60px] right-[60px] h-1.5 bg-gray-100 rounded-full z-0 overflow-hidden">
+                <div className="absolute top-[45px] left-[60px] right-[60px] h-1.5 bg-gray-300 rounded-full z-0 overflow-hidden">
                     {/* Animated Progress Line Foreground */}
                     <motion.div
                         className="h-full bg-primary-500 rounded-full"
@@ -62,8 +62,8 @@ export const WorkflowStepper: React.FC<WorkflowStepperProps> = ({ currentStep, o
                                     className={`w-12 h-12 rounded-full flex items-center justify-center border-4 transition-colors duration-300 relative ${isActive
                                         ? 'bg-primary-500 border-primary-100 text-white shadow-[0_0_20px_rgba(242,15,121,0.4)]'
                                         : isCompleted
-                                            ? 'bg-primary-500 border-white text-white'
-                                            : 'bg-white border-gray-100 text-gray-300 hover:border-primary-100 hover:text-primary-300'
+                                            ? 'bg-primary-500 border-primary-500 text-white'
+                                            : 'bg-white border-gray-300 text-gray-400 hover:border-primary-200 hover:text-primary-500'
                                         }`}
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.95 }}
@@ -84,7 +84,7 @@ export const WorkflowStepper: React.FC<WorkflowStepperProps> = ({ currentStep, o
 
                                 {/* Label */}
                                 <div className="text-center">
-                                    <p className={`text-sm font-bold transition-colors duration-300 ${isActive ? 'text-primary-600' : isCompleted ? 'text-brand-dark' : 'text-gray-300'
+                                    <p className={`text-sm font-bold transition-colors duration-300 ${isActive ? 'text-primary-600' : isCompleted ? 'text-brand-dark' : 'text-gray-400'
                                         }`}>
                                         {tab.label}
                                     </p>
