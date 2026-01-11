@@ -114,7 +114,7 @@ const TaskCard: React.FC<{
         <div className="flex justify-between items-center border-t border-gray-50 pt-3 pointer-events-none">
             <div className="flex items-center gap-1.5 text-gray-400">
                 <Clock size={12} />
-                <span className="text-[10px] font-medium">{task.date ? new Date(task.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : 'No date'}</span>
+                <span className="text-[10px] font-medium">{task.date ? new Date(task.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : 'Sin fecha'}</span>
             </div>
             <MemberStack members={task.members} />
         </div>
@@ -157,7 +157,7 @@ const TaskDetailModal: React.FC<{ task: Task; onClose: () => void; updateTaskSta
                             <div className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
                                 <Clock size={16} /> Fecha Límite
                             </div>
-                            <div className="text-sm text-gray-600">{task.date ? new Date(task.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Sin fecha'}</div>
+                            <div className="text-sm text-gray-600">{task.date ? new Date(task.date).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'Sin fecha'}</div>
                         </div>
                         <div>
                             <div className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2">
