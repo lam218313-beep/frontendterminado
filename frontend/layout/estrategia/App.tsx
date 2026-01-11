@@ -96,58 +96,6 @@ const App: React.FC = () => {
         fetchAnalysis();
     }, [CLIENT_ID]);
 
-    // --- Persistence Logic ---
-    const [hasLoaded, setHasLoaded] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
-    const saveTimeout = useRef<NodeJS.Timeout | null>(null);
-
-    // Load Strategy on Mount
-    useEffect(() => {
-        const loadStrategy = async () => {
-            if (!CLIENT_ID) return;
-            try {
-                const fetchedNodes = await api.getStrategy(CLIENT_ID);
-                if (fetchedNodes && fetchedNodes.length > 0) {
-                    // Map API nodes back to internal structure if needed, or use directly
-                    // Ensure types match. API StrategyNode has same structure as NodeData
-                    const mappedNodes = fetchedNodes.map(n => ({
-                        ...n,
-                        // Ensure optional fields are handled if necessary
-                    }));
-                    setNodes(mappedNodes as NodeData[]);
-                }
-            } catch (e) {
-                console.error("Failed to load strategy nodes:", e);
-            } finally {
-                setHasLoaded(true);
-            }
-        };
-        loadStrategy();
-    }, [CLIENT_ID]);
-
-    // Auto-Save on Change
-    useEffect(() => {
-        if (!CLIENT_ID || !hasLoaded) return;
-
-        // Clear existing timer
-        if (saveTimeout.current) clearTimeout(saveTimeout.current);
-
-        setIsSaving(true);
-        saveTimeout.current = setTimeout(async () => {
-            try {
-                await api.syncStrategy(CLIENT_ID, nodes);
-            } catch (e) {
-                console.error("Failed to save strategy:", e);
-            } finally {
-                setIsSaving(false);
-            }
-        }, 2000); // 2 second debounce
-
-        return () => {
-            if (saveTimeout.current) clearTimeout(saveTimeout.current);
-        };
-    }, [nodes, CLIENT_ID, hasLoaded]);
-
     // --- Logic: Data Management ---
     const updateNodeData = (id: string, field: keyof NodeData, value: any) => {
         setNodes(prev => prev.map(n => n.id === id ? { ...n, [field]: value } : n));
@@ -492,8 +440,8 @@ const App: React.FC = () => {
                 {/* Header Toggle */}
                 <header className="absolute top-6 left-1/2 -translate-x-1/2 h-16 glass-panel rounded-full shadow-float flex items-center gap-4 px-2 z-40">
                     <div className="flex items-center bg-gray-100/50 p-1 rounded-full border border-gray-200/50">
-                        <button onClick={() => setViewMode('map')} className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold transition-all ${viewMode === 'map' ? 'bg-white shadow-sm' : 'text-gray-400'}`}>Mapa</button>
-                        <button onClick={() => setViewMode('list')} className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold transition-all ${viewMode === 'list' ? 'bg-white shadow-sm' : 'text-gray-400'}`}>Lista</button>
+                        <button onClick={() => setViewMode('map')} className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold transition-all ${viewMode === 'map' ? 'bg-white shadow-sm' : 'text-gray-400'}`}>Map</button>
+                        <button onClick={() => setViewMode('list')} className={`flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold transition-all ${viewMode === 'list' ? 'bg-white shadow-sm' : 'text-gray-400'}`}>List</button>
                     </div>
                 </header>
 
@@ -534,6 +482,23 @@ const App: React.FC = () => {
                 {viewMode === 'map' && (
                     <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-50">
                         <div className="glass-panel rounded-2xl p-2 shadow-float flex items-center gap-3 pr-6">
+                            <div className="flex items-center gap-1 bg-gray-100/50 p-1 rounded-xl mr-2">
+                                <button
+                                    onClick={() => setMode('select')}
+                                    className={`p-2.5 rounded-lg transition-all ${mode === 'select' ? 'bg-white shadow-sm text-brand-dark' : 'text-gray-400 hover:text-gray-600'}`}
+                                    title="Seleccionar (V)"
+                                >
+                                    <MousePointer2 size={18} />
+                                </button>
+                                <button
+                                    onClick={() => setMode('pan')}
+                                    className={`p-2.5 rounded-lg transition-all ${mode === 'pan' ? 'bg-white shadow-sm text-brand-dark' : 'text-gray-400 hover:text-gray-600'}`}
+                                    title="Mover Lienzo (H)"
+                                >
+                                    <Hand size={18} />
+                                </button>
+                            </div>
+                            <div className="w-px h-8 bg-gray-200 mx-2"></div>
                             <button onClick={() => addMainObjective()} className="group flex items-center gap-3 bg-accent-500 text-white pl-5 pr-6 py-3.5 rounded-xl hover:bg-accent-600 transition-all shadow-lg">
                                 <Plus size={16} /> <span className="font-bold text-sm">Nuevo Objetivo</span>
                             </button>
@@ -547,7 +512,7 @@ const App: React.FC = () => {
 
             {/* RECOMMENDATIONS SIDEBAR */}
             <aside
-                className={`absolute right-6 top-6 bottom-6 w-80 glass-panel border border-white/40 shadow-2xl rounded-[32px] p-6 flex flex-col transition-all duration-300 transform z-50
+                className={`fixed right-8 top-32 bottom-8 w-80 glass-panel border border-white/40 shadow-2xl rounded-[32px] p-6 flex flex-col transition-all duration-300 transform z-50 
                 ${showRecs ? 'translate-x-0 opacity-100' : 'translate-x-[120%] opacity-0 pointer-events-none'}`}
             >
                 <div className="flex items-center justify-between mb-6">
