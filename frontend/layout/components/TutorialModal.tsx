@@ -226,22 +226,64 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose, s
                         </div>
 
                         {/* Right Panel - Content Section with glassmorphism */}
-                        <div className="flex-1 p-10 md:p-12 flex flex-col relative">
-                            {/* Close Button - Premium style */}
-                            <button
-                                onClick={onClose}
-                                className="absolute top-7 right-7 p-3 rounded-full text-slate-500 hover:text-slate-800 transition-all"
+                        <div className="flex-1 flex flex-col relative">
+                            {/* Modern Premium Header */}
+                            <div
+                                className="px-10 md:px-12 py-6 border-b border-slate-200/40"
                                 style={{
-                                    background: 'rgba(255,255,255,0.4)',
-                                    backdropFilter: 'blur(10px)',
-                                    border: '1.5px solid rgba(255,255,255,0.6)'
+                                    background: 'linear-gradient(135deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4))',
+                                    backdropFilter: 'blur(10px)'
                                 }}
                             >
-                                <X size={20} strokeWidth={2.5} />
-                            </button>
+                                <div className="flex items-center justify-between">
+                                    {/* Logo/Brand */}
+                                    <div className="flex items-center gap-3">
+                                        <div
+                                            className="w-10 h-10 rounded-xl flex items-center justify-center"
+                                            style={{
+                                                background: 'linear-gradient(135deg, #ec4899, #f43f5e)',
+                                                boxShadow: '0 4px 12px rgba(236, 72, 153, 0.3)'
+                                            }}
+                                        >
+                                            <Sparkles size={20} className="text-white" strokeWidth={2.5} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-sm font-bold text-slate-900">Pixely Partners</h3>
+                                            <p className="text-xs text-slate-500 font-medium">Tutorial Interactivo</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Slide Counter */}
+                                    <div className="flex items-center gap-4">
+                                        <div
+                                            className="px-4 py-2 rounded-xl text-sm font-bold text-slate-700"
+                                            style={{
+                                                background: 'rgba(255,255,255,0.5)',
+                                                border: '1.5px solid rgba(255,255,255,0.8)'
+                                            }}
+                                        >
+                                            <span className="text-pink-600">{currentIndex + 1}</span>
+                                            <span className="text-slate-400 mx-1">/</span>
+                                            <span className="text-slate-500">{slides.length}</span>
+                                        </div>
+
+                                        {/* Close Button */}
+                                        <button
+                                            onClick={onClose}
+                                            className="p-2.5 rounded-xl text-slate-500 hover:text-slate-800 transition-all"
+                                            style={{
+                                                background: 'rgba(255,255,255,0.5)',
+                                                border: '1.5px solid rgba(255,255,255,0.7)'
+                                            }}
+                                        >
+                                            <X size={18} strokeWidth={2.5} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
 
                             {/* Text Content */}
-                            <div className="flex-1 flex flex-col justify-center pr-6">
+                            <div className="flex-1 flex flex-col justify-center p-10 md:p-12 pr-6">
                                 <AnimatePresence mode="wait">
                                     <motion.div
                                         key={currentIndex}
@@ -298,8 +340,8 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose, s
                                             <div
                                                 key={idx}
                                                 className={`h-2 rounded-full transition-all duration-500 ${idx === currentIndex
-                                                        ? 'w-10 bg-gradient-to-r from-pink-500 via-rose-500 to-pink-500'
-                                                        : 'w-2 bg-slate-300/60'
+                                                    ? 'w-10 bg-gradient-to-r from-pink-500 via-rose-500 to-pink-500'
+                                                    : 'w-2 bg-slate-300/60'
                                                     }`}
                                             />
                                         ))}
@@ -309,8 +351,8 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose, s
                                         onClick={handlePrev}
                                         disabled={currentIndex === 0}
                                         className={`p-3.5 rounded-full transition-all ${currentIndex === 0
-                                                ? 'text-slate-300 cursor-not-allowed'
-                                                : 'text-slate-700 hover:text-pink-600'
+                                            ? 'text-slate-300 cursor-not-allowed'
+                                            : 'text-slate-700 hover:text-pink-600'
                                             }`}
                                         style={{
                                             background: currentIndex === 0 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.5)',
