@@ -8,6 +8,7 @@ import React from 'react';
 import { WorkflowStepper } from './WorkflowStepper';
 import { useBenefitAccess } from '../hooks/usePlanAccess';
 import { Sparkles, Brain, Target, TrendingUp, Wand2, Lock, Crown } from 'lucide-react';
+import { InteractiveHeader } from './InteractiveHeader';
 
 // Benefit definitions
 const BENEFITS = [
@@ -117,11 +118,12 @@ export const BenefitsView: React.FC<{ onNavigate: (view: string) => void }> = ({
                 <WorkflowStepper currentStep={6} onNavigate={onNavigate} />
 
                 <div className='mb-8'>
-                    <h2 className='text-3xl font-black text-brand-dark mb-2 tracking-tight flex items-center gap-3'>
-                        <Sparkles className="text-amber-500" size={32} />
-                        Beneficios por Continuidad
-                    </h2>
-                    <p className='text-gray-500'>Herramientas exclusivas de IA que potencian tu estrategia.</p>
+                    <InteractiveHeader
+                        title="Beneficios"
+                        subtitle="Estimación de impacto y ROI."
+                        supertitle="Fase 6: Resultados"
+                        colors={['#F20F79', '#465362']}
+                    />
                 </div>
 
                 {/* Benefits Grid */}
