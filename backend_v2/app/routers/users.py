@@ -38,6 +38,7 @@ class UserPasswordUpdate(BaseModel):
 
 class UserPlanUpdate(BaseModel):
     plan: str
+    plan_expires_at: Optional[str] = None
     benefits: list[str] = []
 
 class UserResponse(BaseModel):
@@ -192,17 +193,11 @@ async def update_user_plan(user_id: str, payload: UserPlanUpdate):
         raise HTTPException(status_code=400, detail=f"Invalid plan. Must be one of: {PLAN_TYPES}")
     
     try:
-        # Calculate expiration for free_trial (30 days)
-        plan_expires_at = None
-        if payload.plan == "free_trial":
-            from datetime import datetime, timedelta
-            plan_expires_at = (datetime.utcnow() + timedelta(days=30)).isoformat()
-        
-        db.update_user_plan(user_id, payload.plan, plan_expires_at, payload.benefits)
+        db.update_user_plan(user_id, payload.plan, payload.plan_expires_at, payload.benefits)
         return {
             "message": "Plan updated successfully",
             "plan": payload.plan,
-            "plan_expires_at": plan_expires_at,
+            "plan_expires_at": payload.plan_expires_at,
             "benefits": payload.benefits
         }
     except Exception as e:

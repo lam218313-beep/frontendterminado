@@ -22,9 +22,12 @@ import {
 } from './lab';
 import { WorkflowStepper } from './WorkflowStepper';
 import { AnimatedHeaderCard } from './AnimatedHeaderCard';
+import { DemoToast } from './DemoToast';
+import { usePlanAccess } from '../hooks/usePlanAccess';
 
 export const LabView: React.FC<{ onNavigate: (view: string) => void }> = ({ onNavigate }) => {
   const { data, isLoading } = useAnalysisContext();
+  const { hasAccess, requiredPlanName } = usePlanAccess('analisis_completo');
 
   const hasData = data?.Q1 && data.Q1.emociones?.some((e: any) => e.value > 0);
 
@@ -60,6 +63,8 @@ export const LabView: React.FC<{ onNavigate: (view: string) => void }> = ({ onNa
   // Main content with data
   return (
     <div className="min-h-screen bg-brand-bg font-sans">
+      {/* Demo Toast for users without access */}
+      <DemoToast show={!hasAccess} requiredPlanName={requiredPlanName} />
       <main className="w-full p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
 

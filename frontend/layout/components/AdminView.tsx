@@ -108,6 +108,7 @@ const UsersPanel: React.FC = () => {
   const [newUserPass, setNewUserPass] = useState('');
   const [newUserName, setNewUserName] = useState('');
   const [newUserRole, setNewUserRole] = useState('client');
+  const [newUserPlan, setNewUserPlan] = useState('free_trial');
   const [createLoading, setCreateLoading] = useState(false);
 
   const [clients, setClients] = useState<api.Client[]>([]);
@@ -117,6 +118,20 @@ const UsersPanel: React.FC = () => {
   const [showResetPass, setShowResetPass] = useState<string | null>(null);
   const [resetPassValue, setResetPassValue] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
+
+  // Plan Edit State
+  const [showEditPlan, setShowEditPlan] = useState<string | null>(null);
+  const [editPlanValue, setEditPlanValue] = useState('free_trial');
+  const [editPlanExpiry, setEditPlanExpiry] = useState('');
+  const [planLoading, setPlanLoading] = useState(false);
+
+  const PLAN_OPTIONS = [
+    { value: 'free_trial', label: 'Prueba Gratis', color: 'gray' },
+    { value: 'lite', label: 'Lite', color: 'blue' },
+    { value: 'basic', label: 'Basic', color: 'emerald' },
+    { value: 'pro', label: 'Pro', color: 'purple' },
+    { value: 'premium', label: 'Premium', color: 'amber' },
+  ];
 
   const loadUsers = async () => {
     setLoading(true);
@@ -155,15 +170,16 @@ const UsersPanel: React.FC = () => {
         password: newUserPass,
         full_name: newUserName,
         role: 'client',
-        client_id: selectedClientId || undefined
+        client_id: selectedClientId || undefined,
+        plan: newUserPlan
       });
       setIsCreateModalOpen(false);
       setNewUserEmail('');
       setNewUserPass('');
       setNewUserName('');
       setNewUserRole('client');
+      setNewUserPlan('free_trial');
       setSelectedClientId('');
-      loadUsers();
       loadUsers();
     } catch (error: any) {
       console.error(error);
@@ -191,56 +207,83 @@ const UsersPanel: React.FC = () => {
             <tr>
               <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Usuario</th>
               <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Rol</th>
+              <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Plan</th>
               <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Estado</th>
               <th className="p-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {loading ? (
-              <tr><td colSpan={4} className="p-8 text-center text-gray-400">Cargando...</td></tr>
-            ) : users.map(user => (
-              <tr key={user.id} className="hover:bg-gray-50/50 transition-colors">
-                <td className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-sm">
-                      {user.full_name?.charAt(0) || user.email.charAt(0)}
+              <tr><td colSpan={5} className="p-8 text-center text-gray-400">Cargando...</td></tr>
+            ) : users.map(user => {
+              const userPlan = (user as any).plan || 'free_trial';
+              const planOption = PLAN_OPTIONS.find(p => p.value === userPlan) || PLAN_OPTIONS[0];
+              const planExpiry = (user as any).plan_expires_at;
+
+              return (
+                <tr key={user.id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-sm">
+                        {user.full_name?.charAt(0) || user.email.charAt(0)}
+                      </div>
+                      <div>
+                        <div className="font-bold text-gray-900">{user.full_name || 'Sin nombre'}</div>
+                        <div className="text-xs text-gray-500">{user.email}</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="font-bold text-gray-900">{user.full_name || 'Sin nombre'}</div>
-                      <div className="text-xs text-gray-500">{user.email}</div>
+                  </td>
+                  <td className="p-4">
+                    <span className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-600 text-xs font-bold border border-gray-200">
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="p-4">
+                    <button
+                      onClick={() => {
+                        setShowEditPlan(user.id);
+                        setEditPlanValue(userPlan);
+                        setEditPlanExpiry(planExpiry ? planExpiry.split('T')[0] : '');
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all hover:scale-105 ${planOption.color === 'gray' ? 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200' :
+                        planOption.color === 'blue' ? 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100' :
+                          planOption.color === 'emerald' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100' :
+                            planOption.color === 'purple' ? 'bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100' :
+                              'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
+                        }`}
+                    >
+                      {planOption.label}
+                      {planExpiry && (
+                        <span className="ml-1.5 opacity-60">→ {new Date(planExpiry).toLocaleDateString()}</span>
+                      )}
+                    </button>
+                  </td>
+                  <td className="p-4">
+                    <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                      Activo
+                    </span>
+                  </td>
+                  <td className="p-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => setShowResetPass(user.id)}
+                        className="p-2 hover:bg-yellow-50 text-gray-400 hover:text-yellow-600 rounded-lg transition-colors"
+                        title="Cambiar Contraseña"
+                      >
+                        <Key size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(user.id)}
+                        className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
+                      >
+                        <Trash2 size={18} />
+                      </button>
                     </div>
-                  </div>
-                </td>
-                <td className="p-4">
-                  <span className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-600 text-xs font-bold border border-gray-200">
-                    {user.role}
-                  </span>
-                </td>
-                <td className="p-4">
-                  <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                    Activo
-                  </span>
-                </td>
-                <td className="p-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <button
-                      onClick={() => setShowResetPass(user.id)}
-                      className="p-2 hover:bg-yellow-50 text-gray-400 hover:text-yellow-600 rounded-lg transition-colors"
-                      title="Cambiar Contraseña"
-                    >
-                      <Key size={18} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(user.id)}
-                      className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </Card>
@@ -287,6 +330,20 @@ const UsersPanel: React.FC = () => {
                       </div>
                     </div>
                   </motion.div>
+                </div>
+
+                {/* Plan Selector */}
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Plan Inicial</label>
+                  <select
+                    className="w-full bg-primary-50 border border-primary-200 text-primary-900 rounded-xl p-3 outline-none focus:border-primary-500 transition-all font-bold appearance-none"
+                    value={newUserPlan}
+                    onChange={e => setNewUserPlan(e.target.value)}
+                  >
+                    {PLAN_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="flex gap-3 pt-4">
@@ -346,6 +403,82 @@ const UsersPanel: React.FC = () => {
                     }
                   }}>
                     {resetLoading ? 'Guardando...' : 'Cambiar Pass'}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Edit Plan */}
+      <AnimatePresence>
+        {showEditPlan && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md"
+            >
+              <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
+                <Shield className="text-primary-500" /> Editar Plan
+              </h2>
+              <p className="text-gray-500 text-sm mb-4">
+                Selecciona el plan y fecha de expiración.
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-2">Plan</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {PLAN_OPTIONS.map(opt => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setEditPlanValue(opt.value)}
+                        className={`px-4 py-3 rounded-xl text-sm font-bold border transition-all ${editPlanValue === opt.value
+                          ? 'bg-primary-500 text-white border-primary-500 scale-105'
+                          : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                          }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Fecha de Expiración (Opcional)</label>
+                  <input
+                    type="date"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-primary-500 transition-all font-medium"
+                    value={editPlanExpiry}
+                    onChange={e => setEditPlanExpiry(e.target.value)}
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1 ml-1">Dejar vacío para acceso permanente</p>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button className="flex-1" onClick={() => { setShowEditPlan(null); setEditPlanExpiry(''); }}>Cancelar</Button>
+                  <Button primary disabled={planLoading} className="flex-1 !bg-primary-500 hover:!bg-primary-600" onClick={async () => {
+                    if (!showEditPlan) return;
+                    setPlanLoading(true);
+                    try {
+                      await api.updateUserPlan(
+                        showEditPlan,
+                        editPlanValue,
+                        editPlanExpiry ? new Date(editPlanExpiry).toISOString() : null
+                      );
+                      alert("Plan actualizado correctamente");
+                      setShowEditPlan(null);
+                      setEditPlanExpiry('');
+                      loadUsers();
+                    } catch (e) {
+                      alert("Error al actualizar: " + String(e));
+                    } finally {
+                      setPlanLoading(false);
+                    }
+                  }}>
+                    {planLoading ? 'Guardando...' : 'Guardar Plan'}
                   </Button>
                 </div>
               </div>

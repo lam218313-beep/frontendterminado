@@ -201,16 +201,15 @@ class SupabaseService:
             logger.error(f"DB Get User By ID Error: {e}")
         return None
 
-    def update_user_plan(self, user_id: str, plan: str, plan_expires_at: Optional[str], benefits: list):
-        """Update user's subscription plan and benefits."""
+    def update_user_plan(self, user_id: str, plan: str, plan_expires_at: Optional[str], benefits: list = None):
+        """Update user's subscription plan."""
         target_client = self.admin_client if self.admin_client else self.client
         if not target_client: return
         
         try:
             data = {
                 "plan": plan,
-                "plan_expires_at": plan_expires_at,
-                "benefits": benefits
+                "plan_expires_at": plan_expires_at
             }
             target_client.table("users").update(data).eq("id", user_id).execute()
         except Exception as e:

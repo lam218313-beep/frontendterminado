@@ -89,6 +89,22 @@ const AppContent: React.FC = () => {
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   // ... activeView ...
   const [activeView, setActiveView] = useState<string>('partners');
+  const [viewCounter, setViewCounter] = useState(0);
+  const contentRef = React.useRef<HTMLDivElement>(null);
+
+  // Navigation handler that resets scroll
+  const handleNavigate = (view: string) => {
+    // Reset all scrollable containers
+    document.querySelectorAll('.overflow-y-auto, .custom-scrollbar').forEach(el => {
+      el.scrollTop = 0;
+    });
+    if (contentRef.current) {
+      contentRef.current.scrollTop = 0;
+    }
+    setViewCounter(prev => prev + 1);
+    setActiveView(view);
+  };
+
 
   // Check for existing session on mount
   useEffect(() => {
@@ -124,10 +140,24 @@ const AppContent: React.FC = () => {
     setDisplayUser(username);
     setFlow('LOGIN_EXITING');
     setActiveView('partners');
+
+    // Flow: LOGIN_EXITING -> ANIMATION_ENTRY -> ANIMATION_EXITING -> DASHBOARD_ACTIVE
+    setTimeout(() => {
+      setFlow('ANIMATION_ENTRY');
+    }, 500);
+
+    setTimeout(() => {
+      setFlow('ANIMATION_EXITING');
+    }, 2500);
+
+    setTimeout(() => {
+      setFlow('DASHBOARD_ACTIVE');
+    }, 3500);
+
     // Check tutorial on fresh login too
     const seen = localStorage.getItem('pixely_tutorial_seen_v2');
     if (!seen) {
-      setTimeout(() => setShowTutorial(true), 3500); // Wait for animation
+      setTimeout(() => setShowTutorial(true), 4000); // Wait for all animations
     }
   };
 
@@ -135,60 +165,63 @@ const AppContent: React.FC = () => {
 
   // Content Renderer Logic
   const renderContent = () => {
+    // Use counter-based key to force remount on every navigation
+    const viewKey = `${activeView}-${viewCounter}`;
+
     switch (activeView) {
       case 'partners':
         return (
-          <ErrorBoundary>
+          <ErrorBoundary key={viewKey}>
             <PartnersView onShowTutorial={() => setShowTutorial(true)} />
           </ErrorBoundary>
         );
       case 'interview':
         return (
-          <ErrorBoundary>
-            <InterviewView onNavigate={setActiveView} />
+          <ErrorBoundary key={viewKey}>
+            <InterviewView onNavigate={handleNavigate} />
           </ErrorBoundary>
         );
       case 'brand':
         return (
-          <ErrorBoundary>
-            <BrandView onNavigate={setActiveView} />
+          <ErrorBoundary key={viewKey}>
+            <BrandView onNavigate={handleNavigate} />
           </ErrorBoundary>
         );
       case 'lab':
         return (
-          <ErrorBoundary>
-            <LabView onNavigate={setActiveView} />
+          <ErrorBoundary key={viewKey}>
+            <LabView onNavigate={handleNavigate} />
           </ErrorBoundary>
         );
       case 'strategy':
         return (
-          <ErrorBoundary>
-            <StrategyView onNavigate={setActiveView} />
+          <ErrorBoundary key={viewKey}>
+            <StrategyView onNavigate={handleNavigate} />
           </ErrorBoundary>
         );
       case 'benefits':
         return (
-          <ErrorBoundary>
-            <BenefitsView onNavigate={setActiveView} />
+          <ErrorBoundary key={viewKey}>
+            <BenefitsView onNavigate={handleNavigate} />
           </ErrorBoundary>
         );
       case 'work':
         return (
-          <ErrorBoundary>
-            <TasksView onNavigate={setActiveView} />
+          <ErrorBoundary key={viewKey}>
+            <TasksView onNavigate={handleNavigate} />
           </ErrorBoundary>
         );
-      case 'img-generator': // Assuming this existed or I can add placeholders. Wait, I should stick to the list I built in Sidebar.
+      case 'img-generator':
         return null;
       case 'wiki':
         return (
-          <ErrorBoundary>
+          <ErrorBoundary key={viewKey}>
             <WikiView />
           </ErrorBoundary>
         );
       case 'admin':
         return (
-          <ErrorBoundary>
+          <ErrorBoundary key={viewKey}>
             <AdminView />
           </ErrorBoundary>
         );
@@ -257,10 +290,7 @@ const AppContent: React.FC = () => {
               isExpanded={sidebarExpanded}
               setIsExpanded={setSidebarExpanded}
               activeView={activeView}
-              setActiveView={(view) => {
-                setActiveView(view);
-                // Close mobile sidebar on selection if we had one
-              }}
+              setActiveView={handleNavigate}
               onLogout={handleLogout}
             />
           </div>
@@ -278,7 +308,7 @@ const AppContent: React.FC = () => {
             <main className="flex-1 flex flex-col relative h-full overflow-hidden p-4 lg:py-4 lg:pr-4">
 
               {/* Dynamic Card Container */}
-              <div className="flex-1 min-h-0 bg-transparent rounded-[30px] lg:rounded-[40px] relative overflow-y-auto group flex flex-col items-stretch justify-start mb-0 scroll-smooth">
+              <div key={activeView} ref={contentRef} className="flex-1 min-h-0 bg-transparent rounded-[30px] lg:rounded-[40px] relative overflow-y-auto group flex flex-col items-stretch justify-start mb-0">
 
                 {/* Subtle grid background */}
                 <div className="absolute inset-0 pointer-events-none opacity-[0.03] z-0"

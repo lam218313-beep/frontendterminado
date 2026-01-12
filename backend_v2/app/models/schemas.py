@@ -122,8 +122,10 @@ class AnalysisReportResponse(AnalysisReportBase):
 class UserBase(BaseModel):
     email: str
     full_name: Optional[str] = None
-    role: str = "analyst"
-    client_id: Optional[str] = None # Link to specific client for 'client' role
+    role: str = "client"
+    client_id: Optional[str] = None
+    plan: str = "free_trial"
+    plan_expires_at: Optional[datetime] = None
 
 class UserCreate(UserBase):
     password: str
@@ -135,3 +137,8 @@ class UserResponse(UserBase):
     
     class Config:
         from_attributes = True
+
+class UserPlanUpdate(BaseModel):
+    plan: str
+    plan_expires_at: Optional[datetime] = None
+

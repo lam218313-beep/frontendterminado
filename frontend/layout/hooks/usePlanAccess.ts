@@ -7,16 +7,18 @@
 import { useAuth } from '../contexts/AuthContext';
 
 // Define which plans have access to which features
+// See PLAN_ACCESS.md for documentation
 const FEATURE_ACCESS: Record<string, string[]> = {
-    // Panels - which plans can access each panel
+    // Workflow Panels
     entrevista: ['free_trial', 'lite', 'basic', 'pro', 'premium'],
+    brand: ['basic', 'pro', 'premium'],
     analisis_basico: ['free_trial', 'lite', 'basic', 'pro', 'premium'],
     analisis_completo: ['basic', 'pro', 'premium'],
     estrategia: ['pro', 'premium'],
     validacion: ['pro', 'premium'],
-    brand_book: ['premium'],
+    planificacion: ['basic', 'pro', 'premium'],
 
-    // Benefits - which plans unlock each benefit
+    // Benefits
     benefit_1: ['lite', 'basic', 'pro', 'premium'],
     benefit_2: ['basic', 'pro', 'premium'],
     benefit_3: ['basic', 'pro', 'premium'],
@@ -57,7 +59,16 @@ interface PlanAccessResult {
 export function usePlanAccess(feature: string): PlanAccessResult {
     const { user } = useAuth();
 
-    const currentPlan = user?.plan || 'free_trial';
+    // Get user's plan and check expiration
+    const rawPlan = user?.plan || 'free_trial';
+    const expiresAt = user?.planExpiresAt;
+
+    // Check if plan has expired
+    const isExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
+
+    // If expired, treat as free_trial
+    const currentPlan = isExpired ? 'free_trial' : rawPlan;
+
     const allowedPlans = FEATURE_ACCESS[feature] || [];
     const hasAccess = allowedPlans.includes(currentPlan);
     const requiredPlan = getMinimumPlan(feature);

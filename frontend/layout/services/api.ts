@@ -791,6 +791,38 @@ export async function resetPassword(userId: string, password: string): Promise<v
 
 
 /**
+ * Update user plan (Admin only)
+ * PUT /users/{user_id}/plan
+ */
+export async function updateUserPlan(
+  userId: string,
+  plan: string,
+  planExpiresAt?: string | null,
+  benefits: string[] = []
+): Promise<{ plan: string; plan_expires_at: string | null; benefits: string[] }> {
+  const response = await fetch(`${API_BASE_URL}/users/${userId}/plan`, {
+    method: 'PUT',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      plan,
+      plan_expires_at: planExpiresAt || null,
+      benefits
+    }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    throw new ApiError(response.status, errorBody.detail || `Failed to update plan: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+
+/**
  * Generate Personas using AI
  * POST /clients/{client_id}/personas
  */
