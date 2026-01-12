@@ -31,6 +31,10 @@ COMMERCE_TOPICS = [
 
 CLASSIFICATION_PROMPT = """
 Eres un clasificador experto de comentarios de redes sociales para marcas comerciales.
+
+CONTEXTO DE LA MARCA (Usa esto para entender mejor la relevancia de los comentarios):
+{brand_context}
+
 Tu trabajo es ETIQUETAR cada comentario con los siguientes campos:
 
 1. **emotion**: Una emoción de Plutchik (exactamente una):
@@ -64,12 +68,13 @@ COMENTARIOS A CLASIFICAR:
 """
 
 
-async def classify_comments_batch(comments: list[str], batch_size: int = 50) -> list[dict[str, Any]]:
+async def classify_comments_batch(comments: list[str], brand_context: str = "", batch_size: int = 50) -> list[dict[str, Any]]:
     """
     Classify a list of comments using Gemini.
     
     Args:
         comments: List of comment texts
+        brand_context: String describing mission, vision, target, product, etc.
         batch_size: Max comments per API call (default 50)
         
     Returns:
@@ -91,7 +96,7 @@ async def classify_comments_batch(comments: list[str], batch_size: int = 50) -> 
         batch = comments[i:i + batch_size]
         batch_start_idx = i
         
-        logger.info(f"🧠 Classifying batch {i // batch_size + 1}: {len(batch)} comments")
+        logger.info(f"🧠 Classifying batch {i // batch_size + 1}: {len(batch)} comments. Context len: {len(brand_context)}")
         
         # Prepare input
         comments_for_prompt = [
@@ -100,6 +105,7 @@ async def classify_comments_batch(comments: list[str], batch_size: int = 50) -> 
         ]
         
         prompt = CLASSIFICATION_PROMPT.format(
+            brand_context=brand_context or "No context provided.",
             comments_json=json.dumps(comments_for_prompt, ensure_ascii=False)
         )
         

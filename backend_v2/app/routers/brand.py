@@ -30,6 +30,8 @@ class BrandIdentity(BaseModel):
     archetype: str
     colors: Optional[dict] = {}
     typography: Optional[dict] = {}
+    logo_url: Optional[str] = None
+    stationery_url: Optional[str] = None
 
 
 
@@ -44,5 +46,15 @@ async def get_brand(client_id: str):
     if not data:
         return {"status": "empty", "data": None}
     return {"status": "success", "data": data}
+
+@router.put("/{client_id}")
+async def update_brand(client_id: str, identity: BrandIdentity):
+    try:
+        data = identity.model_dump()
+        db.update_brand_identity(client_id, data)
+        return {"status": "success", "message": "Brand identity updated"}
+    except Exception as e:
+        logger.error(f"Error updating brand for {client_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 

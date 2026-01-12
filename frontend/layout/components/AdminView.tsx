@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Users, Database, Plus, Trash2, Search,
   Shield, Activity, Play, FileText, CheckCircle,
-  AlertCircle, Loader2, X, Key
+  AlertCircle, Loader2, X, Key, Palette, UserCog
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as api from '../services/api';
@@ -95,6 +95,12 @@ export const AdminView: React.FC = () => {
 };
 
 // =============================================================================
+import { BrandAdminModal } from './BrandAdminModal';
+
+// ... (Sub-components)
+
+// ...
+
 // USERS PANEL
 // =============================================================================
 
@@ -102,6 +108,14 @@ const UsersPanel: React.FC = () => {
   const [users, setUsers] = useState<api.UserInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingBrand, setEditingBrand] = useState<{ id: string, name: string } | null>(null);
+
+  // Edit User State
+  const [editingUser, setEditingUser] = useState<api.UserInfo | null>(null);
+  const [editUserName, setEditUserName] = useState('');
+  const [editUserRole, setEditUserRole] = useState('');
+  const [editClientId, setEditClientId] = useState('');
+  const [saveUserLoading, setSaveUserLoading] = useState(false);
 
   // Form
   const [newUserEmail, setNewUserEmail] = useState('');
@@ -190,6 +204,29 @@ const UsersPanel: React.FC = () => {
     }
   };
 
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    console.log("Updating user:", editingUser.id); // Debug
+    setSaveUserLoading(true);
+    try {
+      await api.updateUser(editingUser.id, {
+        full_name: editUserName,
+        role: editUserRole,
+        client_id: editClientId || null
+      });
+      setEditingUser(null);
+      loadUsers();
+      alert("Usuario actualizado correctamente");
+    } catch (error: any) {
+      console.error(error);
+      const msg = error.response?.data?.detail || error.message || "Error desconocido";
+      alert("Error al actualizar usuario: " + msg);
+    } finally {
+      setSaveUserLoading(false);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
@@ -266,6 +303,32 @@ const UsersPanel: React.FC = () => {
                   </td>
                   <td className="p-4 text-right">
                     <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => {
+                          if (user.client_id) {
+                            setEditingBrand({ id: user.client_id, name: user.full_name });
+                          } else {
+                            alert("Este usuario no tiene un Cliente asignado.");
+                          }
+                        }}
+                        className="p-2 hover:bg-purple-50 text-gray-400 hover:text-purple-600 rounded-lg transition-colors"
+                        title="Editar Marca"
+                      >
+                        <Palette size={18} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingUser(user);
+                          // Pre-fill state
+                          setEditUserName(user.full_name || '');
+                          setEditUserRole(user.role || 'client');
+                          setEditClientId(user.client_id || '');
+                        }}
+                        className="p-2 hover:bg-blue-50 text-gray-400 hover:text-blue-600 rounded-lg transition-colors"
+                        title="Editar Usuario"
+                      >
+                        <UserCog size={18} />
+                      </button>
                       <button
                         onClick={() => setShowResetPass(user.id)}
                         className="p-2 hover:bg-yellow-50 text-gray-400 hover:text-yellow-600 rounded-lg transition-colors"
@@ -482,6 +545,70 @@ const UsersPanel: React.FC = () => {
                   </Button>
                 </div>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <BrandAdminModal
+        isOpen={!!editingBrand}
+        onClose={() => setEditingBrand(null)}
+        clientId={editingBrand?.id || ''}
+        clientName={editingBrand?.name || ''}
+      />
+
+      {/* Modal Edit User */}
+      <AnimatePresence>
+        {editingUser && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md"
+            >
+              <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
+                <UserCog className="text-blue-500" /> Editar Usuario
+              </h2>
+              <form onSubmit={handleUpdateUser} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Nombre Completo</label>
+                  <input required className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-gray-900 transition-all font-medium" value={editUserName} onChange={e => setEditUserName(e.target.value)} />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Rol</label>
+                  <select className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-gray-900 transition-all font-medium" value={editUserRole} onChange={e => setEditUserRole(e.target.value)}>
+                    <option value="client">Cliente</option>
+                    <option value="admin">Admin</option>
+                    <option value="analyst">Analista</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Cliente Asignado</label>
+                  <div className="relative">
+                    <select
+                      className="w-full bg-blue-50 border border-blue-200 text-blue-900 rounded-xl p-3 outline-none focus:border-blue-500 transition-all font-bold appearance-none"
+                      value={editClientId}
+                      onChange={e => setEditClientId(e.target.value)}
+                    >
+                      <option value="">-- Sin Cliente --</option>
+                      {clients.map(c => (
+                        <option key={c.id} value={c.id}>{c.nombre}</option>
+                      ))}
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-blue-400">
+                      <Database size={16} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button className="flex-1" onClick={() => setEditingUser(null)}>Cancelar</Button>
+                  <Button primary disabled={saveUserLoading} className="flex-1">
+                    Guardar Cambios
+                  </Button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}

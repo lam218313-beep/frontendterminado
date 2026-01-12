@@ -5,19 +5,24 @@ FastAPI entry point for the new serverless backend.
 """
 
 import logging
+# Force reload trigger
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
-from .routers import pipeline, clients, analysis, auth, users, tasks, interview, personas, tts, strategy, brand
+from .routers import pipeline, clients, analysis, auth, users_v2, tasks, interview, personas, tts, strategy, brand
 
 # Lifespan context
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: logging, db connections if needed
     logging.info("Starting up Aggregation Engine...")
+    print("--- LIFESPAN STARTUP ---")
+    for route in app.routes:
+        print(f"ROUTE: {route.path}")
+    print("------------------------")
     yield
     # Shutdown
     logging.info("Shutting down...")
@@ -29,6 +34,13 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+@app.on_event("startup")
+async def startup_event():
+    print("--- REGISTERED ROUTES ---")
+    for route in app.routes:
+        print(f"ROUTE: {route.path}")
+    print("-------------------------")
+
 # Middleware
 app.add_middleware(
     CORSMiddleware,
@@ -39,8 +51,9 @@ app.add_middleware(
 )
 
 # Routers
+app.include_router(users_v2.admin_router)
 app.include_router(auth.router)
-app.include_router(users.router)
+app.include_router(users_v2.router)
 app.include_router(clients.router)
 app.include_router(analysis.router)
 app.include_router(pipeline.router)
@@ -51,6 +64,11 @@ app.include_router(tts.router)
 app.include_router(strategy.router)
 app.include_router(brand.router)
 
+
+@app.post("/debug/update/{user_id}")
+async def direct_update_user(user_id: str, payload: dict): 
+    print(f"HIT DIRECT UPDATE {user_id}")
+    return {"status": "ok", "id": user_id, "data": payload}
 
 @app.get("/", tags=["Health"])
 async def root():

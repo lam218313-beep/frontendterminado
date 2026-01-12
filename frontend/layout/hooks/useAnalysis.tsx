@@ -7,6 +7,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import * as api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { usePlanAccess } from './usePlanAccess';
+import { MOCK_ANALYSIS_DATA } from '../mocks/mockAnalysisData';
 
 // =============================================================================
 // TYPES
@@ -160,6 +162,7 @@ const DEFAULT_DATA: AnalysisData = {
 
 export function useAnalysis(): UseAnalysisReturn {
   const { user } = useAuth();
+  const { hasAccess } = usePlanAccess('analisis_completo'); // Check plan access
   const [data, setData] = useState<AnalysisData>(DEFAULT_DATA);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -170,7 +173,7 @@ export function useAnalysis(): UseAnalysisReturn {
   // Refresh context status
   const refreshContextStatus = useCallback(async () => {
     if (!clientId) return;
-    
+
     try {
       const status = await api.getContextStatus(clientId);
       setContextStatus(status);
@@ -181,8 +184,14 @@ export function useAnalysis(): UseAnalysisReturn {
 
   // Load existing analysis data
   const loadExistingAnalysis = useCallback(async () => {
+    // If user has no access, load MOCK data immediately mechanism
+    if (!hasAccess) {
+      setData(MOCK_ANALYSIS_DATA);
+      return;
+    }
+
     if (!clientId) return;
-    
+
     setIsLoading(true);
     try {
       const response = await api.getLatestAnalysis(clientId);
@@ -205,7 +214,7 @@ export function useAnalysis(): UseAnalysisReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [clientId]);
+  }, [clientId, hasAccess]);
 
   // Run full analysis
   const runAnalysis = useCallback(async () => {
@@ -219,12 +228,12 @@ export function useAnalysis(): UseAnalysisReturn {
 
     try {
       const response = await api.runFullAnalysis(clientId);
-      
+
       // After running, load the formatted data from the get endpoint
       await loadExistingAnalysis();
     } catch (err) {
-      const message = err instanceof api.ApiError 
-        ? err.message 
+      const message = err instanceof api.ApiError
+        ? err.message
         : 'Error al ejecutar análisis';
       setError(message);
     } finally {
@@ -264,7 +273,7 @@ interface AnalysisProviderProps {
 
 export function AnalysisProvider({ children }: AnalysisProviderProps) {
   const analysis = useAnalysis();
-  
+
   return (
     <AnalysisContext.Provider value={analysis}>
       {children}

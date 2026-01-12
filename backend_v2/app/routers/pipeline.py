@@ -77,6 +77,33 @@ async def _run_full_pipeline(report_id: str, client_id: str, instagram_url: str,
             
         logger.info(f"📦 [{report_id}] Scraped {len(all_content)} items")
 
+        # PASO 1.5: RECUPERAR CONTEXTO DE ENTREVISTA (Integración)
+        brand_context = ""
+        try:
+            logger.info(f"🔍 [{report_id}] Fetching Interview Context for {client_id}...")
+            interview_record = db.get_interview(client_id)
+            if interview_record and interview_record.get("data"):
+                idata = interview_record.get("data", {})
+                
+                # Construir string de contexto rico
+                parts = []
+                if "Q1" in idata: parts.append(f"Misión/Descripción: {idata['Q1']}")
+                if "Q2" in idata: parts.append(f"Público Objetivo: {idata['Q2']}")
+                if "Q3" in idata: parts.append(f"Propuesta de Valor: {idata['Q3']}")
+                if "type" in idata: parts.append(f"Tipo de Producto: {idata['type']}")
+                if "competitors" in idata: parts.append(f"Competidores: {idata['competitors']}")
+                if "tone" in idata: parts.append(f"Tono deseado: {idata['tone']}")
+                
+                if "product_context" in idata:
+                    parts.append(f"--- Contexto Adicional (Archivo) ---\n{idata['product_context'][:2000]}...") # Limit context
+                
+                brand_context = "\n".join(parts)
+                logger.info(f"✅ [{report_id}] Context Loaded ({len(brand_context)} chars)")
+            else:
+                logger.warning(f"⚠️ [{report_id}] No Interview Data found. Analysis will be generic.")
+        except Exception as e:
+            logger.error(f"❌ [{report_id}] Failed to load interview context: {e}")
+
         # PASO 2: CLASIFICACIÓN
         db.update_report_status(report_id, "CLASSIFYING")
         normalized_items = [
@@ -86,7 +113,12 @@ async def _run_full_pipeline(report_id: str, client_id: str, instagram_url: str,
         texts_to_classify = [item["content"] for item in normalized_items if item["content"]]
         
         logger.info(f"🧠 [{report_id}] Classifying {len(texts_to_classify)} items...")
-        classifications = await gemini_service.classify_comments_batch(texts_to_classify)
+        
+        # Pass brand_context to Gemini
+        classifications = await gemini_service.classify_comments_batch(
+            texts_to_classify, 
+            brand_context=brand_context
+        )
         
         # Merge
         raw_items = []

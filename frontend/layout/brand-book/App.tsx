@@ -2,6 +2,8 @@ import React from 'react';
 import { Download } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import * as api from '../services/api';
+import { usePlanAccess } from '../hooks/usePlanAccess';
+import { MOCK_BRAND_DATA } from '../mocks/mockBrandData';
 
 import {
     CardMission,
@@ -24,7 +26,17 @@ const App: React.FC = () => {
     const { user } = useAuth();
     const CLIENT_ID = user?.fichaClienteId;
 
+    // Check Plan Access
+    const { hasAccess } = usePlanAccess('brand');
+
     const fetchBrand = async () => {
+        // If Demo Mode (no access), use mock data
+        if (!hasAccess) {
+            setBrandData(MOCK_BRAND_DATA);
+            setIsLoading(false);
+            return;
+        }
+
         if (!CLIENT_ID) {
             setIsLoading(false);
             return;
@@ -80,7 +92,7 @@ const App: React.FC = () => {
 
                 {/* 4. Logo Construction */}
                 <div className="col-span-12 md:col-span-6 min-h-[340px]">
-                    <CardLogo />
+                    <CardLogo data={brandData} />
                 </div>
 
                 {/* 5. Color Palette */}
@@ -107,9 +119,9 @@ const App: React.FC = () => {
                     <CardPatterns />
                 </div>
 
-                {/* 9. Stationery & Applications */}
-                <div className="col-span-12 md:col-span-4 min-h-[320px]">
-                    <CardStationery />
+                {/* 9. Stationery */}
+                <div className="col-span-12 md:col-span-8 min-h-[300px]">
+                    <CardStationery data={brandData} />
                 </div>
 
                 {/* 10. Core Values (Pillars) */}

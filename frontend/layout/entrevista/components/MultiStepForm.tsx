@@ -255,7 +255,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ label, value, onChange, opt
 
     return (
         <div className="space-y-2 relative" ref={containerRef}>
-            <label className="text-sm font-bold text-gray-700 ml-1">{label}</label>
+            {label && <label className="text-sm font-bold text-gray-700 ml-1">{label}</label>}
             <div
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 className={`w-full bg-gray-50 border rounded-xl px-4 py-3 flex items-center justify-between transition-all duration-200 ${disabled ? 'cursor-default bg-gray-50' : 'cursor-pointer hover:border-gray-300 hover:bg-gray-100'} ${isOpen ? 'border-primary-500 ring-2 ring-primary-500/20 bg-white' : 'border-gray-200'}`}
@@ -481,7 +481,7 @@ const InputField: React.FC<InputFieldProps> = ({ label, name, value, onChange, p
 
     return (
         <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700 ml-1">{label}</label>
+            {label && <label className="text-sm font-bold text-gray-700 ml-1">{label}</label>}
             <input
                 type={type}
                 name={name}

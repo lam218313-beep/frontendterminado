@@ -11,7 +11,8 @@ import {
     Play,
     Eye,
     RotateCcw,
-    ThumbsUp
+    ThumbsUp,
+    RefreshCw
 } from 'lucide-react';
 import * as api from '../services/api';
 
@@ -259,48 +260,74 @@ export const KanbanBoard: React.FC = () => {
 
     const CLIENT_ID = localStorage.getItem('clientId');
 
-    // Fetch Tasks
-    useEffect(() => {
-        const fetchTasks = async () => {
-            if (!CLIENT_ID) return;
-            setIsLoading(true);
-            try {
-                // api.getTasks returns TasksByWeekResponse (nested weeks)
-                // We need to cast or inspect response. Since we know structure from backend analysis...
-                // But TypeScript might complain if api definitions are different.
-                // Assuming api.getTasks returns 'any' or 'TasksByWeekResponse'.
-                const res: any = await api.getTasks(CLIENT_ID);
+    const fetchData = React.useCallback(async () => {
+        if (!CLIENT_ID) return;
+        setIsLoading(true);
+        try {
+            // 1. Fetch Standard Tasks and Strategy in parallel
+            const [tasksRes, strategyRes] = await Promise.all([
+                api.getTasks(CLIENT_ID),
+                api.getStrategy(CLIENT_ID)
+            ]);
 
-                // Flatten weeks
-                const week1 = res.week_1 || [];
-                const week2 = res.week_2 || [];
-                const week3 = res.week_3 || [];
-                const week4 = res.week_4 || [];
+            // 2. Process Standard Tasks
+            const res: any = tasksRes;
+            const week1 = res.week_1 || [];
+            const week2 = res.week_2 || [];
+            const week3 = res.week_3 || [];
+            const week4 = res.week_4 || [];
 
-                const allRaw = [...week1, ...week2, ...week3, ...week4];
+            const allRaw = [...week1, ...week2, ...week3, ...week4];
 
-                const mapped: Task[] = allRaw.map((t: any) => ({
-                    id: t.id,
-                    title: t.title,
-                    description: t.description || '',
-                    category: t.area_estrategica || 'General',
-                    date: t.created_at ? t.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10),
-                    status: mapStatusFromBackend(t.status),
-                    priority: mapPriorityFromBackend(t.priority),
-                    members: [] // Mock members
-                }));
+            const standardTasks: Task[] = allRaw.map((t: any) => ({
+                id: t.id,
+                title: t.title,
+                description: t.description || '',
+                category: t.area_estrategica || 'General',
+                date: t.created_at ? t.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10),
+                status: mapStatusFromBackend(t.status),
+                priority: mapPriorityFromBackend(t.priority),
+                members: []
+            }));
 
-                setTasks(mapped);
+            // 3. Process Strategy Posts
+            let strategyTasks: Task[] = [];
+            if (Array.isArray(strategyRes)) {
+                // Filter for 'post' type nodes
+                const postNodes = strategyRes.filter((node: any) => node.type === 'post');
 
-            } catch (e) {
-                console.error("Failed to fetch tasks", e);
-            } finally {
-                setIsLoading(false);
+                strategyTasks = postNodes.map((node: any) => {
+                    return {
+                        id: node.id,
+                        title: node.label,
+                        description: node.description || 'Contenido estrátegico generado desde el mapa.',
+                        category: 'Contenido',
+                        date: new Date().toISOString().slice(0, 10), // Default to today
+                        status: 'todo', // Default to To-Do
+                        priority: 'medium',
+                        members: []
+                    };
+                });
             }
-        };
 
-        fetchTasks();
+            // 4. Merge
+            const taskMap = new Map<string, Task>();
+            standardTasks.forEach(t => taskMap.set(t.id, t));
+            strategyTasks.forEach(t => taskMap.set(t.id, t));
+
+            setTasks(Array.from(taskMap.values()));
+
+        } catch (e) {
+            console.error("Failed to fetch data", e);
+        } finally {
+            setIsLoading(false);
+        }
     }, [CLIENT_ID]);
+
+    // Fetch Tasks & Strategy Posts
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     // DnD State
     const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
@@ -589,7 +616,17 @@ export const KanbanBoard: React.FC = () => {
 
                 <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
                     {/* View Switcher */}
-                    <div className="flex bg-gray-50 p-1 rounded-xl">
+                    <div className="flex bg-gray-50 p-1 rounded-xl gap-2">
+                        {/* Refresh Button */}
+                        <button
+                            onClick={fetchData}
+                            className="p-2 text-gray-400 hover:text-primary-500 hover:bg-white rounded-lg transition-all"
+                            title="Recargar tareas y estrategias"
+                        >
+                            <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+                        </button>
+                        <div className="w-px h-6 bg-gray-200 my-auto"></div>
+
                         <button
                             onClick={() => setView('board')}
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${view === 'board' ? 'bg-white text-primary-500 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}

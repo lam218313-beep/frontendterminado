@@ -159,10 +159,33 @@ class SupabaseService:
             logger.error(f"DB Create User Profile Error: {e}")
             raise e
 
+    def update_user(self, user_id: str, updates: dict):
+        # Use Admin Client if available to bypass RLS
+        target_client = self.admin_client if self.admin_client else self.client
+        client_type = "ADMIN" if self.admin_client else "PUBLIC"
+        
+        if not target_client: 
+            logger.error("DB: No client available for update")
+            return
+
+        try:
+            logger.info(f"DB: Attempting to update user {user_id} using {client_type} client. Updates: {updates}")
+            
+            # Prevent updating sensitive fields via this method if any
+            if "id" in updates: del updates["id"]
+            if "email" in updates: del updates["email"] # Usually email is immutable or handled via auth
+            
+            response = target_client.table("users").update(updates).eq("id", user_id).execute()
+            logger.info(f"DB: Update response: {response}")
+            
+        except Exception as e:
+            logger.error(f"DB Update User Error: {e}")
+            raise e
+
     def list_users(self) -> list[dict]:
         if not self.client: return []
         try:
-            response = self.client.table("users").select("id, email, full_name, role, created_at").execute()
+            response = self.client.table("users").select("id, email, full_name, role, created_at, client_id").execute()
             return response.data if response.data else []
         except Exception as e:
             logger.error(f"DB List Users Error: {e}")

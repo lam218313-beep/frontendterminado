@@ -27,6 +27,8 @@ export interface BrandIdentityData {
     };
     archetype?: string;
     typography?: any;
+    logo_url?: string;
+    stationery_url?: string;
 }
 
 interface CommonProps {
@@ -119,7 +121,7 @@ export const CardTone: React.FC<CommonProps> = ({ data }) => {
 };
 
 // --- CARD 4: LOGO CONSTRUCTION ---
-export const CardLogo: React.FC = () => {
+export const CardLogo: React.FC<CommonProps> = ({ data }) => {
     return (
         <div className="h-full bg-white rounded-[40px] p-8 shadow-sm border border-gray-100 flex flex-col relative group overflow-hidden">
             {/* Background Grid */}
@@ -139,17 +141,23 @@ export const CardLogo: React.FC = () => {
 
             <div className="flex-1 flex items-center justify-center relative z-10">
                 <div className="relative w-48 h-48 flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
-                    {/* Logo Construction Guidelines (Mock) */}
-                    <div className="absolute inset-0 border border-primary-500/20 rounded-full"></div>
-                    <div className="absolute inset-4 border border-primary-500/20 rounded-full"></div>
-                    <div className="absolute top-1/2 left-0 w-full h-px bg-primary-500/20"></div>
-                    <div className="absolute left-1/2 top-0 w-px h-full bg-primary-500/20"></div>
+                    {data?.logo_url ? (
+                        <img src={data.logo_url} alt="Brand Logo" className="w-full h-full object-contain" />
+                    ) : (
+                        <>
+                            {/* Logo Construction Guidelines (Mock) */}
+                            <div className="absolute inset-0 border border-primary-500/20 rounded-full"></div>
+                            <div className="absolute inset-4 border border-primary-500/20 rounded-full"></div>
+                            <div className="absolute top-1/2 left-0 w-full h-px bg-primary-500/20"></div>
+                            <div className="absolute left-1/2 top-0 w-px h-full bg-primary-500/20"></div>
 
-                    {/* The Logo Shape (X/Helix concept) */}
-                    <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M20 20C20 20 40 50 50 50C60 50 80 20 80 20" stroke="#F20F79" strokeWidth="12" strokeLinecap="round" />
-                        <path d="M20 80C20 80 40 50 50 50C60 50 80 80 80 80" stroke="#465362" strokeWidth="12" strokeLinecap="round" />
-                    </svg>
+                            {/* The Logo Shape (X/Helix concept) */}
+                            <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20 20C20 20 40 50 50 50C60 50 80 20 80 20" stroke="#F20F79" strokeWidth="12" strokeLinecap="round" />
+                                <path d="M20 80C20 80 40 50 50 50C60 50 80 80 80 80" stroke="#465362" strokeWidth="12" strokeLinecap="round" />
+                            </svg>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -331,30 +339,36 @@ export const CardPatterns: React.FC = () => {
 };
 
 // --- CARD 9: STATIONERY & MOCKUPS ---
-export const CardStationery: React.FC = () => {
+export const CardStationery: React.FC<CommonProps> = ({ data }) => {
     return (
         <div className="h-full bg-[#E5E9F2] rounded-[40px] overflow-hidden relative group">
             <div className="absolute inset-0 flex items-center justify-center p-8">
-                {/* ID Card Mockup */}
-                <div className="w-48 h-72 bg-white rounded-2xl shadow-xl transform rotate-[-5deg] group-hover:rotate-0 transition-all duration-500 flex flex-col overflow-hidden relative z-10">
-                    <div className="h-24 bg-brand-dark relative">
-                        <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-16 h-16 bg-gray-200 rounded-full border-4 border-white overflow-hidden">
-                            <img src="https://picsum.photos/id/64/100/100" className="w-full h-full object-cover" alt="User" />
+                {data?.stationery_url ? (
+                    <img src={data.stationery_url} alt="Stationery" className="w-full h-full object-cover rounded-2xl shadow-lg" />
+                ) : (
+                    <>
+                        {/* ID Card Mockup */}
+                        <div className="w-48 h-72 bg-white rounded-2xl shadow-xl transform rotate-[-5deg] group-hover:rotate-0 transition-all duration-500 flex flex-col overflow-hidden relative z-10">
+                            <div className="h-24 bg-brand-dark relative">
+                                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-16 h-16 bg-gray-200 rounded-full border-4 border-white overflow-hidden">
+                                    <img src="https://picsum.photos/id/64/100/100" className="w-full h-full object-cover" alt="User" />
+                                </div>
+                            </div>
+                            <div className="mt-8 text-center px-4">
+                                <h4 className="font-bold text-gray-800 text-sm">Sarah Connor</h4>
+                                <p className="text-[10px] text-gray-400 uppercase tracking-wider">Product Lead</p>
+                            </div>
+                            <div className="mt-auto p-4 bg-gray-50">
+                                <div className="h-2 w-20 bg-gray-200 rounded-full mx-auto"></div>
+                            </div>
                         </div>
-                    </div>
-                    <div className="mt-8 text-center px-4">
-                        <h4 className="font-bold text-gray-800 text-sm">Sarah Connor</h4>
-                        <p className="text-[10px] text-gray-400 uppercase tracking-wider">Product Lead</p>
-                    </div>
-                    <div className="mt-auto p-4 bg-gray-50">
-                        <div className="h-2 w-20 bg-gray-200 rounded-full mx-auto"></div>
-                    </div>
-                </div>
 
-                {/* Business Card Mockup (Behind) */}
-                <div className="absolute w-56 h-32 bg-primary-500 rounded-xl shadow-lg transform rotate-[10deg] translate-x-12 translate-y-12 flex items-center justify-center">
-                    <span className="text-white font-bold text-lg tracking-widest">REGENETIX</span>
-                </div>
+                        {/* Business Card Mockup (Behind) */}
+                        <div className="absolute w-56 h-32 bg-primary-500 rounded-xl shadow-lg transform rotate-[10deg] translate-x-12 translate-y-12 flex items-center justify-center">
+                            <span className="text-white font-bold text-lg tracking-widest">REGENETIX</span>
+                        </div>
+                    </>
+                )}
             </div>
 
             <div className="absolute top-8 left-8">

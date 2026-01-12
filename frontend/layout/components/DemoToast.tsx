@@ -9,6 +9,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, X } from 'lucide-react';
 
+import { useAuth } from '../contexts/AuthContext';
+
 interface DemoToastProps {
     show: boolean;
     requiredPlanName: string;
@@ -20,19 +22,28 @@ export const DemoToast: React.FC<DemoToastProps> = ({
     requiredPlanName,
     onDismiss
 }) => {
+    const { user } = useAuth();
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
-        if (show) {
+        if (!user) return;
+
+        const storageKey = `pixely_demo_toast_seen_${user.email}`;
+        const hasSeen = localStorage.getItem(storageKey);
+
+        if (show && !hasSeen) {
             setIsVisible(true);
-            // Auto-dismiss after 4 seconds
+            // Mark as seen immediately so it doesn't show again on refresh/re-nav
+            localStorage.setItem(storageKey, 'true');
+
+            // Auto-dismiss after 6 seconds (longer read time for first/only view)
             const timer = setTimeout(() => {
                 setIsVisible(false);
                 onDismiss?.();
-            }, 4000);
+            }, 6000);
             return () => clearTimeout(timer);
         }
-    }, [show, onDismiss]);
+    }, [show, user, onDismiss]);
 
     const handleDismiss = () => {
         setIsVisible(false);

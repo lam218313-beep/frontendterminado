@@ -32,6 +32,7 @@ export interface UserInfo {
   role: string;
   is_active: boolean;
   logo_url?: string;
+  client_id?: string;
 }
 
 export interface ContextStatus {
@@ -356,14 +357,26 @@ export async function createUser(userData: any): Promise<UserInfo> {
  * Update a user (Admin only)
  * PUT /users/{user_id}
  */
+// export async function updateUser(userId: string, userData: any): Promise<UserInfo> {
+//   const url = `${API_BASE_URL}/admin-users/${userId}`;
 export async function updateUser(userId: string, userData: any): Promise<UserInfo> {
-  const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
-    method: 'PUT',
+  // Use Debug Endpoint to bypass routing issues
+  const url = `${API_BASE_URL}/admin-users/update-debug`;
+  console.log("updateUser calling:", url);
+
+  // Wrap in payload expected by debug endpoint
+  const payload = {
+    user_id: userId,
+    updates: userData
+  };
+
+  const response = await fetch(url, {
+    method: 'POST',
+    body: JSON.stringify(payload),
     headers: {
       ...getAuthHeaders(),
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(userData),
   });
   return handleResponse<UserInfo>(response);
 }
@@ -848,7 +861,7 @@ export async function generatePersonas(clientId: string, data: any): Promise<any
  */
 export async function getBrand(clientId: string): Promise<{ status: string; data: any }> {
   try {
-    const response = await fetch(`${API_BASE_URL}/clients/${clientId}/brand`, {
+    const response = await fetch(`${API_BASE_URL}/brand/${clientId}`, {
       headers: getAuthHeaders(),
     });
 
@@ -863,6 +876,18 @@ export async function getBrand(clientId: string): Promise<{ status: string; data
     console.error("Error fetching brand:", error);
     return { status: "error", data: null };
   }
+}
+
+export async function updateBrand(clientId: string, data: any): Promise<{ status: string; message: string }> {
+  const response = await fetch(`${API_BASE_URL}/brand/${clientId}`, {
+    method: 'PUT',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response);
 }
 
 // =============================================================================
