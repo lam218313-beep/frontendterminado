@@ -922,3 +922,106 @@ export async function syncStrategy(clientId: string, nodes: StrategyNode[]): Pro
   });
   return handleResponse(response);
 }
+
+// =============================================================================
+// CLIENTS (Admin)
+// =============================================================================
+
+export interface Client {
+  id: string;
+  nombre: string;
+  industry: string;
+  plan: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface ClientStatus {
+  hasInterview: boolean;
+  hasBrandIdentity: boolean;
+  canExecuteAnalysis: boolean;
+  lastAnalysisDate?: string;
+  analysisStatus?: string;
+}
+
+/**
+ * List all clients
+ * GET /clients/
+ */
+export async function getClients(): Promise<Client[]> {
+  const url = `${API_BASE_URL}/clients/`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  return handleResponse<Client[]>(response);
+}
+
+/**
+ * Create a new client
+ * POST /clients/
+ */
+export async function createClient(data: {
+  brand_name: string;
+  industry?: string;
+  plan: string;
+}): Promise<Client> {
+  const url = `${API_BASE_URL}/clients/`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<Client>(response);
+}
+
+/**
+ * Get client setup status
+ * GET /clients/{client_id}/status
+ */
+export async function getClientStatus(clientId: string): Promise<ClientStatus> {
+  const url = `${API_BASE_URL}/clients/${clientId}/status`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  return handleResponse<ClientStatus>(response);
+}
+
+/**
+ * Update client information
+ * PUT /clients/{client_id}
+ */
+export async function updateClient(clientId: string, data: {
+  nombre?: string;
+  industry?: string;
+  plan?: string;
+  is_active?: boolean;
+}): Promise<Client> {
+  const url = `${API_BASE_URL}/clients/${clientId}`;
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+  return handleResponse<Client>(response);
+}
+
+// Export as default object for backward compatibility
+export default {
+  login,
+  signup,
+  getMe,
+  listUsers,
+  getClientStatus,
+  createClient,
+  updateClient,
+  getClients
+  // ... add other exports as needed
+};

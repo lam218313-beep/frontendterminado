@@ -84,14 +84,21 @@ async def update_debug_user(payload: dict):
     try:
         user_id = payload.get("user_id") # Expect ID in body
         updates = payload.get("updates", {})
-        print(f"HIT EMERGENCY UPDATE {user_id}")
+        print(f"=== UPDATE DEBUG ===")
+        print(f"User ID: {user_id}")
+        print(f"Updates received: {updates}")
+        print(f"client_id in updates: {updates.get('client_id', 'NOT PRESENT')}")
         
         # Clean updates
         if "id" in updates: del updates["id"]
         
+        print(f"Calling db.update_user...")
         db.update_user(user_id, updates)
+        print(f"Database update complete")
+        print(f"===================")
         return {"id": user_id, "data": updates}
     except Exception as e:
+        print(f"ERROR in update_debug_user: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

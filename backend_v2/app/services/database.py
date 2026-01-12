@@ -1,10 +1,19 @@
 
+
 import logging
 from typing import Optional, Any
 from supabase import create_client, Client
 from ..config import settings
 
 logger = logging.getLogger(__name__)
+
+# Add file logging to bypass PowerShell display issues
+file_handler = logging.FileHandler('database_debug.log')
+file_handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+logger.setLevel(logging.INFO)
 
 class SupabaseService:
     def __init__(self):
@@ -19,9 +28,12 @@ class SupabaseService:
         if settings.SUPABASE_URL and settings.SUPABASE_SERVICE_KEY:
             try:
                 self.admin_client: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
-            except Exception:
+                logger.info("✅ Admin client initialized successfully with SERVICE_KEY")
+            except Exception as e:
+                logger.error(f"❌ Admin client initialization FAILED: {e}")
                 self.admin_client = None
         else:
+            logger.warning("⚠️ SUPABASE_SERVICE_KEY not configured - admin operations will use public client")
             self.admin_client = None
 
     # ============================================================================
@@ -118,6 +130,20 @@ class SupabaseService:
         except Exception as e:
             logger.error(f"DB Get Error (Client): {e}")
             return None
+    
+    def update_client(self, client_id: str, updates: dict):
+        """Update client information."""
+        if not self.client:
+            logger.error("DB: No client available for update")
+            return
+        
+        try:
+            response = self.client.table("clients").update(updates).eq("id", client_id).execute()
+            logger.info(f"Updated client {client_id}: {updates}")
+            return response.data
+        except Exception as e:
+            logger.error(f"DB Update Client Error: {e}")
+            raise e
 
     def delete_client(self, client_id: str):
         if not self.client: return
@@ -160,23 +186,34 @@ class SupabaseService:
             raise e
 
     def update_user(self, user_id: str, updates: dict):
-        # Use Admin Client if available to bypass RLS
-        target_client = self.admin_client if self.admin_client else self.client
-        client_type = "ADMIN" if self.admin_client else "PUBLIC"
+        # FORCE use of Admin Client - we MUST bypass RLS for admin operations
+        if not self.admin_client:
+            error_msg = "CRITICAL: admin_client is NULL - cannot perform admin updates. Check SUPABASE_SERVICE_KEY in .env"
+            logger.error(error_msg)
+            raise Exception(error_msg)
         
-        if not target_client: 
-            logger.error("DB: No client available for update")
-            return
-
+        logger.info(f"✅ Using ADMIN client for update (SERVICE_ROLE)")
+        
         try:
-            logger.info(f"DB: Attempting to update user {user_id} using {client_type} client. Updates: {updates}")
+            logger.info(f"DB: Attempting to update user {user_id}. Updates: {updates}")
             
             # Prevent updating sensitive fields via this method if any
             if "id" in updates: del updates["id"]
             if "email" in updates: del updates["email"] # Usually email is immutable or handled via auth
             
-            response = target_client.table("users").update(updates).eq("id", user_id).execute()
+            response = self.admin_client.table("users").update(updates).eq("id", user_id).execute()
             logger.info(f"DB: Update response: {response}")
+            logger.info(f"DB: Response data: {response.data}")
+            logger.info(f"DB: Response count: {response.count if hasattr(response, 'count') else 'N/A'}")
+            
+            # CRITICAL: Check if update actually affected rows
+            if not response.data or len(response.data) == 0:
+                error_msg = f"Supabase update returned empty data - update failed for user {user_id}"
+                logger.error(error_msg)
+                raise Exception(error_msg)
+            
+            logger.info(f"✅ Update successful - {len(response.data)} row(s) affected")
+            return response.data[0]
             
         except Exception as e:
             logger.error(f"DB Update User Error: {e}")
