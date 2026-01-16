@@ -109,7 +109,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isExpanded, setIsExpanded, act
                     onClick={setActiveView}
                 />
 
-                {/* Admin Link - ONLY visible for admin users */}
+                {/* Admin Panel - Only visible for admin users */}
                 {user?.isAdmin && (
                     <div className="pt-4 mt-4 border-t border-gray-200">
                         <SidebarItem

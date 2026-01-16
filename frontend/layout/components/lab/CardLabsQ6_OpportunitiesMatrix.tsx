@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo, useCallback } from 'react';
-import { Target, Zap, MousePointer2, TrendingUp } from 'lucide-react';
+import { Target, Zap, ArrowRight, MousePointer2, MoveUpRight, CheckCircle2, TrendingUp } from 'lucide-react';
 
 interface Opportunity {
   oportunidad: string;
@@ -18,10 +18,18 @@ interface CardLabsQ6_OpportunitiesMatrixProps {
   };
 }
 
+// Strict Palette
 const GREEN = '#41ead4';
 const YELLOW = '#f3dfa2';
 const RED = '#ee4266';
 const BLUE = '#63ADF2';
+
+const QUADRANTS = [
+  { id: 'q1', label: 'Quick Wins', color: GREEN, x: 50, y: 50, w: 50, h: 50, bg: 'rgba(65, 234, 212, 0.05)' }, // Top Right
+  { id: 'q2', label: 'Sustain', color: BLUE, x: 0, y: 50, w: 50, h: 50, bg: 'rgba(99, 173, 242, 0.05)' },    // Top Left
+  { id: 'q3', label: 'Invest', color: YELLOW, x: 50, y: 0, w: 50, h: 50, bg: 'rgba(243, 223, 162, 0.05)' },   // Bottom Right
+  { id: 'q4', label: 'Drop', color: RED, x: 0, y: 0, w: 50, h: 50, bg: 'rgba(238, 66, 102, 0.03)' },       // Bottom Left
+];
 
 export const CardLabsQ6_OpportunitiesMatrix: React.FC<CardLabsQ6_OpportunitiesMatrixProps> = ({ data }) => {
   const [isFlipped, setIsFlipped] = useState(false);
@@ -36,7 +44,7 @@ export const CardLabsQ6_OpportunitiesMatrix: React.FC<CardLabsQ6_OpportunitiesMa
     const y = e.clientY - rect.top;
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
-    const rotateX = ((y - centerY) / centerY) * -3;
+    const rotateX = ((y - centerY) / centerY) * -3; // Subtle tilt
     const rotateY = ((x - centerX) / centerX) * 3;
     setRotation({ x: rotateX, y: rotateY });
   }, [isFlipped]);
@@ -82,7 +90,7 @@ export const CardLabsQ6_OpportunitiesMatrix: React.FC<CardLabsQ6_OpportunitiesMa
           transform: `rotateX(${isFlipped ? 0 : rotation.x}deg) rotateY(${isFlipped ? 180 : rotation.y}deg)`
         }}
       >
-        {/* FRONT FACE */}
+        {/* --- FRONT FACE --- */}
         <div className="absolute inset-0 bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 [backface-visibility:hidden] flex flex-col z-10">
 
           <div className="flex justify-between items-center mb-4">
@@ -91,8 +99,8 @@ export const CardLabsQ6_OpportunitiesMatrix: React.FC<CardLabsQ6_OpportunitiesMa
                 <Target size={20} />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900 leading-tight">Matriz de Oportunidades</h3>
-                <p className="text-xs text-gray-400 font-medium">Priorización Estratégica</p>
+                <h3 className="text-lg font-bold text-gray-900 leading-tight">¿Dónde están tus oportunidades?</h3>
+                <p className="text-xs text-gray-400 font-medium">Matriz de Oportunidades</p>
               </div>
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
@@ -100,25 +108,30 @@ export const CardLabsQ6_OpportunitiesMatrix: React.FC<CardLabsQ6_OpportunitiesMa
             </div>
           </div>
 
-          <div className="flex-1 flex gap-6 min-h-0">
+          <div className="flex-1 flex flex-col md:flex-row gap-6 min-h-0">
 
+            {/* LEFT: CHART AREA */}
             <div className="relative flex-1 bg-white rounded-2xl border border-gray-100 overflow-hidden" onClick={(e) => e.stopPropagation()}>
               <div className="absolute inset-0 flex flex-col">
                 <div className="flex-1 flex">
+                  {/* Q2: Sustain */}
                   <div className="flex-1 border-r border-b border-gray-100 relative group/q">
                     <span className="absolute top-2 left-2 text-[10px] font-bold text-chart-blue uppercase tracking-wider opacity-50 group-hover/q:opacity-100 transition-opacity">Sustain</span>
                     <div className="absolute inset-0 bg-chart-blue/5"></div>
                   </div>
+                  {/* Q1: Quick Wins */}
                   <div className="flex-1 border-b border-gray-100 relative group/q">
                     <span className="absolute top-2 right-2 text-[10px] font-bold text-chart-green uppercase tracking-wider opacity-50 group-hover/q:opacity-100 transition-opacity">Quick Wins</span>
                     <div className="absolute inset-0 bg-chart-green/5"></div>
                   </div>
                 </div>
                 <div className="flex-1 flex">
+                  {/* Q4: Drop */}
                   <div className="flex-1 border-r border-gray-100 relative group/q">
                     <span className="absolute bottom-2 left-2 text-[10px] font-bold text-chart-red uppercase tracking-wider opacity-50 group-hover/q:opacity-100 transition-opacity">Drop</span>
                     <div className="absolute inset-0 bg-chart-red/5"></div>
                   </div>
+                  {/* Q3: Invest */}
                   <div className="flex-1 relative group/q">
                     <span className="absolute bottom-2 right-2 text-[10px] font-bold text-chart-yellow uppercase tracking-wider opacity-50 group-hover/q:opacity-100 transition-opacity">Invest</span>
                     <div className="absolute inset-0 bg-chart-yellow/5"></div>
@@ -126,6 +139,7 @@ export const CardLabsQ6_OpportunitiesMatrix: React.FC<CardLabsQ6_OpportunitiesMa
                 </div>
               </div>
 
+              {/* Axes Labels */}
               <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[9px] font-bold text-gray-400 uppercase tracking-widest bg-white/50 px-2 rounded backdrop-blur-sm">
                 Gap de Mercado →
               </div>
@@ -133,6 +147,7 @@ export const CardLabsQ6_OpportunitiesMatrix: React.FC<CardLabsQ6_OpportunitiesMa
                 Capacidad Interna →
               </div>
 
+              {/* Bubbles */}
               <div className="absolute inset-4">
                 {points.map((p, i) => {
                   const isHovered = hoveredOpp === p.oportunidad;
@@ -153,6 +168,7 @@ export const CardLabsQ6_OpportunitiesMatrix: React.FC<CardLabsQ6_OpportunitiesMa
                     >
                       <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.color }}></div>
 
+                      {/* Tooltip on Hover Chart */}
                       {isHovered && (
                         <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap pointer-events-none shadow-xl">
                           {p.oportunidad}
@@ -164,6 +180,7 @@ export const CardLabsQ6_OpportunitiesMatrix: React.FC<CardLabsQ6_OpportunitiesMa
               </div>
             </div>
 
+            {/* RIGHT: TOP LIST */}
             <div className="w-1/3 flex flex-col gap-3 min-w-[140px]">
               <div className="flex items-center gap-1.5 pb-2 border-b border-gray-100">
                 <Zap size={14} className="text-chart-yellow fill-chart-yellow" />
@@ -177,8 +194,8 @@ export const CardLabsQ6_OpportunitiesMatrix: React.FC<CardLabsQ6_OpportunitiesMa
                     <div
                       key={idx}
                       className={`p-2.5 rounded-xl border transition-all duration-200 cursor-pointer ${isHovered
-                          ? 'bg-gray-50 border-gray-200 shadow-sm translate-x-1'
-                          : 'bg-white border-transparent hover:border-gray-100'
+                        ? 'bg-gray-50 border-gray-200 shadow-sm translate-x-1'
+                        : 'bg-white border-transparent hover:border-gray-100'
                         }`}
                       onMouseEnter={() => setHoveredOpp(item.oportunidad)}
                       onMouseLeave={() => setHoveredOpp(null)}
@@ -202,14 +219,14 @@ export const CardLabsQ6_OpportunitiesMatrix: React.FC<CardLabsQ6_OpportunitiesMa
               </div>
 
               <div className="mt-auto pt-2 text-center">
-                <span className="text-[10px] text-gray-400 font-medium">Ver {Math.max(0, points.length - 3)} oportunidades más →</span>
+                <span className="text-[10px] text-gray-400 font-medium">Ver 3 oportunidades más →</span>
               </div>
             </div>
 
           </div>
         </div>
 
-        {/* BACK FACE: INTERPRETATION */}
+        {/* --- BACK FACE: INTERPRETATION --- */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-white rounded-[32px] p-6 shadow-sm border border-primary-100 [backface-visibility:hidden] [transform:rotateY(180deg)] flex flex-col z-20">
           <div className="flex items-center gap-3 mb-4 shrink-0">
             <div className="p-2.5 bg-primary-100 rounded-xl text-primary-600">
@@ -228,7 +245,7 @@ export const CardLabsQ6_OpportunitiesMatrix: React.FC<CardLabsQ6_OpportunitiesMa
               />
             ) : (
               <div className="flex flex-col gap-3">
-                {topPriorities.map((opp, idx) => (
+                {points.sort((a, b) => (b.gap_score + b.competencia_score) - (a.gap_score + a.competencia_score)).slice(0, 3).map((opp, idx) => (
                   <div key={idx} className="bg-gray-50 rounded-xl p-3 border border-gray-100">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="w-5 h-5 rounded-full text-[10px] font-bold text-white flex items-center justify-center" style={{ backgroundColor: opp.color }}>{idx + 1}</span>

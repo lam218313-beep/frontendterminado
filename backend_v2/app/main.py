@@ -12,7 +12,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
-from .routers import pipeline, clients, analysis, auth, users_v2, tasks, interview, personas, tts, strategy, brand
+from .routers import pipeline, clients, analysis, auth, tasks, interview, personas, tts, strategy, brand, admin
 
 # Lifespan context
 @asynccontextmanager
@@ -24,8 +24,10 @@ async def lifespan(app: FastAPI):
         print(f"ROUTE: {route.path}")
     print("------------------------")
     yield
-    # Shutdown
-    logging.info("Shutting down...")
+    # Shutdown: Clean up resources
+    print("--- LIFESPAN SHUTDOWN ---")
+    logging.info("Shutting down Aggregation Engine...")
+    logging.info("✅ All async resources cleaned up")
 
 app = FastAPI(
     title="Pixely Partners API v2",
@@ -36,10 +38,51 @@ app = FastAPI(
 
 @app.on_event("startup")
 async def startup_event():
+    """Validate configuration and log startup status."""
     print("--- REGISTERED ROUTES ---")
     for route in app.routes:
         print(f"ROUTE: {route.path}")
     print("-------------------------")
+    
+    # Validate critical configuration
+    print("\n--- CONFIGURATION CHECK ---")
+    
+    # Check Supabase
+    if not settings.SUPABASE_URL:
+        logging.warning("⚠️  SUPABASE_URL not configured - database operations will fail!")
+        print("⚠️  SUPABASE_URL: MISSING")
+    else:
+        print(f"✅ SUPABASE_URL: Configured ({settings.SUPABASE_URL[:30]}...)")
+    
+    if not settings.SUPABASE_KEY:
+        logging.warning("⚠️  SUPABASE_KEY not configured - public operations will fail!")
+        print("⚠️  SUPABASE_KEY: MISSING")
+    else:
+        print("✅ SUPABASE_KEY: Configured")
+    
+    # CRITICAL: Service Key for admin operations
+    if not settings.SUPABASE_SERVICE_KEY:
+        logging.error("❌ SUPABASE_SERVICE_KEY not configured - ADMIN OPERATIONS WILL FAIL!")
+        logging.error("   This includes: user creation, password reset, user updates")
+        print("❌ SUPABASE_SERVICE_KEY: MISSING - ADMIN FEATURES DISABLED!")
+    else:
+        print("✅ SUPABASE_SERVICE_KEY: Configured")
+    
+    # Check Apify
+    if not settings.APIFY_TOKEN:
+        logging.warning("⚠️  APIFY_TOKEN not configured - scraping will fail!")
+        print("⚠️  APIFY_TOKEN: MISSING")
+    else:
+        print("✅ APIFY_TOKEN: Configured")
+    
+    # Check Gemini
+    if not settings.GEMINI_API_KEY:
+        logging.warning("⚠️  GEMINI_API_KEY not configured - AI analysis will fail!")
+        print("⚠️  GEMINI_API_KEY: MISSING")
+    else:
+        print("✅ GEMINI_API_KEY: Configured")
+    
+    print("---------------------------\n")
 
 # Middleware
 app.add_middleware(
@@ -51,9 +94,7 @@ app.add_middleware(
 )
 
 # Routers
-app.include_router(users_v2.admin_router)
 app.include_router(auth.router)
-app.include_router(users_v2.router)
 app.include_router(clients.router)
 app.include_router(analysis.router)
 app.include_router(pipeline.router)
@@ -63,13 +104,7 @@ app.include_router(personas.router)
 app.include_router(tts.router)
 app.include_router(strategy.router)
 app.include_router(brand.router)
-
-
-@app.post("/debug/update/{user_id}")
-async def direct_update_user(user_id: str, payload: dict): 
-    print(f"HIT DIRECT UPDATE {user_id}")
-    return {"status": "ok", "id": user_id, "data": payload}
-
+app.include_router(admin.router)
 @app.get("/", tags=["Health"])
 async def root():
     """Health check."""
@@ -79,6 +114,10 @@ async def root():
         "status": "healthy",
         "docs": "/docs"
     }
+
+@app.get("/direct-admin-test")
+async def direct_test():
+    return {"status": "direct-ok"}
 
 
 @app.get("/health", tags=["Health"])
@@ -90,6 +129,17 @@ async def health_check():
         "components": {
             "apify": "connected" if settings.APIFY_TOKEN else "missing_token",
             "gemini": "connected" if settings.GEMINI_API_KEY else "missing_key",
-            "supabase": "connected" if settings.SUPABASE_URL else "missing_url"
         }
+    }
+
+@app.get("/debug-env", tags=["Health"])
+async def debug_env():
+    """Debug environment variables."""
+    key = settings.OPENAI_API_KEY
+    return {
+        "status": "debug",
+        "openai_key_present": bool(key),
+        "openai_key_prefix": key[:5] + "..." if key else "MISSING",
+        "gemini_key_present": bool(settings.GEMINI_API_KEY),
+        "gemini_key_prefix": settings.GEMINI_API_KEY[:5] + "..." if settings.GEMINI_API_KEY else "MISSING"
     }

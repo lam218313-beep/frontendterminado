@@ -9,7 +9,7 @@ interface EmotionDataPoint {
 interface CardLabsQ1_EmotionsProps {
   data: {
     emociones: EmotionDataPoint[];
-    interpretation_text?: string;
+    interpretation_text?: string; // AI-generated explanation
   };
 }
 
@@ -18,7 +18,9 @@ const PLUTCHIK_AXES = [
   'Tristeza', 'Aversión', 'Ira', 'Anticipación'
 ];
 
+// Palette
 const CHART_BLUE = '#63ADF2';
+const THEME_MAGENTA = '#F20F79';
 
 export const CardLabsQ1_Emotions: React.FC<CardLabsQ1_EmotionsProps> = ({ data }) => {
   const [isFlipped, setIsFlipped] = useState(false);
@@ -26,6 +28,7 @@ export const CardLabsQ1_Emotions: React.FC<CardLabsQ1_EmotionsProps> = ({ data }
   const [rotation, setRotation] = useState({ x: 0, y: 0 });
   const [hoveredEmotion, setHoveredEmotion] = useState<{ name: string; value: number } | null>(null);
 
+  // --- 3D Tilt Logic ---
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current || isFlipped) return;
     const rect = cardRef.current.getBoundingClientRect();
@@ -43,9 +46,10 @@ export const CardLabsQ1_Emotions: React.FC<CardLabsQ1_EmotionsProps> = ({ data }
     setHoveredEmotion(null);
   }, []);
 
-  const CHART_SIZE = 280;
+  // --- Chart Math (Reduced Size) ---
+  const CHART_SIZE = 220; // Reduced from 280
   const CENTER = CHART_SIZE / 2;
-  const RADIUS = 100;
+  const RADIUS = 75; // Reduced from 100
 
   const chartPoints = useMemo(() => {
     return PLUTCHIK_AXES.map((axisName, index) => {
@@ -93,29 +97,30 @@ export const CardLabsQ1_Emotions: React.FC<CardLabsQ1_EmotionsProps> = ({ data }
           transform: `rotateX(${isFlipped ? 0 : rotation.x}deg) rotateY(${isFlipped ? 180 : rotation.y}deg)`
         }}
       >
-        {/* FRONT FACE */}
+        {/* --- FRONT FACE --- */}
         <div className="absolute inset-0 bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 [backface-visibility:hidden] flex flex-col items-center justify-between z-10">
           <div className="w-full flex justify-between items-center mb-2">
             <div className="flex items-center gap-3">
+              {/* Theme Color Icon */}
               <div className="p-2.5 bg-primary-50 rounded-xl text-primary-500">
                 <Heart size={20} />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900 leading-tight">Radar Emocional</h3>
-                <p className="text-xs text-gray-400 font-medium">Modelo Plutchik</p>
+                <h3 className="text-lg font-bold text-gray-900 leading-tight">¿Qué sienten tus seguidores?</h3>
+                <p className="text-xs text-gray-400 font-medium">Radar Emocional</p>
               </div>
             </div>
           </div>
 
           <div
-            className="relative flex-1 w-full flex items-center justify-center"
+            className="relative flex-1 w-full flex items-center justify-center overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none z-20">
-              <span className="text-2xl font-bold" style={{ color: CHART_BLUE }}>
+              <span className="text-xl font-bold" style={{ color: CHART_BLUE }}>
                 {hoveredEmotion ? `${hoveredEmotion.value}%` : ''}
               </span>
-              <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">
+              <p className="text-[9px] uppercase tracking-wider text-gray-400 font-bold">
                 {hoveredEmotion ? hoveredEmotion.name : ''}
               </p>
             </div>
@@ -181,18 +186,18 @@ export const CardLabsQ1_Emotions: React.FC<CardLabsQ1_EmotionsProps> = ({ data }
                   <circle
                     cx={p.x}
                     cy={p.y}
-                    r="4"
+                    r="3.5"
                     fill="white"
                     stroke={CHART_BLUE}
                     strokeWidth="2"
-                    className="transition-all duration-200"
+                    className="transition-all duration-200 group-hover/point:r-5 group-hover/point:stroke-[3px]"
                   />
                   <text
-                    x={CENTER + (RADIUS + 20) * Math.cos(p.angle)}
-                    y={CENTER + (RADIUS + 20) * Math.sin(p.angle)}
+                    x={CENTER + (RADIUS + 15) * Math.cos(p.angle)}
+                    y={CENTER + (RADIUS + 15) * Math.sin(p.angle)}
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    className={`text-[10px] font-semibold fill-gray-400 transition-colors ${hoveredEmotion?.name === p.name ? 'font-bold' : ''}`}
+                    className={`text-[9px] font-semibold fill-gray-400 transition-colors ${hoveredEmotion?.name === p.name ? 'font-bold' : ''}`}
                     style={{ fill: hoveredEmotion?.name === p.name ? CHART_BLUE : undefined }}
                   >
                     {p.name}
@@ -202,13 +207,13 @@ export const CardLabsQ1_Emotions: React.FC<CardLabsQ1_EmotionsProps> = ({ data }
             </svg>
           </div>
 
-          <div className="w-full flex items-center gap-2 text-xs text-gray-500 mt-4 bg-gray-50 p-3 rounded-xl">
+          <div className="w-full flex items-center gap-2 text-xs text-gray-500 mt-2 bg-gray-50 p-3 rounded-xl">
             <MousePointer2 size={14} className="text-chart-blue" />
-            <span>Hover en vértices para detalles</span>
+            <span>Explora los puntos de datos</span>
           </div>
         </div>
 
-        {/* BACK FACE: INTERPRETATION */}
+        {/* --- BACK FACE: AI INTERPRETATION --- */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-white rounded-[32px] p-6 shadow-sm border border-primary-100 [backface-visibility:hidden] [transform:rotateY(180deg)] flex flex-col z-20">
           <div className="flex items-center gap-3 mb-4 shrink-0">
             <div className="p-2.5 bg-primary-100 rounded-xl text-primary-600">
@@ -226,24 +231,27 @@ export const CardLabsQ1_Emotions: React.FC<CardLabsQ1_EmotionsProps> = ({ data }
                 dangerouslySetInnerHTML={{ __html: data.interpretation_text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-primary-600">$1</strong>') }}
               />
             ) : (
-              <table className="w-full text-sm text-left">
-                <thead className="text-xs text-gray-400 uppercase bg-gray-50">
-                  <tr>
-                    <th className="py-2 px-3">#</th>
-                    <th className="py-2 px-3">Emoción</th>
-                    <th className="py-2 px-3 text-right">Valor</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedData.slice(0, 4).map((item, idx) => (
-                    <tr key={item.name} className="border-b border-gray-50">
-                      <td className="py-2 px-3 text-gray-400 font-bold">{idx + 1}</td>
-                      <td className="py-2 px-3 font-medium text-gray-700">{item.name}</td>
-                      <td className="py-2 px-3 text-right font-bold text-chart-blue">{item.value}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="space-y-4 w-full">
+                <h4 className="text-xs text-gray-400 font-bold uppercase tracking-widest text-center">Datos Brutos</h4>
+                <div className="overflow-auto custom-scrollbar max-h-[200px]">
+                  <table className="w-full text-sm text-left">
+                    <thead className="text-xs text-gray-400 uppercase bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 rounded-l-lg">Emoción</th>
+                        <th className="px-4 py-2 rounded-r-lg text-right">%</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {sortedData.slice(0, 4).map((item, idx) => (
+                        <tr key={idx}>
+                          <td className="px-4 py-2 font-medium text-gray-700">{item.name}</td>
+                          <td className="px-4 py-2 text-right font-bold text-primary-600">{item.value}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             )}
           </div>
 

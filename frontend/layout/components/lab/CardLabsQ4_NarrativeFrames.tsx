@@ -142,8 +142,8 @@ export const CardLabsQ4_NarrativeFrames: React.FC<CardLabsQ4_NarrativeFramesProp
                 <Layers size={20} />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900 leading-tight">Marcos Narrativos</h3>
-                <p className="text-xs text-gray-400 font-medium">Distribución Semántica</p>
+                <h3 className="text-lg font-bold text-gray-900 leading-tight">¿Qué narrativas impulsan tu marca?</h3>
+                <p className="text-xs text-gray-400 font-medium">Marcos Narrativos</p>
               </div>
             </div>
             <div className="text-gray-300">

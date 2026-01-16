@@ -85,11 +85,14 @@ async def create_client(request: ClientCreate):
         "created_at": datetime.utcnow().isoformat()
     }
     
-    # Insert using service
-    db.create_client(client_data)
-    logger.info(f"✅ Created client persistent: {request.brand_name}")
-    
-    return client_data
+    try:
+        # Insert using service
+        result = db.create_client(client_data)
+        logger.info(f"✅ Created client persistent: {request.brand_name} (ID: {client_id})")
+        return client_data
+    except Exception as e:
+        logger.error(f"❌ Failed to create client: {e}")
+        raise HTTPException(status_code=500, detail=f"Error creating client: {str(e)}")
 
 
 @router.get("/{client_id}", response_model=ClientResponse)
@@ -133,9 +136,16 @@ async def get_client_status(client_id: str):
     interview = db.get_interview(client_id)
     has_interview = interview is not None
     
-    # Check brand identity completion
+    # Check brand identity completion - validate multiple required fields
     brand = db.get_brand_identity(client_id)
-    has_brand = bool(brand and brand.get('mission'))  # Check if has actual data
+    has_brand = False
+    if brand:
+        # Brand is complete if it has at least mission OR vision with actual content
+        has_mission = bool(brand.get('mission') and len(str(brand.get('mission')).strip()) > 0)
+        has_vision = bool(brand.get('vision') and len(str(brand.get('vision')).strip()) > 0)
+        has_values = bool(brand.get('values') and len(brand.get('values')) > 0)
+        # Consider complete if has mission or vision (flexible validation)
+        has_brand = has_mission or has_vision
     
     # Determine if can execute analysis
     plan = client.get('plan', 'free_trial')

@@ -7,7 +7,8 @@ import { TasksView } from './components/TasksView.tsx';
 import { DashboardView } from './components/DashboardView.tsx';
 import WikiView from './components/WikiView.tsx';
 import PartnersView from './components/PartnersView.tsx';
-import { AdminView } from './components/AdminView.tsx';
+import { AdminPanel } from './components/AdminPanel.tsx';
+
 import { InterviewView } from './components/InterviewView.tsx';
 import { BrandView } from './components/BrandView.tsx';
 import { ContentPlanView } from './components/ContentPlanView.tsx';
@@ -67,7 +68,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryStat
 
 // Transition States
 type FlowState = 'LOGIN_ACTIVE' | 'LOGIN_EXITING' | 'ANIMATION_ENTRY' | 'ANIMATION_EXITING' | 'DASHBOARD_ACTIVE';
-type ViewType = 'dashboard' | 'partners' | 'lab' | 'work' | 'wiki' | 'admin' | 'interview' | 'brand' | 'strategy' | 'benefits';
+type ViewType = 'dashboard' | 'partners' | 'lab' | 'work' | 'wiki' | 'interview' | 'brand' | 'strategy' | 'benefits';
 
 // ... imports
 
@@ -222,7 +223,7 @@ const AppContent: React.FC = () => {
       case 'admin':
         return (
           <ErrorBoundary key={viewKey}>
-            <AdminView />
+            <AdminPanel />
           </ErrorBoundary>
         );
       // case 'dashboard': Removed

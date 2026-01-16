@@ -4,7 +4,8 @@
  * Centraliza todas las llamadas al backend FastAPI
  */
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+export const API_BASE_URL = 'http://localhost:8001';
 
 // =============================================================================
 // TIPOS DE RESPUESTA
@@ -14,7 +15,6 @@ export interface AuthResponse {
   access_token: string;
   token_type: string;
   user_email: string;
-  tenant_id: string;
   ficha_cliente_id: string | null;
   logo_url: string | null;
   role: string | null;  // User role (admin, analyst, client)
@@ -28,11 +28,14 @@ export interface UserInfo {
   id: string;
   email: string;
   full_name: string;
-  tenant_id: string;
   role: string;
   is_active: boolean;
   logo_url?: string;
   client_id?: string;
+  plan?: string;
+  plan_expires_at?: string;
+  benefits?: string[];
+  created_at?: string;
 }
 
 export interface ContextStatus {
@@ -355,24 +358,19 @@ export async function createUser(userData: any): Promise<UserInfo> {
 
 /**
  * Update a user (Admin only)
- * PUT /users/{user_id}
+ * PATCH /admin-users/{user_id}
  */
-// export async function updateUser(userId: string, userData: any): Promise<UserInfo> {
-//   const url = `${API_BASE_URL}/admin-users/${userId}`;
 export async function updateUser(userId: string, userData: any): Promise<UserInfo> {
-  // Use Debug Endpoint to bypass routing issues
-  const url = `${API_BASE_URL}/admin-users/update-debug`;
+  const url = `${API_BASE_URL}/admin-users/${userId}`;
   console.log("updateUser calling:", url);
 
-  // Wrap in payload expected by debug endpoint
-  const payload = {
-    user_id: userId,
-    updates: userData
-  };
+  // Clean updates - remove id if present
+  const updates = { ...userData };
+  if ("id" in updates) delete updates["id"];
 
   const response = await fetch(url, {
-    method: 'POST',
-    body: JSON.stringify(payload),
+    method: 'PATCH',
+    body: JSON.stringify(updates),
     headers: {
       ...getAuthHeaders(),
       'Content-Type': 'application/json',
@@ -897,7 +895,7 @@ export async function generatePersonas(clientId: string, data: any): Promise<any
  * Get Brand Identity
  * GET /clients/{client_id}/brand
  */
-export async function getBrand(clientId: string): Promise<{ status: string; data: any }> {
+export async function getBrand(clientId: string): Promise<{ status: string; data: any; brand_name?: string }> {
   try {
     const response = await fetch(`${API_BASE_URL}/brand/${clientId}`, {
       headers: getAuthHeaders(),
@@ -908,8 +906,8 @@ export async function getBrand(clientId: string): Promise<{ status: string; data
       return { status: "empty", data: null };
     }
 
-    const data = await handleResponse<any>(response);
-    return { status: "success", data };
+    const responseData = await handleResponse<any>(response);
+    return responseData;
   } catch (error) {
     console.error("Error fetching brand:", error);
     return { status: "error", data: null };
@@ -926,6 +924,23 @@ export async function updateBrand(clientId: string, data: any): Promise<{ status
     body: JSON.stringify(data),
   });
   return handleResponse(response);
+}
+
+export async function generateManual(clientId: string): Promise<{ status: string; message: string; data: any }> {
+  const response = await fetch(`${API_BASE_URL}/api/admin/brands/${clientId}/manual`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    }
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || 'Error generating manual');
+  }
+
+  return response.json();
 }
 
 // =============================================================================

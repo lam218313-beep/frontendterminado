@@ -4,27 +4,31 @@
  */
 
 export const MOCK_BRAND_DATA = {
-    mvv_mision: "Transformar la manera en que las pequeñas empresas gestionan su presencia digital, haciéndola accesible y poderosa para todos.",
-    mvv_vision: "Ser la plataforma líder mundial en automatización de branding para emprendedores en 2030.",
-    mvv_valores: [
-        { titulo: "Innovación", descripcion: "Buscamos constantemente nuevas formas de resolver problemas antiguos." },
-        { titulo: "Simplicidad", descripcion: "Hacemos lo complejo, sencillo y comprensible." },
-        { titulo: "Empatía", descripcion: "Diseñamos pensando siempre en el usuario final." }
+    mission: "Transformar la manera en que las pequeñas empresas gestionan su presencia digital, haciéndola accesible y poderosa para todos.",
+    vision: "Ser la plataforma líder mundial en automatización de branding para emprendedores en 2030.",
+    values: [
+        { title: "Innovación", desc: "Buscamos constantemente nuevas formas de resolver problemas antiguos." },
+        { title: "Simplicidad", desc: "Hacemos lo complejo, sencillo y comprensible." },
+        { title: "Empatía", desc: "Diseñamos pensando siempre en el usuario final." }
     ],
-    personalidad_arquetipo_nombre: "El Creador",
-    personalidad_arquetipo_descripcion: "Impulsado por el deseo de crear cosas nuevas y duraderas. Valora la expresión, la imaginación y la cultura.",
-    personalidad_tono_voz: "Inspirador, Visionario, Auténtico",
-    paleta_colores: [
-        { hex: "#6366F1", nombre: "Indigo Vibrante", uso: "Primario" },
-        { hex: "#818CF8", nombre: "Indigo Suave", uso: "Secundario" },
-        { hex: "#F43F5E", nombre: "Rosa Energético", uso: "Acento" },
-        { hex: "#1F2937", nombre: "Gris Grafito", uso: "Texto" },
-        { hex: "#F9FAFB", nombre: "Blanco Humo", uso: "Fondo" }
+    archetype: "El Creador",
+    tone_traits: [
+        { trait: "Inspirador", desc: "Motivamos a la acción y al cambio positivo." },
+        { trait: "Visionario", desc: "Vemos más allá del presente." },
+        { trait: "Auténtico", desc: "Hablamos con verdad y transparencia." }
     ],
-    tipometria_titulos: { fontFamily: "Montserrat", peso: "Bold", uso: "Títulos y Encabezados" },
-    tipometria_cuerpos: { fontFamily: "Inter", peso: "Regular", uso: "Cuerpo de texto y UI" },
+    colors: {
+        primary: "#6366F1",
+        secondary: "#818CF8",
+        background: "#F9FAFB"
+    },
+    typography: {
+        heading: "Montserrat",
+        body: "Inter"
+    },
     // Mock URLs for images - pointing to placeholders or specific assets if available
-    logo_base_url: "https://via.placeholder.com/300x100?text=LOGO+DEMO",
-    logo_monocromo_url: "https://via.placeholder.com/300x100/000000/FFFFFF?text=LOGO+MONO",
-    download_url: "#"
+    logo_url: "https://via.placeholder.com/300x100?text=LOGO+DEMO",
+    stationery_url: "https://via.placeholder.com/600x400/E5E9F2/333333?text=STATIONERY+MOCK",
+    download_url: "#",
+    brand_name: "BrandDemo"
 };

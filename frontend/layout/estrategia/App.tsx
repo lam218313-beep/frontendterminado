@@ -59,7 +59,7 @@ interface Recommendation {
     impacto: string;
 }
 
-const App: React.FC = () => {
+const App: React.FC<{ overrideClientId?: string }> = ({ overrideClientId }) => {
     const [nodes, setNodes] = useState<NodeData[]>([]);
     const [viewMode, setViewMode] = useState<ViewMode>('map');
     const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
@@ -104,9 +104,13 @@ const App: React.FC = () => {
     const panStartOffset = useRef({ x: 0, y: 0 });
 
     // Plan Access Check
-    const { hasAccess } = usePlanAccess('estrategia');
+    let { hasAccess } = usePlanAccess('estrategia');
 
-    const CLIENT_ID = localStorage.getItem('clientId');
+    if (overrideClientId) {
+        hasAccess = true;
+    }
+
+    const CLIENT_ID = overrideClientId || localStorage.getItem('clientId');
 
     // --- Persistence Handlers ---
     // --- Persistence Handlers (Autosave) ---

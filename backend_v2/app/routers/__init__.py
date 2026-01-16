@@ -1,5 +1,5 @@
 """Routers package."""
 
-from . import pipeline, clients, analysis, auth, users_v2, tasks
+from . import pipeline, clients, analysis, auth, tasks, admin
 
-__all__ = ["pipeline", "clients", "analysis"]
+__all__ = ["pipeline", "clients", "analysis", "admin"]

@@ -329,7 +329,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({ type, data }) => {
 
     return (
         <div
-            className="relative w-full max-w-md h-[450px] [perspective:1000px] group cursor-pointer mx-auto"
+            className="relative w-full max-w-md h-[600px] [perspective:1000px] group cursor-pointer mx-auto"
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
             onClick={() => setIsFlipped(!isFlipped)}
@@ -351,9 +351,9 @@ const PersonaCard: React.FC<PersonaCardProps> = ({ type, data }) => {
                         </div>
                     </div>
 
-                    <div className="px-8 pb-8 -mt-12 relative">
+                    <div className="px-8 pb-8 -mt-12 relative h-full flex flex-col">
                         {/* Avatar & Badge */}
-                        <div className="flex justify-between items-end mb-4">
+                        <div className="flex justify-between items-end mb-4 shrink-0">
                             <div className="relative">
                                 <div className="w-24 h-24 rounded-2xl bg-white p-1.5 shadow-lg">
                                     <div className="w-full h-full rounded-xl bg-gray-50 overflow-hidden relative">
@@ -370,23 +370,23 @@ const PersonaCard: React.FC<PersonaCardProps> = ({ type, data }) => {
                         </div>
 
                         {/* Main Info */}
-                        <div>
+                        <div className="shrink-0">
                             <h3 className="text-2xl font-bold text-gray-900 leading-tight">{title}</h3>
                             <p className="text-sm text-gray-500 font-medium mt-1">
                                 {data.occupation || 'Profesión'} • {data.location || 'Ubicación'}
                             </p>
                         </div>
 
-                        <div className="h-px w-full bg-gray-100 my-4"></div>
+                        <div className="h-px w-full bg-gray-100 my-4 shrink-0"></div>
 
                         {/* Stats Grid */}
-                        <div className="space-y-4">
+                        <div className="space-y-4 overflow-y-auto pr-2">
                             <div className={`p-3 rounded-xl border transition-colors ${isIdeal ? 'bg-gray-50 border-gray-100' : 'bg-red-50 border-red-100'}`}>
                                 <div className="flex items-center gap-2 mb-1">
                                     <BrainCircuit size={14} className={isIdeal ? "text-primary-500" : "text-red-500"} />
                                     <span className="text-xs font-bold text-gray-400 uppercase">Mentalidad</span>
                                 </div>
-                                <p className="text-sm font-medium text-gray-800 italic line-clamp-2">
+                                <p className="text-sm font-medium text-gray-800 italic">
                                     "{getDisplayValue('pain', data.painPoints)}"
                                 </p>
                             </div>
@@ -405,7 +405,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({ type, data }) => {
                     </div>
 
                     {/* Rotate Hint */}
-                    <div className="absolute bottom-3 right-4 flex items-center gap-1 text-[10px] text-gray-300">
+                    <div className="absolute bottom-3 right-4 flex items-center gap-1 text-[10px] text-gray-300 bg-white/80 px-2 py-1 rounded-full backdrop-blur-sm">
                         <RotateCw size={10} />
                         <span>Click para girar</span>
                     </div>
@@ -413,12 +413,12 @@ const PersonaCard: React.FC<PersonaCardProps> = ({ type, data }) => {
 
                 {/* --- BACK FACE --- */}
                 <div className="absolute inset-0 bg-white border border-gray-100 rounded-[30px] shadow-2xl p-8 [backface-visibility:hidden] [transform:rotateY(180deg)] flex flex-col">
-                    <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+                    <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4 shrink-0">
                         <h3 className="text-xl font-bold text-gray-800">Datos {isIdeal ? 'Clave' : 'de Riesgo'}</h3>
                         {isIdeal ? <CheckCircle2 className="text-green-500" /> : <AlertTriangle className="text-red-500" />}
                     </div>
 
-                    <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar">
+                    <div className="flex-1 space-y-4 overflow-y-auto pr-2">
                         <div className="space-y-1">
                             <span className="text-xs text-gray-400 uppercase font-bold">Intereses</span>
                             <div className="flex flex-wrap gap-1">
@@ -899,6 +899,44 @@ export const MultiStepForm: React.FC = () => {
                         </div>
                     )}
 
+                    {/* Navigation Buttons (Top Position) */}
+                    {(!isFinished || (isFinished && currentStep === 2)) && (
+                        <div className="mb-6 flex items-center justify-between pb-4 border-b border-gray-100">
+                            <button
+                                onClick={prevStep}
+                                disabled={(currentStep === 1 && audienceStep === 0) || isLoading || isAnalyzing || isSubmitting}
+                                className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all ${(currentStep === 1) || isSubmitting
+                                    ? 'text-gray-300 cursor-not-allowed'
+                                    : 'text-gray-600 hover:bg-gray-100'
+                                    }`}
+                            >
+                                <ArrowLeft size={18} />
+                                {(currentStep === 2 && audienceStep > 0) ? 'Anterior' : 'Atrás'}
+                            </button>
+
+                            {/* Only show Next/Continue if NOT on the final step */}
+                            {currentStep < 6 && (
+                                <button
+                                    onClick={nextStep}
+                                    disabled={isLoading || isAnalyzing || (isFinished && currentStep === 2 && audienceStep === 5)} // Disable next if finished and at last sub-step
+                                    className={`flex items-center gap-2 bg-primary-600 text-white px-8 py-3 rounded-full font-bold text-sm shadow-lg shadow-primary-600/20 hover:bg-primary-700 hover:shadow-primary-600/40 transition-all transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-80 disabled:cursor-not-allowed ${isFinished && currentStep === 2 && audienceStep === 5 ? 'opacity-50' : ''}`}
+                                >
+                                    {isLoading || isAnalyzing ? (
+                                        <>
+                                            <Loader2 size={18} className="animate-spin" />
+                                            <span>{isAnalyzing ? 'Analizando...' : 'Procesando...'}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            {(currentStep === 2 && audienceStep < 5) ? 'Siguiente' : 'Continuar'}
+                                            <ArrowRight size={18} />
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                        </div>
+                    )}
+
                     {/* AUDIENCE STEP PROGRESS (Only for Step 2) */}
                     {currentStep === 2 && (
                         <div className="mb-8 flex gap-2">
@@ -912,7 +950,7 @@ export const MultiStepForm: React.FC = () => {
                     )}
 
                     {/* FORM CONTENT */}
-                    <div className={`flex-1 relative overflow-y-auto pr-2 custom-scrollbar ${isFinished && currentStep !== 6 ? 'pointer-events-none select-none' : ''}`} style={{ maxHeight: isFinished ? 'calc(100vh - 200px)' : '600px' }}>
+                    <div className={`flex-1 relative overflow-y-auto pr-2 custom-scrollbar ${isFinished && currentStep !== 6 ? 'pointer-events-none select-none' : ''}`} style={{ maxHeight: isFinished ? 'calc(100vh - 200px)' : '750px' }}>
 
                         {/* STEP 1: BUSINESS INFO */}
                         {currentStep === 1 && (
@@ -1023,7 +1061,7 @@ export const MultiStepForm: React.FC = () => {
 
                                 {/* 2.4 SCANNING & ANTI-PERSONA REVEAL */}
                                 {audienceStep === 4 && (
-                                    <div className="flex items-center justify-center py-4 relative h-[450px]">
+                                    <div className="flex items-center justify-center py-4 relative min-h-[650px]">
                                         {isAnalyzing ? (
                                             // SCANNING STATE
                                             <div className="absolute inset-0 flex flex-col items-center justify-center z-20 bg-white/80 backdrop-blur-sm animate-in fade-in duration-500">
@@ -1057,7 +1095,7 @@ export const MultiStepForm: React.FC = () => {
 
                                 {/* 2.5 IDEAL PERSONA REVEAL */}
                                 {audienceStep === 5 && (
-                                    <div className="flex items-center justify-center py-4 relative h-[450px]">
+                                    <div className="flex items-center justify-center py-4 relative min-h-[650px]">
                                         <div className="animate-in zoom-in-50 duration-700 ease-out-back fill-mode-forwards w-full">
                                             <PersonaCard type="ideal" data={formData.audience.idealPersona || formData.audience} />
                                         </div>
@@ -1501,43 +1539,7 @@ export const MultiStepForm: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Navigation Buttons (Only shown if NOT finished OR if finished and on Step 2 for sub-nav) */}
-                    {(!isFinished || (isFinished && currentStep === 2)) && (
-                        <div className="mt-10 flex items-center justify-between pt-6 border-t border-gray-100">
-                            <button
-                                onClick={prevStep}
-                                disabled={(currentStep === 1 && audienceStep === 0) || isLoading || isAnalyzing || isSubmitting}
-                                className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all ${(currentStep === 1) || isSubmitting
-                                    ? 'text-gray-300 cursor-not-allowed'
-                                    : 'text-gray-600 hover:bg-gray-100'
-                                    }`}
-                            >
-                                <ArrowLeft size={18} />
-                                {(currentStep === 2 && audienceStep > 0) ? 'Anterior' : 'Atrás'}
-                            </button>
 
-                            {/* Only show Next/Continue if NOT on the final step */}
-                            {currentStep < 6 && (
-                                <button
-                                    onClick={nextStep}
-                                    disabled={isLoading || isAnalyzing || (isFinished && currentStep === 2 && audienceStep === 5)} // Disable next if finished and at last sub-step
-                                    className={`flex items-center gap-2 bg-primary-600 text-white px-8 py-3 rounded-full font-bold text-sm shadow-lg shadow-primary-600/20 hover:bg-primary-700 hover:shadow-primary-600/40 transition-all transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-80 disabled:cursor-not-allowed ${isFinished && currentStep === 2 && audienceStep === 5 ? 'opacity-50' : ''}`}
-                                >
-                                    {isLoading || isAnalyzing ? (
-                                        <>
-                                            <Loader2 size={18} className="animate-spin" />
-                                            <span>{isAnalyzing ? 'Analizando...' : 'Procesando...'}</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            {(currentStep === 2 && audienceStep < 5) ? 'Siguiente' : 'Continuar'}
-                                            <ArrowRight size={18} />
-                                        </>
-                                    )}
-                                </button>
-                            )}
-                        </div>
-                    )}
 
                 </div>
             </div>

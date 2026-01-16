@@ -1,5 +1,5 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { RotateCw, BarChart3 } from 'lucide-react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
+import { RotateCw, MoreHorizontal, ChevronDown, BarChart3 } from 'lucide-react';
 
 interface SentimentAggregated {
    Positivo: number;
@@ -29,13 +29,21 @@ const CATEGORIES = [
 export const CardLabsQ7_SentimentBars: React.FC<CardLabsQ7_SentimentBarsProps> = ({ data }) => {
    const [isFlipped, setIsFlipped] = useState(false);
    const cardRef = useRef<HTMLDivElement>(null);
-   const contentRef = useRef<HTMLDivElement>(null);
+   const [rotation, setRotation] = useState({ x: 0, y: 0 });
    const [hoveredKey, setHoveredKey] = useState<string | null>(null);
 
-   const stats = data.results.analisis_agregado;
+   const rawStats = data.results.analisis_agregado as any;
+   const stats = {
+      Positivo: rawStats.Positivo ?? rawStats.positivo ?? 0,
+      Negativo: rawStats.Negativo ?? rawStats.negativo ?? 0,
+      Neutral: rawStats.Neutral ?? rawStats.neutral ?? 0,
+      Mixto: rawStats.Mixto ?? rawStats.mixto ?? 0,
+      subjetividad_promedio_global: rawStats.subjetividad_promedio_global ?? 0,
+      ejemplo_mixto: rawStats.ejemplo_mixto
+   };
 
-   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!cardRef.current || !contentRef.current || isFlipped) return;
+   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+      if (!cardRef.current || isFlipped) return;
       const rect = cardRef.current.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
@@ -44,53 +52,46 @@ export const CardLabsQ7_SentimentBars: React.FC<CardLabsQ7_SentimentBarsProps> =
 
       const rotateX = ((y - centerY) / centerY) * -5;
       const rotateY = ((x - centerX) / centerX) * 5;
-
-      contentRef.current.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-   };
+      setRotation({ x: rotateX, y: rotateY });
+   }, [isFlipped]);
 
    const handleMouseLeave = () => {
-      if (contentRef.current && !isFlipped) {
-         contentRef.current.style.transform = `rotateX(0deg) rotateY(0deg)`;
-      }
+      setRotation({ x: 0, y: 0 });
       setHoveredKey(null);
    };
 
-   // Reset transform when flipped changes
-   React.useEffect(() => {
-      if (contentRef.current) {
-         contentRef.current.style.transform = isFlipped
-            ? 'rotateX(0deg) rotateY(180deg)'
-            : 'rotateX(0deg) rotateY(0deg)';
-      }
-   }, [isFlipped]);
-
    return (
       <div
-         ref={cardRef}
          className="relative w-full h-full min-h-[400px] [perspective:1000px] group cursor-pointer"
          onMouseMove={handleMouseMove}
          onMouseLeave={handleMouseLeave}
          onClick={() => setIsFlipped(!isFlipped)}
       >
          <div
-            ref={contentRef}
-            className="w-full h-full relative transition-transform duration-100 ease-out [transform-style:preserve-3d]"
+            ref={cardRef}
+            className="w-full h-full relative transition-all duration-500 ease-out [transform-style:preserve-3d]"
+            style={{
+               transform: `rotateX(${isFlipped ? 0 : rotation.x}deg) rotateY(${isFlipped ? 180 : rotation.y}deg)`
+            }}
          >
-            {/* FRONT FACE */}
+            {/* --- FRONT FACE --- */}
             <div className="absolute inset-0 bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 [backface-visibility:hidden] flex flex-col z-10">
 
+               {/* Header Row */}
                <div className="flex justify-between items-start mb-6">
                   <div className="flex items-center gap-3">
+                     {/* Theme Icon */}
                      <div className="p-2.5 bg-primary-50 rounded-xl text-primary-500">
                         <BarChart3 size={20} />
                      </div>
                      <div>
-                        <h3 className="text-lg font-bold text-gray-900 leading-tight">Dist. de Sentimiento</h3>
-                        <p className="text-xs text-gray-400 font-medium">Análisis Global</p>
+                        <h3 className="text-lg font-bold text-gray-900 leading-tight">¿Cuál es el sentimiento general?</h3>
+                        <p className="text-xs text-gray-400 font-medium">Dist. de Sentimiento</p>
                      </div>
                   </div>
                </div>
 
+               {/* Big Number (Hero Metric) */}
                <div className="mb-8">
                   <div className="flex items-baseline gap-2">
                      <span className="text-5xl font-bold text-gray-900 tracking-tight">
@@ -101,6 +102,7 @@ export const CardLabsQ7_SentimentBars: React.FC<CardLabsQ7_SentimentBarsProps> =
                   <p className="text-xs text-gray-400 font-medium mt-1">Subjetividad Promedio</p>
                </div>
 
+               {/* Chart Area */}
                <div
                   className="flex-1 w-full flex flex-col justify-center gap-5"
                   onClick={(e) => e.stopPropagation()}
@@ -111,18 +113,23 @@ export const CardLabsQ7_SentimentBars: React.FC<CardLabsQ7_SentimentBarsProps> =
 
                      return (
                         <div key={cat.key} className="flex items-center gap-4 group/bar" onMouseEnter={() => setHoveredKey(cat.key)}>
+                           {/* Y-Axis Label */}
                            <div className="w-16 text-xs font-bold text-gray-400 group-hover/bar:text-gray-700 transition-colors">
                               {cat.label}
                            </div>
 
+                           {/* Bar Container */}
                            <div className="flex-1 h-8 relative bg-gray-50 rounded-lg overflow-hidden flex items-center">
+                              {/* Background Track (Dynamic Color) */}
                               <div className={`absolute inset-0 w-full opacity-0 group-hover/bar:opacity-100 transition-opacity ${cat.track}`}></div>
 
+                              {/* Value Bar (Dynamic Color) */}
                               <div
                                  className={`h-full rounded-lg relative z-10 transition-all duration-500 ease-out ${cat.color} ${cat.shadow}`}
                                  style={{ width: `${percentage}%` }}
                               ></div>
 
+                              {/* Value Label */}
                               <span className="absolute right-3 text-xs font-bold text-gray-500 z-20">
                                  {percentage}%
                               </span>
@@ -132,11 +139,12 @@ export const CardLabsQ7_SentimentBars: React.FC<CardLabsQ7_SentimentBarsProps> =
                   })}
                </div>
 
+               {/* X-Axis / Legend / Footer */}
 
 
             </div>
 
-            {/* BACK FACE: INTERPRETATION */}
+            {/* --- BACK FACE: INTERPRETATION --- */}
             <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-white rounded-[32px] p-6 shadow-sm border border-primary-100 [backface-visibility:hidden] [transform:rotateY(180deg)] flex flex-col z-20">
                <div className="flex items-center gap-3 mb-4 shrink-0">
                   <div className="p-2.5 bg-primary-100 rounded-xl text-primary-600">
@@ -154,13 +162,15 @@ export const CardLabsQ7_SentimentBars: React.FC<CardLabsQ7_SentimentBarsProps> =
                         dangerouslySetInnerHTML={{ __html: data.interpretation_text.replace(/\*\*(.*?)\*\*/g, '<strong class="text-primary-600">$1</strong>') }}
                      />
                   ) : (
-                     <div className="bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
-                        {CATEGORIES.map((cat, i) => (
-                           <div key={i} className="flex justify-between items-center p-3 border-b border-gray-100 last:border-0">
-                              <span className="text-sm text-gray-600 font-medium">{cat.label}</span>
-                              <span className={`text-sm font-bold ${cat.color.replace('bg-', 'text-')}`}>{((stats as any)[cat.key] * 100).toFixed(1)}%</span>
-                           </div>
-                        ))}
+                     <div className="space-y-4">
+                        <div className="bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
+                           {CATEGORIES.map((cat, i) => (
+                              <div key={i} className="flex justify-between items-center p-3 border-b border-gray-100 last:border-0">
+                                 <span className="text-sm text-gray-600 font-medium">{cat.label}</span>
+                                 <span className={`text-sm font-bold ${cat.color.replace('bg-', 'text-')}`}>{((stats as any)[cat.key] * 100).toFixed(1)}%</span>
+                              </div>
+                           ))}
+                        </div>
                      </div>
                   )}
                </div>

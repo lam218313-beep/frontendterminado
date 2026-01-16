@@ -188,20 +188,21 @@ async def scrape_instagram_profile_with_posts_and_comments(
     """
     logger.info(f"🚀 Starting full Instagram scrape: {profile_url}")
     
-    # Step 1: Get posts from profile
+    # Step 1: Get posts from profile (SINGLE Apify call)
     posts = await scrape_instagram_posts(profile_url, limit=posts_limit)
     
     if not posts:
         logger.warning("⚠️ No posts found")
         return {"posts": [], "all_comments": [], "stats": {}}
     
-    # Step 2: Collect ALL comments from each post
+    # Step 2: Extract comments from post data (NO additional Apify calls!)
+    # This uses the latestComments field included in the posts response
     all_comments = []
     
     for i, post in enumerate(posts):
         logger.info(f"📝 Processing post {i+1}/{len(posts)}: {post.get('shortCode', 'N/A')}")
         
-        # First, add the post caption as content for analysis
+        # Add the post caption as content for analysis
         caption = post.get("caption", "")
         if caption:
             all_comments.append({
@@ -216,29 +217,24 @@ async def scrape_instagram_profile_with_posts_and_comments(
                 "mentions": post.get("mentions", [])
             })
         
-        # Then, fetch FULL comments for this post (not just latestComments)
-        post_url = post.get("url")
-        if post_url and comments_per_post > 0:
-            try:
-                full_comments = await scrape_instagram_comments(post_url, limit=comments_per_post)
-                
-                for comment in full_comments:
-                    all_comments.append({
-                        "id": comment.get("id"),
-                        "postId": post.get("shortCode"),
-                        "text": comment.get("text", ""),
-                        "ownerUsername": comment.get("ownerUsername", ""),
-                        "timestamp": comment.get("timestamp"),
-                        "ownerIsVerified": comment.get("ownerIsVerified", False),
-                        "source": "full_scrape"
-                    })
-                
-                logger.info(f"   ✅ Retrieved {len(full_comments)} comments from post")
-                
-            except Exception as e:
-                logger.error(f"   ❌ Error fetching comments for post {post_url}: {e}")
-                # Continue with next post even if one fails
-                continue
+        # Extract latestComments from post data (COST-FREE!)
+        # These are included in the initial posts scrape
+        latest_comments = post.get("latestComments", [])
+        
+        for comment in latest_comments:
+            text = comment.get("text", "")
+            if text:  # Only add non-empty comments
+                all_comments.append({
+                    "id": comment.get("id", f"lc_{i}_{len(all_comments)}"),
+                    "postId": post.get("shortCode"),
+                    "text": text,
+                    "ownerUsername": comment.get("ownerUsername", ""),
+                    "timestamp": comment.get("timestamp") or post.get("timestamp"),
+                    "ownerIsVerified": comment.get("ownerIsVerified", False),
+                    "source": "latest_comments"
+                })
+        
+        logger.info(f"   ✅ Extracted {len(latest_comments)} comments from post (no extra API call)")
     
     # Calculate stats
     total_likes = sum(p.get("likesCount", 0) for p in posts)
@@ -250,16 +246,19 @@ async def scrape_instagram_profile_with_posts_and_comments(
         "total_comments_reported": total_comments_count,
         "total_likes": total_likes,
         "avg_likes": total_likes // len(posts) if posts else 0,
-        "avg_comments": total_comments_count // len(posts) if posts else 0
+        "avg_comments": total_comments_count // len(posts) if posts else 0,
+        "apify_calls": 1  # Only 1 call now!
     }
     
     logger.info(f"📊 Scrape complete: {stats}")
+    logger.info(f"💰 Cost optimization: Only 1 Apify call (was 51+)")
     
     return {
         "posts": posts,
         "all_comments": all_comments,
         "stats": stats
     }
+
 
 
 

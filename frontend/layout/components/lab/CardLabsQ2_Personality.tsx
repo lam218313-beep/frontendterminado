@@ -107,8 +107,8 @@ export const CardLabsQ2_Personality: React.FC<CardLabsQ2_PersonalityProps> = ({ 
                 <Fingerprint size={20} />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900 leading-tight">Identidad</h3>
-                <p className="text-xs text-gray-400 font-medium">Espectro de Marca</p>
+                <h3 className="text-lg font-bold text-gray-900 leading-tight">¿Cuál es tu personalidad de marca?</h3>
+                <p className="text-xs text-gray-400 font-medium">Arquetipo de Marca</p>
               </div>
             </div>
           </div>

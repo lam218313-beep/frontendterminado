@@ -19,7 +19,11 @@ class Settings(BaseSettings):
     APIFY_TOKEN: str = ""
     
     # Gemini
+    # Gemini
     GEMINI_API_KEY: str = ""
+    
+    # OpenAI
+    OPENAI_API_KEY: str = ""
     
     # Server
     PORT: int = 8000

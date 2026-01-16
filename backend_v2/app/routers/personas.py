@@ -7,6 +7,7 @@ from google import genai
 from google.genai import types
 from ..config import settings
 from ..services.database import db
+from ..services.gemini_service import _call_gemini
 
 router = APIRouter(prefix="/clients", tags=["Personas"])
 logger = logging.getLogger(__name__)
@@ -43,99 +44,98 @@ async def generate_personas(client_id: str, request: PersonaRequest):
             logger.warning(f"Could not fetch interview context: {e}")
         
         prompt = f"""
-        Eres un estratega de marketing experto. Tu tarea es generar DOS perfiles de cliente basándote en:
+        Actúa como un Psicólogo del Consumidor y Estratega de Marca Senior.
+        Tu objetivo es construir perfiles psicográficos profundos y realistas (Personas) basados en datos limitados.
         
-        1. El CONTEXTO DEL NEGOCIO:
+        AVISO IMPORTANTE:
+        - EVITA nombres genéricos como "Juan Pérez" o "María García". Usa nombres que evoquen un arquetipo (ej: "Sofía, la Emprendedora Digital", "Carlos, el Purista del Audio").
+        - NO inventes datos demográficos aleatorios si no encajan con la narrativa.
+        - Céntrate en las MOTIVACIONES OCULTAS y los MIEDOS reales.
+        - La respuesta debe ser "Insightful", no obvia.
+
+        1. CONTEXTO DEL NEGOCIO:
         {interview_context if interview_context else "No disponible"}
         
-        Información adicional del negocio:
+        Input Adicional:
         {request.business_context}
         
-        2. El CLIENTE HABITUAL (el que ya les compra frecuentemente):
+        2. DATOS DE AUDIENCIA (Base):
         {json.dumps(request.audience_data, indent=2, ensure_ascii=False)}
         
-        3. Información del MERCADO:
+        3. MERCADO Y MARCA:
         {json.dumps(request.market_data, indent=2, ensure_ascii=False)}
-        
-        4. Información de MARCA:
         {json.dumps(request.brand_data, indent=2, ensure_ascii=False)}
         
         ---
         
-        GENERA DOS PERFILES usando EXACTAMENTE estas categorías (las mismas del cliente habitual):
+        GENERA ESTOS DOS PERFILES (En Español Neutro):
         
-        **ANTI-PERSONA** (Cliente NO deseado - el que deberían evitar):
-        Basándote en el negocio y el cliente habitual, identifica qué tipo de cliente sería PROBLEMÁTICO.
-        Dale un nombre ficticio creativo en español.
+        **A. ANTI-PERSONA (El cliente "tóxico" o incompatible)**
+        ¿Quién consume recursos sin dar valor? ¿Quién odiaría tu propuesta de valor?
+        - Pain Point: ¿Por qué se queja siempre?
+        - Desires: ¿Qué busca que tú NO das?
+        - Avoid Reason: ¿Por qué es un riesgo financiero o de reputación?
         
-        **CLIENTE IDEAL** (El cliente perfecto - al que deberían apuntar):
-        Basándote en el negocio y el cliente habitual, identifica al cliente ÓPTIMO que maximizaría el valor.
-        Dale un nombre ficticio creativo en español.
+        **B. CLIENTE IDEAL (El "Evangelista")**
+        ¿Quién obtendría un valor transformacional de tu producto?
+        - Pain Point: El problema agudo que le quita el sueño.
+        - Ideal Reason: Por qué su LTV (Lifetime Value) sería altísimo.
         
-        RESPONDE ÚNICAMENTE con este JSON (sin markdown):
+        FORMATO JSON OBLIGATORIO:
         {{
             "anti_persona": {{
-                "name": "Nombre Creativo del Anti-Cliente",
-                "ageRange": "18-24|25-34|35-44|45-54|55+",
-                "gender": "Masculino|Femenino|Mixto/Todos",
-                "location": "Descripción de ubicación",
-                "occupation": "Ocupación/Rol",
-                "maritalStatus": "Soltero|Casado|Con hijos|Sin hijos",
-                "interests": "Intereses separados por coma",
-                "values": "Valores principales",
-                "painPoints": "Problema principal que tiene",
-                "desires": "Lo que busca (de forma negativa para el negocio)",
-                "lifestyle": "Estilo de vida",
-                "incomeLevel": "Bajo|Medio|Medio-Alto|Alto|Premium",
-                "priceSensitivity": "Busca Ofertas|Equilibrado|Paga por Valor|Sin restricciones",
-                "spendingHabits": "Hábitos de gasto",
-                "frequency": "Diaria|Semanal|Mensual|Anual|Esporádica",
-                "loyalty": "Nuevo|Recurrente|Embajador de Marca",
-                "decisionRole": "Usuario|Influenciador|Decisor Final",
-                "usage": "Uso del producto",
-                "avoid_reason": "Por qué evitar este tipo de cliente"
+                "name": "Arquetipo + Nombre",
+                "ageRange": "Rango estimado",
+                "gender": "Género principal",
+                "location": "Contexto geográfico (ej: Urbano densamente poblado)",
+                "occupation": "Rol profesional específico",
+                "maritalStatus": "Estado civil probable",
+                "interests": "Intereses psicográficos (no solo hobbies)",
+                "values": "Valores profundos (ej: Status, Seguridad, Libertad)",
+                "painPoints": "Su queja principal",
+                "desires": "Lo que realmente quiere (y no le vas a dar)",
+                "lifestyle": "Descripción de su día a día",
+                "incomeLevel": "Nivel (Bajo/Medio/Alto)",
+                "priceSensitivity": "Sensibilidad (Alta/Baja)",
+                "spendingHabits": "Cómo gasta su dinero",
+                "frequency": "Frecuencia de interacción",
+                "loyalty": "Nivel de lealtad esperado (Bajo)",
+                "decisionRole": "Rol en la compra",
+                "usage": "Cómo usaría el producto (mal)",
+                "avoid_reason": "Razón estratégica para evitarlo"
             }},
             "ideal_persona": {{
-                "name": "Nombre Creativo del Cliente Ideal",
-                "ageRange": "18-24|25-34|35-44|45-54|55+",
-                "gender": "Masculino|Femenino|Mixto/Todos",
-                "location": "Descripción de ubicación",
-                "occupation": "Ocupación/Rol",
-                "maritalStatus": "Soltero|Casado|Con hijos|Sin hijos",
-                "interests": "Intereses separados por coma",
-                "values": "Valores principales",
-                "painPoints": "Problema principal que resuelves",
-                "desires": "Lo que busca (alineado con el negocio)",
+                "name": "Arquetipo + Nombre",
+                "ageRange": "Rango",
+                "gender": "Género",
+                "location": "Ubicación",
+                "occupation": "Fofesión",
+                "maritalStatus": "Estado",
+                "interests": "Intereses clave",
+                "values": "Valores alineados con la marca",
+                "painPoints": "Dolor que tú curas",
+                "desires": "Transformación que busca",
                 "lifestyle": "Estilo de vida",
-                "incomeLevel": "Bajo|Medio|Medio-Alto|Alto|Premium",
-                "priceSensitivity": "Busca Ofertas|Equilibrado|Paga por Valor|Sin restricciones",
-                "spendingHabits": "Hábitos de gasto",
-                "frequency": "Diaria|Semanal|Mensual|Anual|Esporádica",
-                "loyalty": "Nuevo|Recurrente|Embajador de Marca",
-                "decisionRole": "Usuario|Influenciador|Decisor Final",
-                "usage": "Uso del producto",
-                "ideal_reason": "Por qué este es el cliente ideal"
+                "incomeLevel": "Nivel",
+                "priceSensitivity": "Sensibilidad",
+                "spendingHabits": "Hábitos de inversión",
+                "frequency": "Frecuencia",
+                "loyalty": "Lealtad potencial (Alta)",
+                "decisionRole": "Rol",
+                "usage": "Caso de uso perfecto",
+                "ideal_reason": "Por qué es rentable"
             }}
         }}
         """
         
-        if not settings.GEMINI_API_KEY:
-             raise ValueError("GEMINI API KEY not set")
-
-        client = genai.Client(api_key=settings.GEMINI_API_KEY)
-        
-        response = await client.aio.models.generate_content(
-            model="gemini-1.5-flash",
-            contents=prompt,
+        # Use Unified LLM Service (OpenAI or Gemini)
+        logger.info(f"Generating personas with model: gpt-4o-mini")
+        result = await _call_gemini(
+            prompt=prompt, 
+            temperature=0.85, 
+            model="gpt-5-mini"
         )
         
-        # Extract text from response
-        response_text = response.text
-        
-        # Clean markdown if present
-        cleaned_response = response_text.replace("```json", "").replace("```", "").strip()
-        
-        result = json.loads(cleaned_response)
         logger.info(f"Successfully generated personas for client {client_id}")
         return result
 

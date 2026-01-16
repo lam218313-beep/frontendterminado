@@ -60,7 +60,7 @@ export function usePlanAccess(feature: string): PlanAccessResult {
     const { user } = useAuth();
 
     // Get user's plan and check expiration
-    const rawPlan = user?.plan || 'free_trial';
+    const rawPlan = (user?.plan || 'free_trial').toLowerCase();
     const expiresAt = user?.planExpiresAt;
 
     // Check if plan has expired

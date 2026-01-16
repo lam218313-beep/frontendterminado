@@ -112,22 +112,24 @@ export const CardLabsQ8_TemporalEvolution: React.FC<CardLabsQ8_TemporalEvolution
           transform: `rotateX(${isFlipped ? 0 : rotation.x}deg) rotateY(${isFlipped ? 180 : rotation.y}deg)`
         }}
       >
-        {/* FRONT FACE */}
+        {/* --- FRONT FACE --- */}
         <div className="absolute inset-0 bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 [backface-visibility:hidden] flex flex-col z-10">
 
+          {/* Header */}
           <div className="flex justify-between items-start mb-4">
             <div className="flex items-center gap-3">
+              {/* Theme Icon */}
               <div className="p-2.5 bg-primary-50 rounded-xl text-primary-500">
                 <TrendingUp size={20} />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900 leading-tight">Evolución Temporal</h3>
-                <p className="text-xs text-gray-400 font-medium">Tendencia Semanal</p>
+                <h3 className="text-lg font-bold text-gray-900 leading-tight">¿Cómo evoluciona tu marca?</h3>
+                <p className="text-xs text-gray-400 font-medium">Evolución Temporal</p>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-1 gap-6 min-h-0">
+          <div className="flex flex-col md:flex-row flex-1 gap-6 min-h-0">
             <div
               className="flex-1 relative flex flex-col"
               onClick={(e) => e.stopPropagation()}
@@ -206,7 +208,7 @@ export const CardLabsQ8_TemporalEvolution: React.FC<CardLabsQ8_TemporalEvolution
               </div>
             </div>
 
-            <div className="w-[140px] flex flex-col border-l border-gray-100 pl-6 py-2 gap-6 justify-center">
+            <div className="w-full md:w-[140px] flex md:flex-col border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6 py-2 gap-6 justify-between md:justify-center">
 
               <div>
                 <div className="flex items-center gap-1.5 mb-1">
@@ -245,7 +247,7 @@ export const CardLabsQ8_TemporalEvolution: React.FC<CardLabsQ8_TemporalEvolution
           </div>
         </div>
 
-        {/* BACK FACE: INTERPRETATION */}
+        {/* --- BACK FACE: INTERPRETATION --- */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-white rounded-[32px] p-6 shadow-sm border border-primary-100 [backface-visibility:hidden] [transform:rotateY(180deg)] flex flex-col z-20">
           <div className="flex items-center gap-3 mb-4 shrink-0">
             <div className="p-2.5 bg-primary-100 rounded-xl text-primary-600">

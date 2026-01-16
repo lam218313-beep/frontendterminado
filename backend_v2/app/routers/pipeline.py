@@ -65,10 +65,12 @@ async def _run_full_pipeline(report_id: str, client_id: str, instagram_url: str,
         
         # PASO 1: SCRAPING
         logger.info(f"📥 [{report_id}] Scraping Instagram...")
+        # Con latestComments (~8-10 por post), 12 posts = ~100 comentarios
+        # Esto garantiza 50-100 comentarios con 1 sola llamada a Apify
         scrape_result = await apify_service.scrape_instagram_profile_with_posts_and_comments(
             profile_url=instagram_url,
-            posts_limit=min(50, comments_limit // 20),
-            comments_per_post=100
+            posts_limit=12,  # 12 posts * ~8-10 latestComments = 50-100 comentarios
+            comments_per_post=0  # No se usa, latestComments viene incluido
         )
         
         all_content = scrape_result.get("all_comments", [])
@@ -163,31 +165,73 @@ async def _run_full_pipeline(report_id: str, client_id: str, instagram_url: str,
         
         try:
             interpretations = await gemini_service.generate_interpretations(result_json, context=full_context)
-            
-            # Inject interpretation_text into each Q block
-            for q_key, q_data in result_json.items():
-                interpretation_key = f"{q_key}_interpretation"
-                if interpretation_key in interpretations:
-                    # Handle both dict and nested dict structures
-                    if isinstance(q_data, dict):
-                        q_data["interpretation_text"] = interpretations[interpretation_key]
-                    
-            logger.info(f"✅ [{report_id}] Interpretations injected successfully")
         except Exception as e:
+            import traceback
+            print(f"❌ [DEBUG] INTERPRETATION ERROR: {type(e).__name__}: {e}")
+            print(f"❌ [DEBUG] TRACEBACK:\n{traceback.format_exc()}")
             logger.warning(f"⚠️ [{report_id}] Interpretation generation failed: {e}")
-            # Non-blocking - continue without interpretations
+            interpretations = {}
+
+        if not interpretations:
+            logger.warning(f"⚠️ [{report_id}] No interpretations generated. Using fallback.")
+            # Helper to get fallback from gemini_service or hardcoded
+            from ..services.gemini_service import _get_fallback_interpretations
+            interpretations = _get_fallback_interpretations()
+
+        # Inject interpretation_text into each Q block
+        count_injected = 0
+        print(f"🔍 [DEBUG] Interpretations received keys: {list(interpretations.keys())}")
+        print(f"🔍 [DEBUG] result_json keys: {list(result_json.keys())}")
         
-        # =========================================
-        # PASO 5: GENERAR TAREAS SUGERIDAS (DESHABILITADO POR REQUERIMIENTO USER)
-        # =========================================
-        # El flujo ahora es: Análisis -> Estrategia (Canvas) -> Tareas
-        # try:
-        #     suggested_tasks = aggregator.generate_suggested_tasks(client_id, result_json)
-        #     db.create_tasks_batch(suggested_tasks)
-        #     logger.info(f"✅ Generated {len(suggested_tasks)} tasks for client {client_id}")
-        # except Exception as e:
-        #     logger.error(f"⚠️ Task Generation Failed: {e}", exc_info=True)
-        #     # Non-blocking error
+        for q_key, q_data in result_json.items():
+            interpretation_key = f"{q_key}_interpretation"
+            if interpretation_key in interpretations:
+                # Handle both dict and nested dict structures
+                if isinstance(q_data, dict):
+                    q_data["interpretation_text"] = interpretations[interpretation_key]
+                    count_injected += 1
+                    print(f"✅ [DEBUG] Injected {interpretation_key} -> {interpretations[interpretation_key][:50]}...")
+        
+        print(f"🔍 [DEBUG] Total injected: {count_injected}")
+        logger.info(f"✅ [{report_id}] Interpretations injected: {count_injected} blocks updated")
+        
+
+        # =========================================================================
+        # PASO 5: GENERACIÓN AUTOMÁTICA DE ESTRATEGIA (CASCADA)
+        # =========================================================================
+        try:
+            logger.info("🧠 Generando Plan Estratégico con IA (Tree Structure)...")
+            
+            # 1. Obtener tipo de plan del cliente (para saber si generar tareas o contenido)
+            client_record = db.get_client(client_id)
+            plan_type = client_record.get("plan", "pro") if client_record else "pro"
+            
+            # 2. Contexto completo de Entrevista (reutilizando variable interview_data ya cargada arriba o DB)
+            # Nota: interview_data ya se cargó en línea 155, usamos esa.
+            
+            # 3. Generar Árbol
+            strategy_tree = await gemini_service.generate_strategic_plan(
+                interview_data=interview_data, # Usamos la variable local ya cargada
+                analysis_json=result_json,
+                plan_type=plan_type
+            )
+            
+            # 4. Convertir a Nodos Visuales para Frontend
+            strategy_nodes = aggregator.convert_tree_to_nodes(client_id, strategy_tree)
+            
+            # 5. Guardar en Base de Datos (Sobreescribe cualquier anterior)
+            db.sync_strategy_nodes(client_id, strategy_nodes)
+            
+            logger.info(f"✅ Estrategia Generada y Guardada: {len(strategy_nodes)} nodos.")
+            
+            # (Opcional) Marcar en el JSON que existe estrategia
+            if "Q10" in result_json:
+                    if "results" not in result_json["Q10"]: result_json["Q10"]["results"] = {}
+                    result_json["Q10"]["results"]["estrategia_generada"] = True
+
+        except Exception as e:
+            # NO detenemos el pipeline si falla la estrategia, es un módulo "extra"
+            logger.error(f"⚠️ Error generando estrategia (Non-blocking): {e}")
         
         # =========================================
         # FINAL: AUDITORÍA Y GUARDADO

@@ -76,8 +76,8 @@ export const CardLabsQ5_InfluencerRanking: React.FC<CardLabsQ5_InfluencerRanking
                 <Medal size={20} />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900 leading-tight">Top Influencers</h3>
-                <p className="text-xs text-gray-400 font-medium">Ranking Centralidad</p>
+                <h3 className="text-lg font-bold text-gray-900 leading-tight">¿Quiénes lideran la conversación?</h3>
+                <p className="text-xs text-gray-400 font-medium">Top Influencers</p>
               </div>
             </div>
           </div>

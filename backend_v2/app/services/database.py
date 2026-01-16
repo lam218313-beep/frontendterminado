@@ -116,11 +116,17 @@ class SupabaseService:
             return []
 
     def create_client(self, client_data: dict):
-        if not self.client: return
+        """Create a new client. Raises exception if fails."""
+        if not self.client:
+            raise Exception("Database client not initialized")
         try:
-            self.client.table("clients").insert(client_data).execute()
+            logger.info(f"Creating client: {client_data.get('nombre')}")
+            response = self.client.table("clients").insert(client_data).execute()
+            logger.info(f"Client created successfully: {response.data}")
+            return response.data
         except Exception as e:
             logger.error(f"DB Insert Error (Client): {e}")
+            raise e  # Propagate error to endpoint
 
     def get_client(self, client_id: str) -> Optional[dict]:
         if not self.client: return None
@@ -151,6 +157,30 @@ class SupabaseService:
             self.client.table("clients").delete().eq("id", client_id).execute()
         except Exception as e:
             logger.error(f"DB Delete Error (Client): {e}")
+
+    def list_brand_users(self, brand_id: str) -> list[dict]:
+        """List all users belonging to a brand (client)."""
+        if not self.client: return []
+        try:
+            response = self.client.table("users").select("id, email, full_name, role, created_at").eq("client_id", brand_id).execute()
+            return response.data if response.data else []
+        except Exception as e:
+            logger.error(f"DB List Brand Users Error: {e}")
+            return []
+
+    def create_user_profile(self, profile_data: dict):
+        """Create a user profile in the users table."""
+        if not self.client:
+            raise Exception("Database client not initialized")
+        try:
+            response = self.client.table("users").insert(profile_data).execute()
+            logger.info(f"Created user profile: {profile_data.get('email')}")
+            return response.data
+        except Exception as e:
+            logger.error(f"DB Create User Profile Error: {e}")
+            raise e
+
+
 
     # ============================================================================
     # Users
@@ -222,7 +252,7 @@ class SupabaseService:
     def list_users(self) -> list[dict]:
         if not self.client: return []
         try:
-            response = self.client.table("users").select("id, email, full_name, role, created_at, client_id").execute()
+            response = self.client.table("users").select("id, email, full_name, role, created_at, client_id, plan, plan_expires_at").execute()
             return response.data if response.data else []
         except Exception as e:
             logger.error(f"DB List Users Error: {e}")
@@ -335,12 +365,20 @@ class SupabaseService:
             raise e
 
     def get_interview(self, client_id: str) -> Optional[dict]:
+        """Get interview for a client. Returns None if not found (not an error)."""
         if not self.client: return None
         try:
-            response = self.client.table("client_interviews").select("*").eq("client_id", client_id).single().execute()
-            return response.data
+            # Use maybeSingle() pattern - returns None if not found instead of throwing
+            response = self.client.table("client_interviews").select("*").eq("client_id", client_id).execute()
+            if response.data and len(response.data) > 0:
+                logger.info(f"Interview found for client {client_id}")
+                return response.data[0]
+            else:
+                logger.info(f"No interview found for client {client_id}")
+                return None
         except Exception as e:
-            logger.error(f"DB Get Interview Error: {e}")
+            # Log but don't propagate - missing interview is not an error
+            logger.warning(f"DB Get Interview - no data for client {client_id}: {e}")
             return None
 
     # ============================================================================

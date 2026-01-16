@@ -42,10 +42,40 @@ class BrandIdentity(BaseModel):
 
 @router.get("/{client_id}")
 async def get_brand(client_id: str):
-    data = db.get_brand_identity(client_id)
-    if not data:
-        return {"status": "empty", "data": None}
-    return {"status": "success", "data": data}
+    client = db.get_client(client_id)
+    identity = db.get_brand_identity(client_id)
+    
+    brand_name = client.get('nombre') if client else "Marca"
+    
+    if not identity:
+        # Try to at least return personas if identity is missing but interview exists
+        interview = db.get_interview(client_id)
+        if interview and interview.get("data"):
+             audience = interview["data"].get("audience", {})
+             if audience.get("idealPersona") or audience.get("antiPersona"):
+                  return {
+                      "status": "partial", 
+                      "data": {
+                          "personas": {
+                              "ideal": audience.get("idealPersona"),
+                              "anti": audience.get("antiPersona")
+                          }
+                      }, 
+                      "brand_name": brand_name
+                  }
+
+        return {"status": "empty", "data": None, "brand_name": brand_name}
+    
+    # Inject Personas from Interview if available
+    interview = db.get_interview(client_id)
+    if interview and interview.get("data"):
+        audience = interview["data"].get("audience", {})
+        identity["personas"] = {
+            "ideal": audience.get("idealPersona"),
+            "anti": audience.get("antiPersona")
+        }
+    
+    return {"status": "success", "data": identity, "brand_name": brand_name}
 
 @router.put("/{client_id}")
 async def update_brand(client_id: str, identity: BrandIdentity):

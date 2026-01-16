@@ -29,6 +29,11 @@ export interface BrandIdentityData {
     typography?: any;
     logo_url?: string;
     stationery_url?: string;
+    brand_name?: string;
+    personas?: {
+        ideal: any;
+        anti: any;
+    };
 }
 
 interface CommonProps {
@@ -39,24 +44,25 @@ interface CommonProps {
 export const CardMission: React.FC<CommonProps> = ({ data }) => {
     const mission = data?.mission || "Democratizar el acceso a tecnologías regenerativas avanzadas, simplificando lo complejo para mejorar la vida cotidiana.";
     const vision = data?.vision || "Ser el estándar global en biotecnología de consumo para el año 2030, liderando con ética e innovación.";
+    const primary = data?.colors?.primary || "#F20F79";
 
     return (
         <div className="h-full bg-white rounded-[40px] p-8 md:p-12 shadow-sm border border-gray-100 flex flex-col justify-center relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary-50 rounded-bl-[100px] -z-0 transition-transform duration-700 group-hover:scale-110"></div>
+            <div className="absolute top-0 right-0 w-64 h-64 rounded-bl-[100px] -z-0 transition-transform duration-700 group-hover:scale-110" style={{ backgroundColor: `${primary}15` }}></div>
 
             <div className="relative z-10">
                 <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-primary-100 text-primary-600 rounded-lg">
+                    <div className="p-2 rounded-lg" style={{ backgroundColor: `${primary}20`, color: primary }}>
                         <Target size={20} />
                     </div>
                     <span className="text-sm font-bold text-gray-400 uppercase tracking-widest">Identidad Verbal</span>
                 </div>
 
-                <h2 className="text-4xl md:text-6xl font-bold text-brand-dark leading-[0.9] mb-8">
+                <h2 className="text-4xl md:text-6xl font-bold text-gray-900 leading-[0.9] mb-8">
                     {data?.archetype ? `Arquetipo: ${data.archetype}` : (
                         <>
                             Redefiniendo la <br />
-                            <span className="text-primary-500">experiencia humana</span> <br />
+                            <span style={{ color: primary }}>experiencia humana</span> <br />
                             a través de la ciencia.
                         </>
                     )}
@@ -120,55 +126,40 @@ export const CardTone: React.FC<CommonProps> = ({ data }) => {
     );
 };
 
-// --- CARD 4: LOGO CONSTRUCTION ---
+// --- CARD 4: LOGO CONCEPT ---
 export const CardLogo: React.FC<CommonProps> = ({ data }) => {
     return (
         <div className="h-full bg-white rounded-[40px] p-8 shadow-sm border border-gray-100 flex flex-col relative group overflow-hidden">
-            {/* Background Grid */}
-            <div className="absolute inset-0" style={{
-                backgroundImage: 'linear-gradient(#f0f0f0 1px, transparent 1px), linear-gradient(90deg, #f0f0f0 1px, transparent 1px)',
-                backgroundSize: '20px 20px',
-                opacity: 0.5
-            }}></div>
-
             <div className="relative z-10 flex justify-between items-start mb-6">
                 <div className="flex items-center gap-2">
                     <div className="p-2 bg-gray-100 rounded-lg text-gray-700"><PenTool size={18} /></div>
-                    <span className="text-sm font-bold text-gray-500 uppercase">Logotipo</span>
-                </div>
-                <span className="text-xs font-mono text-gray-400">Ratio 1:1.618</span>
-            </div>
-
-            <div className="flex-1 flex items-center justify-center relative z-10">
-                <div className="relative w-48 h-48 flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
-                    {data?.logo_url ? (
-                        <img src={data.logo_url} alt="Brand Logo" className="w-full h-full object-contain" />
-                    ) : (
-                        <>
-                            {/* Logo Construction Guidelines (Mock) */}
-                            <div className="absolute inset-0 border border-primary-500/20 rounded-full"></div>
-                            <div className="absolute inset-4 border border-primary-500/20 rounded-full"></div>
-                            <div className="absolute top-1/2 left-0 w-full h-px bg-primary-500/20"></div>
-                            <div className="absolute left-1/2 top-0 w-px h-full bg-primary-500/20"></div>
-
-                            {/* The Logo Shape (X/Helix concept) */}
-                            <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M20 20C20 20 40 50 50 50C60 50 80 20 80 20" stroke="#F20F79" strokeWidth="12" strokeLinecap="round" />
-                                <path d="M20 80C20 80 40 50 50 50C60 50 80 80 80 80" stroke="#465362" strokeWidth="12" strokeLinecap="round" />
-                            </svg>
-                        </>
-                    )}
+                    <span className="text-sm font-bold text-gray-500 uppercase">Logotipo (Concepto)</span>
                 </div>
             </div>
 
-            <div className="relative z-10 flex gap-4 mt-6">
-                <div className="flex-1 bg-gray-50 p-3 rounded-xl text-center border border-gray-100">
-                    <span className="block text-xs text-gray-400 mb-1">Clearspace</span>
-                    <span className="font-bold text-gray-700">24px</span>
-                </div>
-                <div className="flex-1 bg-gray-50 p-3 rounded-xl text-center border border-gray-100">
-                    <span className="block text-xs text-gray-400 mb-1">Min Width</span>
-                    <span className="font-bold text-gray-700">80px</span>
+            <div className="flex-1 flex flex-col items-center justify-center relative z-10 text-center">
+                <h1
+                    className="text-6xl md:text-7xl font-bold tracking-tight mb-2 transition-all duration-300 group-hover:tracking-wide"
+                    style={{
+                        color: data?.colors?.primary || '#333',
+                        fontFamily: data?.typography?.heading || 'sans-serif'
+                    }}
+                >
+                    {data?.brand_name || "Brand"}
+                </h1>
+                <p className="text-sm text-gray-400 font-medium mt-4">
+                    Visualización conceptual basada en tipografía <span className="text-gray-600 font-bold">{data?.typography?.heading || 'Principal'}</span>
+                </p>
+
+                <div className="mt-8 flex gap-4 text-xs text-gray-400 border-t border-gray-100 pt-6 w-full justify-center">
+                    <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                        <span>Legibilidad Alta</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                        <span>Versátil</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -233,18 +224,25 @@ export const CardColors: React.FC<CommonProps> = ({ data }) => {
 };
 
 // --- CARD 6: TYPOGRAPHY ---
-export const CardTypography: React.FC = () => {
+export const CardTypography: React.FC<CommonProps> = ({ data }) => {
+    const primary = data?.colors?.primary || "#F20F79";
+    const headingFont = data?.typography?.heading || "Montserrat";
+    const bodyFont = data?.typography?.body || "Inter";
+
     return (
         <div className="h-full bg-white rounded-[40px] p-8 md:p-10 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-10">
 
             {/* Left: Specimen */}
             <div className="w-full md:w-1/3 flex flex-col items-center justify-center border-r border-gray-100 pr-0 md:pr-10">
-                <span className="text-[120px] leading-none font-sans font-bold text-transparent bg-clip-text bg-gradient-to-br from-brand-dark to-gray-400">
+                <span
+                    className="text-[100px] lg:text-[120px] leading-none font-bold text-transparent bg-clip-text bg-gradient-to-br from-gray-900 to-gray-400"
+                    style={{ fontFamily: headingFont }}
+                >
                     Aa
                 </span>
                 <div className="mt-4 text-center">
-                    <h3 className="text-xl font-bold text-brand-dark">Inter</h3>
-                    <p className="text-xs text-gray-400">Google Font / Sans Serif</p>
+                    <h3 className="text-xl font-bold text-gray-900" style={{ fontFamily: headingFont }}>{headingFont}</h3>
+                    <p className="text-xs text-gray-400">Heading & Display</p>
                 </div>
             </div>
 
@@ -256,17 +254,17 @@ export const CardTypography: React.FC = () => {
                 </div>
 
                 <div>
-                    <span className="text-xs text-primary-500 font-bold uppercase mb-1 block">Display / H1</span>
-                    <p className="text-4xl font-extrabold text-brand-dark tracking-tight">The Quick Brown Fox</p>
+                    <span className="text-xs font-bold uppercase mb-1 block" style={{ color: primary }}>Display / H1</span>
+                    <p className="text-4xl font-extrabold text-gray-900 tracking-tight" style={{ fontFamily: headingFont }}>The Quick Brown Fox</p>
                 </div>
                 <div>
-                    <span className="text-xs text-primary-500 font-bold uppercase mb-1 block">Heading / H2</span>
-                    <p className="text-2xl font-semibold text-brand-dark">Jumps over the lazy dog.</p>
+                    <span className="text-xs font-bold uppercase mb-1 block" style={{ color: primary }}>Heading / H2</span>
+                    <p className="text-2xl font-semibold text-gray-900" style={{ fontFamily: headingFont }}>Jumps over the lazy dog.</p>
                 </div>
                 <div>
                     <span className="text-xs text-gray-400 font-bold uppercase mb-1 block">Body / P</span>
-                    <p className="text-sm text-gray-500 leading-relaxed max-w-md">
-                        Inter es una tipografía diseñada específicamente para pantallas de ordenador. Cuenta con una gran altura de la x para mejorar la legibilidad en tamaños pequeños.
+                    <p className="text-sm text-gray-500 leading-relaxed max-w-md" style={{ fontFamily: bodyFont }}>
+                        {bodyFont} es una tipografía diseñada específicamente para pantallas de ordenador. Cuenta con una gran altura de la x para mejorar la legibilidad en tamaños pequeños.
                     </p>
                 </div>
             </div>
@@ -275,107 +273,111 @@ export const CardTypography: React.FC = () => {
 };
 
 // --- CARD 7: ICONOGRAPHY ---
-export const CardIconography: React.FC = () => {
+export const CardIconography: React.FC<CommonProps> = ({ data }) => {
+    const primary = data?.colors?.primary || "#F20F79";
+
     return (
-        <div className="h-full bg-primary-50 rounded-[40px] p-8 shadow-sm flex flex-col relative overflow-hidden">
+        <div className="h-full rounded-[40px] p-8 shadow-sm flex flex-col relative overflow-hidden" style={{ backgroundColor: `${primary}10` }}>
 
             <div className="relative z-10 flex justify-between items-start mb-6">
                 <div className="flex items-center gap-2">
-                    <div className="p-2 bg-white rounded-lg text-primary-500"><Grid size={18} /></div>
-                    <span className="text-sm font-bold text-primary-900/50 uppercase">Iconografía</span>
+                    <div className="p-2 bg-white rounded-lg" style={{ color: primary }}><Grid size={18} /></div>
+                    <span className="text-sm font-bold uppercase" style={{ color: `${primary}90` }}>Iconografía</span>
                 </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4 flex-1 content-center relative z-10">
                 {[Heart, Zap, Eye, Box, Layers, Target].map((Icon, idx) => (
-                    <div key={idx} className="aspect-square bg-white rounded-2xl flex items-center justify-center text-primary-500 shadow-sm hover:scale-110 transition-transform cursor-pointer">
+                    <div key={idx} className="aspect-square bg-white rounded-2xl flex items-center justify-center shadow-sm hover:scale-110 transition-transform cursor-pointer" style={{ color: primary }}>
                         <Icon strokeWidth={2} size={24} />
                     </div>
                 ))}
             </div>
 
-            <p className="relative z-10 mt-6 text-xs text-primary-800/60 text-center font-medium">
+            <p className="relative z-10 mt-6 text-xs text-center font-medium" style={{ color: `${primary}99` }}>
                 Estilo lineal, stroke 2px, esquinas redondeadas.
             </p>
 
             {/* Background decoration */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-t from-primary-100/50 to-transparent pointer-events-none"></div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none"
+                style={{ background: `linear-gradient(to top, ${primary}20, transparent)` }}
+            ></div>
         </div>
     );
 };
 
-// --- CARD 8: PATTERNS & GRAPHICS ---
-export const CardPatterns: React.FC = () => {
+// --- CARD 8: VISUAL UNIVERSE ---
+export const CardPatterns: React.FC<CommonProps> = ({ data }) => {
+    const primary = data?.colors?.primary || "#F20F79";
+
     return (
-        <div className="h-full bg-white rounded-[40px] overflow-hidden shadow-sm border border-gray-100 relative group">
-            <div className="absolute inset-0 z-0">
-                {/* Pattern Creation using CSS Gradients */}
-                <div className="w-full h-full opacity-10" style={{
-                    backgroundImage: 'radial-gradient(#465362 2px, transparent 2px)',
-                    backgroundSize: '30px 30px'
-                }}></div>
-                <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-gradient-to-br from-primary-500/20 to-transparent rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3"></div>
+        <div className="h-full bg-white rounded-[40px] overflow-hidden shadow-sm border border-gray-100 relative group p-8 flex flex-col">
+            <div className="flex items-center gap-2 mb-6">
+                <div className="p-2 bg-gray-100 rounded-lg text-gray-700"><Layers size={18} /></div>
+                <span className="text-sm font-bold text-gray-500 uppercase">Universo Visual</span>
             </div>
 
-            <div className="relative z-10 p-8 h-full flex flex-col">
-                <div className="flex items-center gap-2 mb-auto">
-                    <div className="p-2 bg-gray-100 rounded-lg text-gray-700"><Layers size={18} /></div>
-                    <span className="text-sm font-bold text-gray-500 uppercase">Recursos Gráficos</span>
+            <div className="flex-1 space-y-4">
+                <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                    <h4 className="font-bold text-gray-900 text-sm mb-2">Fotografía</h4>
+                    <p className="text-xs text-gray-500 leading-relaxed">
+                        Se recomienda el uso de iluminación natural, encuadres abiertos y sujetos en acción. Evitar poses estáticas o iluminación de estudio excesiva.
+                    </p>
                 </div>
 
-                <div className="space-y-4">
-                    <div className="bg-white/80 backdrop-blur-sm p-4 rounded-2xl border border-gray-200">
-                        <span className="text-xs font-bold text-brand-dark block mb-1">Formas Orgánicas</span>
-                        <div className="h-2 w-full bg-gradient-to-r from-primary-500 to-transparent rounded-full"></div>
-                    </div>
-                    <div className="bg-white/80 backdrop-blur-sm p-4 rounded-2xl border border-gray-200">
-                        <span className="text-xs font-bold text-brand-dark block mb-1">Micro-texturas</span>
-                        <div className="h-8 w-full border border-dashed border-gray-300 rounded-lg bg-gray-50"></div>
+                <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                    <h4 className="font-bold text-gray-900 text-sm mb-2">Composición</h4>
+                    <div className="flex gap-2">
+                        <span className="px-3 py-1 bg-white rounded-full text-[10px] font-bold text-gray-600 border border-gray-200">Simétrica</span>
+                        <span className="px-3 py-1 bg-white rounded-full text-[10px] font-bold text-gray-600 border border-gray-200">Espacio Negativo</span>
                     </div>
                 </div>
+            </div>
+
+            <div className="mt-auto pt-4">
+                <div className="h-1 w-full rounded-full" style={{ background: `linear-gradient(to right, ${primary}, #e5e7eb)` }}></div>
             </div>
         </div>
     );
 };
 
-// --- CARD 9: STATIONERY & MOCKUPS ---
+// --- CARD 9: BRAND APPLICATIONS ---
 export const CardStationery: React.FC<CommonProps> = ({ data }) => {
-    return (
-        <div className="h-full bg-[#E5E9F2] rounded-[40px] overflow-hidden relative group">
-            <div className="absolute inset-0 flex items-center justify-center p-8">
-                {data?.stationery_url ? (
-                    <img src={data.stationery_url} alt="Stationery" className="w-full h-full object-cover rounded-2xl shadow-lg" />
-                ) : (
-                    <>
-                        {/* ID Card Mockup */}
-                        <div className="w-48 h-72 bg-white rounded-2xl shadow-xl transform rotate-[-5deg] group-hover:rotate-0 transition-all duration-500 flex flex-col overflow-hidden relative z-10">
-                            <div className="h-24 bg-brand-dark relative">
-                                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-16 h-16 bg-gray-200 rounded-full border-4 border-white overflow-hidden">
-                                    <img src="https://picsum.photos/id/64/100/100" className="w-full h-full object-cover" alt="User" />
-                                </div>
-                            </div>
-                            <div className="mt-8 text-center px-4">
-                                <h4 className="font-bold text-gray-800 text-sm">Sarah Connor</h4>
-                                <p className="text-[10px] text-gray-400 uppercase tracking-wider">Product Lead</p>
-                            </div>
-                            <div className="mt-auto p-4 bg-gray-50">
-                                <div className="h-2 w-20 bg-gray-200 rounded-full mx-auto"></div>
-                            </div>
-                        </div>
+    const primary = data?.colors?.primary || "#F20F79";
 
-                        {/* Business Card Mockup (Behind) */}
-                        <div className="absolute w-56 h-32 bg-primary-500 rounded-xl shadow-lg transform rotate-[10deg] translate-x-12 translate-y-12 flex items-center justify-center">
-                            <span className="text-white font-bold text-lg tracking-widest">REGENETIX</span>
-                        </div>
-                    </>
-                )}
+    return (
+        <div className="h-full bg-gray-50 rounded-[40px] p-8 relative overflow-hidden flex flex-col">
+            <div className="flex items-center gap-2 mb-6">
+                <div className="p-2 bg-white rounded-lg text-gray-900 shadow-sm"><Box size={18} /></div>
+                <span className="text-sm font-bold text-gray-400 uppercase">Aplicaciones Sugeridas</span>
             </div>
 
-            <div className="absolute top-8 left-8">
-                <div className="flex items-center gap-2">
-                    <div className="p-2 bg-white/50 backdrop-blur-md rounded-lg text-brand-dark"><Box size={18} /></div>
-                    <span className="text-sm font-bold text-brand-dark/50 uppercase">Papelería</span>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
+                {[
+                    { title: "Digital", items: ["Firma de Email", "Favicon", "Post Plantilla", "Banner Web"] },
+                    { title: "Impreso", items: ["Tarjeta de Visita", "Membrete", "Carpeta Corporativa", "Merchandising"] }
+                ].map((category, idx) => (
+                    <div key={idx} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                        <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                            {idx === 0 ? <Smartphone size={16} style={{ color: primary }} /> : <Layers size={16} style={{ color: primary }} />}
+                            {category.title}
+                        </h4>
+                        <ul className="space-y-2">
+                            {category.items.map((item, i) => (
+                                <li key={i} className="text-sm text-gray-500 flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-200"></div>
+                                    {item}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                ))}
+            </div>
+
+            <div className="mt-6 bg-white/50 p-4 rounded-xl border border-gray-100">
+                <p className="text-xs text-gray-500 italic">
+                    "La consistencia en estos puntos de contacto construye la confianza de la marca {data?.brand_name}."
+                </p>
             </div>
         </div>
     );
@@ -383,6 +385,7 @@ export const CardStationery: React.FC<CommonProps> = ({ data }) => {
 
 // --- CARD 10: VALUES ---
 export const CardValues: React.FC<CommonProps> = ({ data }) => {
+    const primary = data?.colors?.primary || "#F20F79";
     const values = data?.values || [
         { title: "Innovación Ética", desc: "Avanzar sin romper." },
         { title: "Transparencia Radical", desc: "Datos abiertos al usuario." },
@@ -392,7 +395,9 @@ export const CardValues: React.FC<CommonProps> = ({ data }) => {
     return (
         <div className="h-full bg-white rounded-[40px] p-8 shadow-sm border border-gray-100 flex flex-col">
             <div className="flex items-center gap-2 mb-6">
-                <div className="p-2 bg-primary-50 rounded-lg text-primary-500"><Smartphone size={18} /></div>
+                <div className="p-2 rounded-lg" style={{ backgroundColor: `${primary}15`, color: primary }}>
+                    <Smartphone size={18} />
+                </div>
                 <span className="text-sm font-bold text-gray-500 uppercase">Valores Centrales</span>
             </div>
 
@@ -401,10 +406,10 @@ export const CardValues: React.FC<CommonProps> = ({ data }) => {
                     <div key={i} className="group cursor-pointer">
                         <div className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors">
                             <div>
-                                <h4 className="font-bold text-brand-dark text-sm">{val.title}</h4>
-                                <p className="text-xs text-gray-400">{val.desc}</p>
+                                <h4 className="font-bold text-gray-900 text-sm">{val.title}</h4>
+                                <p className="text-xs text-gray-500">{val.desc}</p>
                             </div>
-                            <div className="w-2 h-2 rounded-full bg-primary-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div className="w-2 h-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: primary }}></div>
                         </div>
                     </div>
                 ))}

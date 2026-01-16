@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download } from 'lucide-react';
+import { Download, Brain, Wand2, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import * as api from '../services/api';
 import { usePlanAccess } from '../hooks/usePlanAccess';
@@ -16,22 +16,28 @@ import {
     CardPatterns,
     CardStationery
 } from './components/BrandBookCards';
+import { CardPersonas } from './components/CardPersonas';
 
-const App: React.FC = () => {
+interface BrandBookProps {
+    overrideClientId?: string;
+}
+
+const App: React.FC<BrandBookProps> = ({ overrideClientId }) => {
     // --- Data State ---
     const [brandData, setBrandData] = React.useState<any>(null);
     const [isLoading, setIsLoading] = React.useState(true);
 
     // Use real ClientID from Auth Context
     const { user } = useAuth();
-    const CLIENT_ID = user?.fichaClienteId;
+    const CLIENT_ID = overrideClientId || user?.fichaClienteId;
 
     // Check Plan Access
     const { hasAccess } = usePlanAccess('brand');
+    const canView = overrideClientId ? true : hasAccess; // Admin bypass
 
     const fetchBrand = async () => {
         // If Demo Mode (no access), use mock data
-        if (!hasAccess) {
+        if (!canView) {
             setBrandData(MOCK_BRAND_DATA);
             setIsLoading(false);
             return;
@@ -48,7 +54,7 @@ const App: React.FC = () => {
             const json = await api.getBrand(CLIENT_ID);
 
             if (json.status === "success" && json.data) {
-                setBrandData(json.data);
+                setBrandData({ ...json.data, brand_name: json.brand_name });
             }
             // Removed auto-generation on empty
         } catch (e) {
@@ -71,6 +77,47 @@ const App: React.FC = () => {
         }
     };
 
+    if (isLoading) {
+        return (
+            <div className="flex h-64 items-center justify-center">
+                <Loader2 className="animate-spin text-blue-500" size={32} />
+            </div>
+        );
+    }
+
+    if (!brandData && canView) {
+        return (
+            <div className="flex flex-col items-center justify-center p-12 text-center h-[60vh] bg-white rounded-3xl border-2 border-dashed border-gray-200 m-4">
+                <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                    <Brain size={40} />
+                </div>
+                <h3 className="text-2xl font-black text-gray-900 mb-3">Manual de Marca No Generado</h3>
+                <p className="text-gray-500 max-w-lg mb-8 text-lg">
+                    Esta marca completó su entrevista pero aún no tiene identidad definida.
+                    <br />Puedes generar su Misión, Visión, Valores y Visuales automáticamente usando IA.
+                </p>
+                <button
+                    onClick={async () => {
+                        setIsLoading(true);
+                        try {
+                            if (!CLIENT_ID) return;
+                            await api.generateManual(CLIENT_ID);
+                            await fetchBrand();
+                        } catch (e) {
+                            console.error(e);
+                            alert("Error generando manual. Revisa la consola.");
+                            setIsLoading(false);
+                        }
+                    }}
+                    className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-bold text-lg hover:shadow-xl hover:scale-105 transition-all"
+                >
+                    <Wand2 size={24} />
+                    Generar Identidad con IA
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="font-sans selection:bg-primary-500 selection:text-white pb-12">
             {/* Grid Layout */}
@@ -88,35 +135,42 @@ const App: React.FC = () => {
                     <CardTone data={brandData} />
                 </div>
 
+                {/* --- ROW 1.5: AUDIENCE --- */}
+                {brandData?.personas && (
+                    <div className="col-span-12 min-h-[360px]">
+                        <CardPersonas data={brandData} />
+                    </div>
+                )}
+
                 {/* --- ROW 2: CORE VISUALS --- */}
 
-                {/* 4. Logo Construction */}
-                <div className="col-span-12 md:col-span-6 min-h-[340px]">
-                    <CardLogo data={brandData} />
+                {/* 5. Color Palette */}
+                <div className="col-span-12 md:col-span-8 min-h-[340px]">
+                    <CardColors data={brandData} />
                 </div>
 
-                {/* 5. Color Palette */}
-                <div className="col-span-12 md:col-span-6 min-h-[340px]">
-                    <CardColors data={brandData} />
+                {/* 10. Core Values (moved here) */}
+                <div className="col-span-12 md:col-span-4 min-h-[340px]">
+                    <CardValues data={brandData} />
                 </div>
 
                 {/* --- ROW 3: DETAILS --- */}
 
                 {/* 6. Typography (Wide) */}
                 <div className="col-span-12 md:col-span-8 min-h-[280px]">
-                    <CardTypography />
+                    <CardTypography data={brandData} />
                 </div>
 
                 {/* 7. Iconography */}
                 <div className="col-span-12 md:col-span-4 min-h-[280px]">
-                    <CardIconography />
+                    <CardIconography data={brandData} />
                 </div>
 
                 {/* --- ROW 4: APPLICATIONS --- */}
 
                 {/* 8. Patterns & Graphics */}
                 <div className="col-span-12 md:col-span-4 min-h-[320px]">
-                    <CardPatterns />
+                    <CardPatterns data={brandData} />
                 </div>
 
                 {/* 9. Stationery */}
@@ -124,10 +178,7 @@ const App: React.FC = () => {
                     <CardStationery data={brandData} />
                 </div>
 
-                {/* 10. Core Values (Pillars) */}
-                <div className="col-span-12 md:col-span-4 min-h-[320px]">
-                    <CardValues data={brandData} />
-                </div>
+
 
             </div>
 
