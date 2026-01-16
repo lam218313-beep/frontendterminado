@@ -491,43 +491,55 @@ async def generate_brand_identity(interview_data: dict) -> dict:
 # STRATEGIC PLAN GENERATOR (Tree Structure)
 # =============================================================================
 
-STRATEGY_TREE_PROMPT = """
-Actúa como un Estratega Digital Senior. Tu misión es crear un Plan Táctico Operativo a medida.
-Tienes dos fuentes de verdad:
+STRATEGY_PLAYBOOK_PROMPT = """
+Actúa como un Director de Estrategia de Contenidos. Tu misión es crear un PLAYBOOK ESTRATÉGICO 
+que servirá como "Constitución" de la marca para guiar TODO el contenido futuro.
 
-1. CONTEXTO PROFUNDO DEL CLIENTE (Entrevista):
+⚠️ IMPORTANTE: NO generes posts específicos. Genera ARQUETIPOS DE CONTENIDO (conceptos reutilizables).
+
+FUENTES DE VERDAD:
+
+1. CONTEXTO PROFUNDO DEL CLIENTE (Entrevista Completa):
 {interview_context}
 
-2. DIAGNÓSTICO DE DATOS (Análisis Real):
+2. DIAGNÓSTICO DE DATOS (Análisis de Redes):
 {analysis_insights}
 
-TIPO DE PLAN: {plan_type}
-(Si es "free_trial" -> Genera TAREAS estratégicas para el usuario.
- Si es plan de pago -> Genera CONTENIDO (Posts, Reels) listo para publicar).
+PLAN DEL CLIENTE: {plan_type}
 
 INSTRUCCIONES DE GENERACIÓN:
-Cruza la información: Si la entrevista dice que la marca es "Elegante" pero el análisis dice que los comentarios la ven "Aburrida", la estrategia debe ser el puente.
 
-Genera un JSON con estructura de Árbol Estratégico:
-1. Define 3 Objetivos Macro que resuelvan la tensión entre lo que el cliente quiere (Entrevista) y lo que necesita (Análisis).
-2. Para cada Objetivo, 2 Estrategias.
-3. Para cada Estrategia, 3 Acciones Tácticas.
+1. Extrae TODOS los objetivos mencionados en la entrevista (ventas, branding, comunidad, educación, etc.)
+2. Para cada objetivo, define 2-3 estrategias que lo aborden
+3. Para cada estrategia, define 2-4 CONCEPTOS DE CONTENIDO (arquetipos reutilizables)
+
+SOBRE LOS CONCEPTOS:
+- Un "concepto" es un TIPO de contenido que se puede producir múltiples veces
+- Ejemplo: "Tutorial Rápido" es un concepto. "5 tips para usar X" es un post específico (NO generar esto)
+- Cada concepto debe tener:
+  * label: Nombre corto del arquetipo (2-4 palabras)
+  * description: Qué logra este tipo de contenido y cómo ejecutarlo
+  * suggested_format: post | story | reel | carousel | video
+  * suggested_frequency: high (3-4/semana) | medium (1-2/semana) | low (1-2/mes)
+  * tags: Lista de 2-3 etiquetas temáticas
 
 FORMATO JSON ESTRICTO:
 {{
-  "root_label": "Estrategia Integral 2026",
+  "root_label": "Playbook Estratégico 2026",
   "objectives": [
     {{
-      "title": "Objetivo (ej: Rejuvenecer la percepción de marca)",
-      "rationale": "Justificación basada en el cruce de datos",
+      "title": "Objetivo: [Nombre del objetivo]",
+      "rationale": "Por qué este objetivo es crítico según el cruce entrevista+análisis",
       "strategies": [
         {{
-          "title": "Estrategia (ej: Humanización de contenido)",
-          "actions": [
+          "title": "Estrategia: [Enfoque táctico]",
+          "concepts": [
             {{
-              "title": "Título del Post/Tarea",
-              "format": "Formato",
-              "description": "Instrucción de ejecución detallada"
+              "label": "Nombre del Arquetipo (ej: Testimonio Cliente)",
+              "description": "Video corto mostrando experiencia real de un cliente satisfecho",
+              "suggested_format": "reel",
+              "suggested_frequency": "medium",
+              "tags": ["social-proof", "confianza", "UGC"]
             }}
           ]
         }}
@@ -535,6 +547,12 @@ FORMATO JSON ESTRICTO:
     }}
   ]
 }}
+
+REGLAS:
+- Mínimo 3 objetivos (extraer de la entrevista)
+- Mínimo 2 estrategias por objetivo
+- Mínimo 2 conceptos por estrategia
+- NUNCA incluir títulos de posts específicos, solo arquetipos
 """
 
 def _format_interview_data(data: dict) -> str:
@@ -585,8 +603,8 @@ async def generate_strategic_plan(interview_data: dict, analysis_json: dict, pla
         f"RECOMENDACIONES CRÍTICAS (Data-Driven): {json.dumps(q9_recs[:5], ensure_ascii=False)}"
     )
     
-    # 3. Llamar a la IA
-    prompt = STRATEGY_TREE_PROMPT.format(
+    # 3. Llamar a la IA con el nuevo Playbook Prompt
+    prompt = STRATEGY_PLAYBOOK_PROMPT.format(
         interview_context=interview_context_str, # <--- Aquí va TODO
         analysis_insights=insights_str,
         plan_type=plan_type

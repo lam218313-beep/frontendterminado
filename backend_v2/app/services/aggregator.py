@@ -679,18 +679,30 @@ def convert_tree_to_nodes(client_id: str, tree_data: dict) -> list[dict]:
                 "client_id": client_id
             })
             
-            actions = strat.get("actions", [])
-            for k, act in enumerate(actions):
-                # Nivel 3: Acciones (Publicaciones / Tareas)
-                act_y = strat_y + ((k - 1) * 90) # Más apiñados
+            
+            # Changed from 'actions' to 'concepts' for Strategy v2 Playbook
+            concepts = strat.get("concepts", strat.get("actions", []))  # Fallback for backwards compat
+            for k, concept in enumerate(concepts):
+                # Nivel 3: Conceptos/Arquetipos (Reemplaza Posts específicos)
+                concept_y = strat_y + ((k - 1) * 90) # Más apiñados
+                
+                # Handle both old format (actions with title) and new format (concepts with label)
+                label = concept.get("label", concept.get("title", "Concepto"))
+                description = concept.get("description", "")
+                suggested_format = concept.get("suggested_format", concept.get("format", "post"))
+                suggested_frequency = concept.get("suggested_frequency", "medium")
+                tags = concept.get("tags", [])
                 
                 nodes.append({
                     "id": str(uuid.uuid4()), 
-                    "type": "post", # El frontend detecta esto como "Item Planificable"
-                    "label": act["title"],
-                    "description": f"{act.get('format', 'General')}: {act.get('description', '')}",
+                    "type": "concept", # Changed from "post" for Strategy v2
+                    "label": label,
+                    "description": description,
+                    "suggested_format": suggested_format,
+                    "suggested_frequency": suggested_frequency,
+                    "tags": tags,
                     "x": X_GAP * 3, 
-                    "y": act_y, 
+                    "y": concept_y, 
                     "parent_id": strat_id, 
                     "client_id": client_id
                 })
