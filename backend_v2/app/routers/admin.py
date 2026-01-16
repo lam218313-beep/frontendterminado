@@ -12,6 +12,7 @@ from datetime import datetime
 import logging
 
 from ..services.database import db
+from ..services import gemini_service, aggregator
 
 
 
@@ -447,4 +448,63 @@ async def generate_brand_manual(brand_id: str):
         
     except Exception as e:
         logger.error(f"Failed to generate manual: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/brands/{brand_id}/strategy/seed")
+async def seed_strategy_manually(brand_id: str):
+    """
+    Trigger manual para generar la Estrategia (Árbol de Objetivos) 
+    usando IA basada en el Análisis completado.
+    """
+    logger.info(f"♟️ [Admin] Iniciando generación manual de estrategia para {brand_id}")
+    
+    # 1. Validar prerrequisitos
+    report = db.get_latest_completed_report(brand_id)
+    if not report or not report.get("frontend_compatible_json"):
+        raise HTTPException(
+            status_code=400, 
+            detail="No se puede generar estrategia: El Análisis no está completado o no existe."
+        )
+    
+    analysis = report["frontend_compatible_json"]
+    if "Q10" not in analysis:
+        raise HTTPException(
+            status_code=400, 
+            detail="No se puede generar estrategia: El Análisis (Q1-Q10) no está completo (Falta Q10)."
+        )
+
+    # 2. Obtener contexto (Entrevista)
+    interview_record = db.get_interview(brand_id)
+    interview_data = interview_record.get("data", {}) if interview_record else {}
+    
+    # 3. Obtener plan (para saber si generar Tareas o Posts)
+    client = db.get_client(brand_id)
+    if not client:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+        
+    plan_type = client.get("plan", "free_trial")
+
+    try:
+        # 4. Generar Árbol con IA (El "Arquitecto")
+        strategy_json = await gemini_service.generate_strategic_plan(
+            interview_data=interview_data,
+            analysis_json=analysis,
+            plan_type=plan_type
+        )
+        
+        # 5. Convertir JSON a Nodos Visuales (x, y)
+        strategy_nodes = aggregator.convert_tree_to_nodes(brand_id, strategy_json)
+        
+        # 6. Guardar en Base de Datos
+        db.sync_strategy_nodes(brand_id, strategy_nodes)
+        
+        return {
+            "status": "success", 
+            "message": "Estrategia generada correctamente", 
+            "nodes_count": len(strategy_nodes)
+        }
+
+    except Exception as e:
+        logger.error(f"❌ Error en generación manual de estrategia: {e}")
         raise HTTPException(status_code=500, detail=str(e))

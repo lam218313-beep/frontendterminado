@@ -375,6 +375,7 @@ const BrandDetailView: React.FC<{ brandId: string; onBack: () => void }> = ({ br
     const [showAnalysisModal, setShowAnalysisModal] = useState(false);
     const [showBrandBook, setShowBrandBook] = useState(false);
     const [showStrategy, setShowStrategy] = useState(false);
+    const [showStrategyGenModal, setShowStrategyGenModal] = useState(false);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
     // Auto-dismiss toast
@@ -501,13 +502,31 @@ const BrandDetailView: React.FC<{ brandId: string; onBack: () => void }> = ({ br
                                     setShowBrandBook(true);
                                 }
                                 if (mod.id === 'strategy' && mod.can_execute) {
-                                    setShowStrategy(true);
+                                    if (mod.status === 'completed') {
+                                        setShowStrategy(true);
+                                    } else {
+                                        setShowStrategyGenModal(true);
+                                    }
                                 }
                             }}
                         />
                     ))}
                 </div>
             </div>
+
+            <AnimatePresence>
+                {showStrategyGenModal && (
+                    <StrategyGenerationModal
+                        brandId={brandId}
+                        onClose={() => setShowStrategyGenModal(false)}
+                        onGenerated={() => {
+                            setShowStrategyGenModal(false);
+                            loadBrandDetail();
+                            setToast({ message: "Estrategia generada con éxito", type: 'success' });
+                        }}
+                    />
+                )}
+            </AnimatePresence>
 
             {/* Users Section */}
             <div className="flex-1">
@@ -843,6 +862,106 @@ const AnalysisModal: React.FC<{ brandId: string; onClose: () => void; onStarted:
                         {loading ? <Loader2 className="animate-spin mx-auto" size={20} /> : 'Iniciar Análisis'}
                     </button>
                 </form>
+            </motion.div>
+        </div>
+    );
+};
+
+
+// =============================================================================
+// STRATEGY GENERATION MODAL
+// =============================================================================
+
+const StrategyGenerationModal: React.FC<{
+    brandId: string;
+    onClose: () => void;
+    onGenerated: () => void
+}> = ({ brandId, onClose, onGenerated }) => {
+    const [loading, setLoading] = useState(false);
+
+    const handleGenerate = async () => {
+        setLoading(true);
+        try {
+            // Llamada al nuevo endpoint backend
+            const response = await fetch(`${api.API_BASE_URL}/api/admin/brands/${brandId}/strategy/seed`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (response.ok) {
+                onGenerated();
+            } else {
+                const error = await response.json();
+                alert(error.detail || 'Error al generar estrategia');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error de conexión al generar estrategia');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl"
+            >
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                            <Target size={20} />
+                        </div>
+                        <h2 className="text-2xl font-black text-gray-900">Generar Estrategia</h2>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full">
+                        <X size={20} className="text-gray-400" />
+                    </button>
+                </div>
+
+                <div className="mb-6 space-y-4 text-gray-600">
+                    <p>
+                        El sistema utilizará la <strong>Inteligencia Artificial</strong> para cruzar:
+                    </p>
+                    <ul className="space-y-2 text-sm bg-gray-50 p-4 rounded-xl border border-gray-100">
+                        <li className="flex items-center gap-2">
+                            <Check size={16} className="text-emerald-500" />
+                            <span>Objetivos de la Entrevista</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                            <Check size={16} className="text-emerald-500" />
+                            <span>Oportunidades del Análisis (Gap Score)</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                            <Check size={16} className="text-emerald-500" />
+                            <span>Recomendaciones Tácticas (Q9)</span>
+                        </li>
+                    </ul>
+                    <p className="text-sm">
+                        Se creará un árbol de objetivos, estrategias y publicaciones listo para revisión.
+                    </p>
+                </div>
+
+                <button
+                    onClick={handleGenerate}
+                    disabled={loading}
+                    className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                    {loading ? (
+                        <>
+                            <Loader2 className="animate-spin" size={20} />
+                            <span>Diseñando Estrategia...</span>
+                        </>
+                    ) : (
+                        <>
+                            <Play size={20} fill="currentColor" />
+                            <span>Ejecutar Generación</span>
+                        </>
+                    )}
+                </button>
             </motion.div>
         </div>
     );

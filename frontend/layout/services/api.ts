@@ -308,6 +308,11 @@ export async function login(email: string, password: string): Promise<AuthRespon
   setStoredToken(data.access_token);
   setStoredUser(data);
 
+  // Store clientId for components that need it (Strategy, Kanban, etc.)
+  if (data.ficha_cliente_id) {
+    localStorage.setItem('clientId', data.ficha_cliente_id);
+  }
+
   return data;
 }
 
