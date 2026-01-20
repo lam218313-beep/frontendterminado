@@ -35,7 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isExpanded, setIsExpanded, act
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 flex flex-col justify-center space-y-2 px-2 w-full overflow-y-auto custom-scrollbar">
+            <nav className="flex-1 flex flex-col justify-center space-y-2 px-2 w-full overflow-y-auto custom-scrollbar" role="navigation" aria-label="Navegación principal">
 
                 {/* 1. Partners */}
                 <SidebarItem
@@ -158,6 +158,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isExpanded, setIsExpanded, act
                             onLogout();
                         }}
                         className="absolute right-4 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                        aria-label="Cerrar sesión"
                     >
                         <Power size={18} />
                     </button>
@@ -183,6 +184,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon: Icon, label, viewId, is
             ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-500/30'
             : 'text-gray-500 hover:text-primary-600 hover:bg-primary-50'
             }`}
+        aria-label={`Ir a ${label}`}
+        aria-current={isActive ? 'page' : undefined}
     >
         {/* Icon container */}
         <div className="w-8 flex items-center justify-center shrink-0">

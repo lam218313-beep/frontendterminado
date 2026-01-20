@@ -807,6 +807,91 @@ export async function deleteTask(taskId: string): Promise<void> {
   }
 }
 
+// =============================================================================
+// PLANNING (STRATEGY v2) ENDPOINTS
+// =============================================================================
+
+export interface Quotas {
+  photo: number;
+  video: number;
+  story: number;
+}
+
+export interface GeneratedTask {
+  id: string;
+  title: string;
+  description: string;
+  week: number;
+  area_estrategica: string;
+  format?: 'photo' | 'video' | 'story' | 'reel' | 'post' | string;
+  month_group?: string;
+  concept_id?: string;
+  execution_date: string;
+  copy_suggestion?: string;
+  score_impacto?: number;
+  score_esfuerzo?: number;
+  // Phase 1 Enriched Fields
+  selected_hook?: string;
+  narrative_structure?: string;
+  key_elements?: string[];
+  dos?: string[];
+  donts?: string[];
+  strategic_purpose?: string;
+}
+
+export async function getPlanningHistory(clientId: string, monthGroup?: string): Promise<{ tasks: GeneratedTask[] }> {
+  const url = new URL(`${API_BASE_URL}/planning/${clientId}/history`);
+  if (monthGroup) {
+    url.searchParams.append('month_group', monthGroup);
+  }
+
+  const response = await fetch(url.toString(), {
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(response);
+}
+
+export async function generateMonthlyPlan(
+  clientId: string,
+  year: number,
+  month: number,
+  quotas: Quotas
+): Promise<{ status: string, tasks: GeneratedTask[] }> {
+  const response = await fetch(`${API_BASE_URL}/planning/generate-month`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      client_id: clientId,
+      year,
+      month,
+      quotas
+    })
+  });
+  return handleResponse(response);
+}
+
+export async function saveMonthlyPlan(
+  clientId: string,
+  tasks: GeneratedTask[]
+): Promise<{ status: string, count: number }> {
+  const response = await fetch(`${API_BASE_URL}/planning/save-month`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      client_id: clientId,
+      tasks
+    })
+  });
+  return handleResponse(response);
+}
+
+
 /**
  * Add note to a task
  * POST /api/v1/tasks/{task_id}/notes
@@ -980,3 +1065,4 @@ export async function syncStrategy(clientId: string, nodes: StrategyNode[]): Pro
   });
   return handleResponse(response);
 }
+

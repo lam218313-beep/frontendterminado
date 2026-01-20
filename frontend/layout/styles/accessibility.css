@@ -1,0 +1,56 @@
+/* Focus Indicators and Accessibility Styles */
+
+@layer utilities {
+
+    /* Focus visible para accesibilidad - Ring primario */
+    .focus-visible-ring {
+        @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
+    }
+
+    /* Focus para botones y elementos interactivos */
+    button:focus-visible,
+    a:focus-visible,
+    [role="button"]:focus-visible {
+        @apply outline-none ring-2 ring-primary-500 ring-offset-2 rounded;
+    }
+
+    /* Focus para elementos draggables - Ring azul para diferenciar */
+    [draggable="true"]:focus-visible {
+        @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+    }
+
+    /* Focus para inputs y textareas */
+    input:focus-visible,
+    textarea:focus-visible,
+    select:focus-visible {
+        @apply outline-none ring-2 ring-primary-500 ring-offset-1;
+    }
+
+    /* Mejorar contraste de texto secundario - WCAG AA */
+    .text-secondary {
+        @apply text-gray-600;
+        /* Cambio de gray-400 a gray-600 para mejor contraste */
+    }
+
+    /* Mejorar contraste de badges */
+    .badge-warning {
+        @apply bg-yellow-100 text-yellow-800 border-yellow-300;
+        /* Mejor contraste que yellow-50 */
+    }
+}
+
+/* Asegurar que focus-visible solo aparece en navegación por teclado */
+*:focus:not(:focus-visible) {
+    outline: none;
+    box-shadow: none;
+}
+
+/* Mejorar visibilidad de focus en modo de alto contraste */
+@media (prefers-contrast: high) {
+
+    button:focus-visible,
+    a:focus-visible,
+    [role="button"]:focus-visible {
+        @apply ring-4 ring-offset-4;
+    }
+}

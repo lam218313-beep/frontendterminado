@@ -9,8 +9,8 @@ export const MOCK_STRATEGY_DATA = {
         {
             id: "demo-main-1",
             type: "main",
-            label: "Dominar Mercado Local",
-            description: "Objetivo principal para Q3 2024",
+            label: "Proyecto: Demo Marketing",
+            description: "Estrategia General",
             parentId: null,
             x: 0,
             y: 0
@@ -18,20 +18,47 @@ export const MOCK_STRATEGY_DATA = {
         {
             id: "demo-sec-1",
             type: "secondary",
-            label: "SEO Local",
-            description: "Optimizar GMB y keywords locales",
+            label: "Objetivo: Crecimiento de Marca",
+            description: "Aumentar visibilidad en redes",
             parentId: "demo-main-1",
-            x: 240,
-            y: 0
+            x: 280,
+            y: -50
+        },
+        {
+            id: "demo-sec-2",
+            type: "secondary",
+            label: "Objetivo: Aumento de Ventas",
+            description: "Convertir seguidores en clientes",
+            parentId: "demo-main-1",
+            x: 280,
+            y: 50
         },
         {
             id: "demo-post-1",
-            type: "post",
-            label: "Post: Guía de Barrio",
-            description: "Carrousel con los mejores sitios",
+            type: "concept",
+            label: "Concepto: Guía de Estilo",
+            description: "Carrousel con tips de moda",
             parentId: "demo-sec-1",
-            x: 420,
-            y: 0
+            x: 520, // Increased spacing
+            y: -80
+        },
+        {
+            id: "demo-post-2",
+            type: "concept",
+            label: "Concepto: Testimonios",
+            description: "Video de cliente satisfecho",
+            parentId: "demo-sec-1",
+            x: 520,
+            y: -20
+        },
+        {
+            id: "demo-post-3",
+            type: "concept",
+            label: "Concepto: Oferta Flash",
+            description: "Story con link de compra",
+            parentId: "demo-sec-2",
+            x: 520,
+            y: 50
         }
     ],
 

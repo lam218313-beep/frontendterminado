@@ -9,13 +9,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Plus, Building2, Users, ChevronRight, X, Loader2,
     ClipboardList, BookOpen, BarChart2, Target, Calendar,
-    Check, Clock, Play, ArrowLeft, Edit2, Trash2
+    Check, Clock, Play, ArrowLeft, Edit2, Trash2, RefreshCw
 } from 'lucide-react';
 import * as api from '../services/api';
 
 // Import BrandBook for preview
 import BrandBookApp from '../brand-book/App';
 import StrategyApp from '../estrategia/App';
+import PlanningView from './PlanningView';
 
 // =============================================================================
 // PLAN CONFIG
@@ -375,6 +376,7 @@ const BrandDetailView: React.FC<{ brandId: string; onBack: () => void }> = ({ br
     const [showAnalysisModal, setShowAnalysisModal] = useState(false);
     const [showBrandBook, setShowBrandBook] = useState(false);
     const [showStrategy, setShowStrategy] = useState(false);
+    const [showSchedule, setShowSchedule] = useState(false);
     const [showStrategyGenModal, setShowStrategyGenModal] = useState(false);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -439,10 +441,62 @@ const BrandDetailView: React.FC<{ brandId: string; onBack: () => void }> = ({ br
                             <p className="text-xs text-gray-500">{brand?.nombre}</p>
                         </div>
                     </div>
+                    <button
+                        onClick={async () => {
+                            if (!confirm(`¿Estás seguro de que quieres regenerar la estrategia de ${brand?.nombre} con IA? Esto eliminará la estrategia actual y generará una nueva completa.`)) {
+                                return;
+                            }
+                            try {
+                                setToast({ message: 'Regenerando estrategia con IA...', type: 'success' });
+                                const response = await fetch(`${api.API_BASE_URL}/api/admin/brands/${brandId}/reset-strategy`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' }
+                                });
+                                if (response.ok) {
+                                    const result = await response.json();
+                                    setToast({ message: `Estrategia regenerada: ${result.nodes_created} nodos creados`, type: 'success' });
+                                    // Reload the strategy view
+                                    setTimeout(() => window.location.reload(), 2000);
+                                } else {
+                                    alert('Error al regenerar la estrategia');
+                                }
+                            } catch (error) {
+                                console.error('Error:', error);
+                                alert('Error al regenerar la estrategia');
+                            }
+                        }}
+                        className="px-4 py-2 bg-purple-50 text-purple-600 rounded-xl hover:bg-purple-100 transition-colors flex items-center gap-2 text-sm font-medium"
+                    >
+                        <RefreshCw size={16} />
+                        Regenerar con IA
+                    </button>
                 </div>
                 <div className="flex-1 overflow-hidden p-4">
                     <div className='h-full rounded-[30px] overflow-hidden border border-gray-200 shadow-sm bg-white'>
                         <StrategyApp overrideClientId={brandId} />
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (showSchedule) {
+        return (
+            <div className="h-full flex flex-col bg-gray-50 relative animate-in fade-in zoom-in duration-300">
+                <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm z-10 shrink-0">
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => setShowSchedule(false)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                            <ArrowLeft size={20} className="text-gray-600" />
+                        </button>
+                        <div>
+                            <h2 className="text-lg font-bold text-gray-900">Cronograma de Contenido</h2>
+                            <p className="text-xs text-gray-500">{brand?.nombre}</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex-1 overflow-hidden p-4">
+                    <div className='h-full rounded-[30px] overflow-hidden border border-gray-200 shadow-sm bg-white'>
+                        <PlanningView clientId={brandId || ''} />
                     </div>
                 </div>
             </div>
@@ -507,6 +561,9 @@ const BrandDetailView: React.FC<{ brandId: string; onBack: () => void }> = ({ br
                                     } else {
                                         setShowStrategyGenModal(true);
                                     }
+                                }
+                                if (mod.id === 'schedule' && mod.can_execute) {
+                                    setShowSchedule(true);
                                 }
                             }}
                         />

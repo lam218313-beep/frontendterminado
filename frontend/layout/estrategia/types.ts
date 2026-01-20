@@ -1,6 +1,7 @@
 import { LucideIcon } from 'lucide-react';
 
-export type NodeType = 'main' | 'secondary' | 'post';
+
+export type NodeType = 'main' | 'secondary' | 'concept' | 'post'; // 'post' kept for legacy/compatibility
 
 export interface NodeData {
   id: string;
@@ -12,6 +13,19 @@ export interface NodeData {
   y: number;
   color?: string;
   icon?: LucideIcon;
+  // Strategy v2 Fields
+  suggested_format?: string;
+  suggested_frequency?: string;
+  tags?: string[];
+  // Phase 1 AI Enhancement Fields
+  strategic_rationale?: string;
+  creative_hooks?: string[];
+  execution_guidelines?: {
+    structure?: string;
+    key_elements?: string[];
+    dos?: string[];
+    donts?: string[];
+  };
 }
 
 export interface NavItem {

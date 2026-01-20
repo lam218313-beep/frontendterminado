@@ -214,11 +214,6 @@ const MicroTopicCard: React.FC<{ topic: TopicData; index: number; interpretation
               </>
             )}
           </div>
-
-          <div className="w-full border-t border-gray-50 pt-4 flex items-center justify-center gap-2 text-xs text-gray-500 font-bold group-hover:text-primary-600 transition-colors cursor-pointer">
-            <span>Ver todos los comentarios</span>
-            <ArrowRight size={14} />
-          </div>
         </div>
       </div>
     </div>

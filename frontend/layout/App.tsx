@@ -1,23 +1,24 @@
-import React, { useState, useEffect, Component, ErrorInfo, ReactNode } from 'react';
+import React, { useState, useEffect, Component, ErrorInfo, ReactNode, Suspense, lazy } from 'react';
 import { LoginForm, WorkflowVisual, SuccessAnimation } from './components/LoginComponents.tsx';
 import { Sidebar } from './components/Sidebar.tsx';
 import { RightSidebar } from './components/RightSidebar.tsx';
-import { LabView } from './components/LabView.tsx';
-import { TasksView } from './components/TasksView.tsx';
-import { DashboardView } from './components/DashboardView.tsx';
-import WikiView from './components/WikiView.tsx';
-import PartnersView from './components/PartnersView.tsx';
-import { AdminPanel } from './components/AdminPanel.tsx';
-
-import { InterviewView } from './components/InterviewView.tsx';
-import { BrandView } from './components/BrandView.tsx';
-import { ContentPlanView } from './components/ContentPlanView.tsx';
-import { StrategyView } from './components/StrategyView.tsx';
-import { BenefitsView } from './components/BenefitsView.tsx';
 import { AlertCircle, Calendar } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext.tsx';
 import { AnalysisProvider } from './hooks/useAnalysis.tsx';
 import { TasksProvider } from './hooks/useTasks.tsx';
+
+// Lazy-loaded views for better performance
+const LabView = lazy(() => import('./components/LabView.tsx').then(m => ({ default: m.LabView })));
+const TasksView = lazy(() => import('./components/TasksView.tsx').then(m => ({ default: m.TasksView })));
+const DashboardView = lazy(() => import('./components/DashboardView.tsx').then(m => ({ default: m.DashboardView })));
+const WikiView = lazy(() => import('./components/WikiView.tsx'));
+const PartnersView = lazy(() => import('./components/PartnersView.tsx'));
+const AdminPanel = lazy(() => import('./components/AdminPanel.tsx').then(m => ({ default: m.AdminPanel })));
+const InterviewView = lazy(() => import('./components/InterviewView.tsx').then(m => ({ default: m.InterviewView })));
+const BrandView = lazy(() => import('./components/BrandView.tsx').then(m => ({ default: m.BrandView })));
+const ContentPlanView = lazy(() => import('./components/ContentPlanView.tsx').then(m => ({ default: m.ContentPlanView })));
+const StrategyView = lazy(() => import('./components/StrategyView.tsx').then(m => ({ default: m.StrategyView })));
+const BenefitsView = lazy(() => import('./components/BenefitsView.tsx').then(m => ({ default: m.BenefitsView })));
 
 // =============================================================================
 // ERROR BOUNDARY
@@ -86,7 +87,8 @@ const AppContent: React.FC = () => {
 
   // State to track sidebar hover/expansion
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
-  // ... rightSidebarOpen ...
+  // Mobile sidebar states
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   // ... activeView ...
   const [activeView, setActiveView] = useState<string>('partners');
@@ -104,6 +106,8 @@ const AppContent: React.FC = () => {
     }
     setViewCounter(prev => prev + 1);
     setActiveView(view);
+    // Close mobile sidebar on navigation
+    setLeftSidebarOpen(false);
   };
 
 
@@ -278,15 +282,45 @@ const AppContent: React.FC = () => {
       {flow === 'DASHBOARD_ACTIVE' && (
         <div className="flex h-screen w-full bg-brand-bg animate-[fade-in_0.8s_ease-out] overflow-hidden">
 
+          {/* Mobile Hamburger Button */}
+          <button
+            onClick={() => setLeftSidebarOpen(true)}
+            className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-white rounded-xl shadow-lg hover:shadow-xl transition-all"
+            aria-label="Abrir menú"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+
+          {/* Mobile Overlay */}
+          {leftSidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+              onClick={() => setLeftSidebarOpen(false)}
+              role="button"
+              aria-label="Cerrar menú de navegación"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+                  e.preventDefault();
+                  setLeftSidebarOpen(false);
+                }
+              }}
+            />
+          )}
+
           {/* Sidebar Left (Responsive) */}
           <div className={`
                 fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 ease-in-out
-                ${rightSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
+                ${leftSidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
                 lg:relative lg:translate-x-0 lg:z-0
                 ${sidebarExpanded ? 'lg:w-[260px]' : 'lg:w-[88px]'}
+                w-[280px] sm:w-[300px]
                 shrink-0 h-full
             `}>
-            {/* Mobile Sidebar Close Overlay (optional, usually handled inside sidebar or by an overlay div) */}
             <Sidebar
               isExpanded={sidebarExpanded}
               setIsExpanded={setSidebarExpanded}

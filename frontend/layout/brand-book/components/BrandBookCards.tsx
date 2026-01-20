@@ -415,8 +415,8 @@ export const CardValues: React.FC<CommonProps> = ({ data }) => {
                 ))}
             </div>
 
-            <div className="mt-4 p-4 bg-gray-900 rounded-2xl text-center">
-                <span className="text-xs text-white font-bold">#FutureOfRegeneration</span>
+            <div className="mt-4 p-4 rounded-2xl text-center" style={{ backgroundColor: `${primary}20` }}>
+                <span className="text-xs font-bold" style={{ color: primary }}>#FutureOfRegeneration</span>
             </div>
         </div>
     );

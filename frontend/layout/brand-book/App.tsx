@@ -182,17 +182,15 @@ const App: React.FC<BrandBookProps> = ({ overrideClientId }) => {
 
             </div>
 
-            {/* Download Button */}
-            <div className="mt-8 flex justify-end pb-8">
-                {brandData?.download_url && (
-                    <button
-                        className="flex items-center gap-2 px-6 py-3 bg-primary-500 text-white rounded-xl font-bold text-sm hover:bg-primary-600 transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                        onClick={handleDownload}
-                    >
-                        <Download size={20} />
-                        Descargar versión impresa
-                    </button>
-                )}
+            {/* Download Button - Always visible */}
+            <div className="mt-8 flex justify-center pb-8">
+                <button
+                    className="flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-primary-500 to-pink-600 text-white rounded-2xl font-bold text-base hover:shadow-2xl transform hover:scale-105 transition-all shadow-lg"
+                    onClick={handleDownload}
+                >
+                    <Download size={22} />
+                    Descargar Versión Completa
+                </button>
             </div>
         </div>
     );

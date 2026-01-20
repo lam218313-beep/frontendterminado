@@ -15,6 +15,7 @@ import {
     ArrowRight,
     Minus,
     Layers,
+    TrendingUp,
     Save,
     Edit2,
     Check,
@@ -22,7 +23,9 @@ import {
     Maximize,
     Minimize,
     Trash2,
-    RefreshCw
+    RefreshCw,
+    ChevronDown,
+    Tag
 } from 'lucide-react';
 import { toast } from 'sonner';
 import * as api from '../services/api';
@@ -64,6 +67,7 @@ const App: React.FC<{ overrideClientId?: string }> = ({ overrideClientId }) => {
     const [viewMode, setViewMode] = useState<ViewMode>('map');
     const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
     const [showRecs, setShowRecs] = useState(true);
+    const [brandName, setBrandName] = useState<string>("La Marca");
 
     // Interaction State
     const [mode, setMode] = useState<InteractionMode>('select');
@@ -73,6 +77,9 @@ const App: React.FC<{ overrideClientId?: string }> = ({ overrideClientId }) => {
     // Editing & Persistence State
     const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+
+    // List View Expansion State
+    const [expandedConceptIds, setExpandedConceptIds] = useState<Set<string>>(new Set());
 
     // --- IMPROVED DRAG STATE ---
     const [isDraggingNodes, setIsDraggingNodes] = useState(false);
@@ -112,17 +119,43 @@ const App: React.FC<{ overrideClientId?: string }> = ({ overrideClientId }) => {
 
     const CLIENT_ID = overrideClientId || localStorage.getItem('clientId');
 
-    // --- Persistence Handlers ---
+    // Fetch Client Name
+    useEffect(() => {
+        const fetchClientInfo = async () => {
+            if (!CLIENT_ID) return;
+            try {
+                const status = await api.getClientStatus(CLIENT_ID); // Or getClient if available by ID
+                // Since getClient by ID isn't directly exposed as a single fetch function (only getClients list), 
+                // we might need to rely on what we can get.
+                // Ideally we'd have api.getClient(id). 
+                // Let's fallback to "La Marca" or try to find it in the list if we must.
+                const clients = await api.getClients();
+                const client = clients.find(c => c.id === CLIENT_ID);
+                if (client) {
+                    setBrandName(client.nombre); // Assuming 'nombre' property
+                }
+            } catch (e) {
+                console.error("Could not fetch brand name", e);
+            }
+        };
+        fetchClientInfo();
+    }, [CLIENT_ID]);
+
+
     // --- Persistence Handlers (Autosave) ---
     const handleSaveStrategy = useCallback(async (currentNodes: NodeData[]) => {
         if (!CLIENT_ID || !hasAccess) return;
         setIsSaving(true);
+
+        console.log('💾 Strategy: Saving for CLIENT_ID:', CLIENT_ID, 'Nodes:', currentNodes.length);
+
         try {
             const cleanNodes = currentNodes.map(({ icon, color, ...rest }) => rest);
             await api.syncStrategy(CLIENT_ID, cleanNodes as any);
+            console.log('✅ Strategy: Saved successfully');
             // toast.success("Guardado automáticamente"); // Optional: too spammy?
         } catch (error) {
-            console.error("Error saving strategy:", error);
+            console.error("❌ Strategy: Error saving strategy:", error);
         } finally {
             setIsSaving(false);
         }
@@ -142,38 +175,54 @@ const App: React.FC<{ overrideClientId?: string }> = ({ overrideClientId }) => {
     useEffect(() => {
         // If Demo Mode (no access), load mock data
         if (!hasAccess) {
+            console.log('🎭 Strategy: Demo mode - loading mock data');
             setNodes(MOCK_STRATEGY_DATA.initialNodes as any);
-            setRecommendations(MOCK_STRATEGY_DATA.recommendations as any);
             return;
         }
 
-        const fetchAnalysis = async () => {
-            if (!CLIENT_ID) return;
+        // Load existing strategy nodes
+        const loadStrategy = async () => {
+            if (!CLIENT_ID) {
+                console.warn('⚠️ Strategy: No CLIENT_ID found in localStorage');
+                return;
+            }
+
+            console.log('🔍 Strategy: Loading for CLIENT_ID:', CLIENT_ID);
+
             try {
-                // Load existing strategy nodes
                 const strategyData = await api.getStrategy(CLIENT_ID);
+                console.log('📊 Strategy: Received data:', {
+                    count: strategyData?.length || 0,
+                    nodes: strategyData,
+                    clientId: CLIENT_ID
+                });
+
                 if (strategyData && strategyData.length > 0) {
                     setNodes(strategyData as any);
-                }
-
-                // Load Recommendations
-                const data = await api.getLatestAnalysis(CLIENT_ID);
-                if (data && data.Q9 && data.Q9.results && data.Q9.results.lista_recomendaciones) {
-                    const mapped: Recommendation[] = data.Q9.results.lista_recomendaciones.map((r: api.Q9Recommendation) => ({
-                        titulo: r.recomendacion,
-                        descripcion: r.descripcion,
-                        prioridad: r.urgencia,
-                        area: r.area_estrategica,
-                        impacto: r.score_impacto.toString()
-                    }));
-                    setRecommendations(mapped);
+                } else {
+                    console.log('📝 Strategy: Empty data - creating initial root node');
+                    // Empty state - Initialize with Root Node if empty
+                    const viewportCenterX = window.innerWidth / 2;
+                    const viewportCenterY = window.innerHeight / 2;
+                    setNodes([{
+                        id: generateId(),
+                        type: 'main',
+                        label: 'Proyecto Marketing',
+                        description: 'Estrategia General',
+                        parentId: null,
+                        x: 0, // Centered via transform usually, logic below handles viewport center
+                        y: 0
+                    }]);
                 }
             } catch (e) {
-                console.error("Error fetching analysis for strategy:", e);
+                console.error("❌ Strategy: Error fetching strategy:", e);
             }
         };
-        fetchAnalysis();
-    }, [CLIENT_ID, hasAccess]);
+        loadStrategy();
+    }, [CLIENT_ID, hasAccess]); // Removed brandName dependency to avoid reload loops, will update label separately if needed
+
+    // Update root node label if brand name changes and it's still default? 
+    // Maybe risky if user edited it. Let's leave it.
 
     // --- Logic: Data Management ---
     const updateNodeData = (id: string, field: keyof NodeData, value: any) => {
@@ -333,7 +382,7 @@ const App: React.FC<{ overrideClientId?: string }> = ({ overrideClientId }) => {
         const newNode: NodeData = {
             id: generateId(),
             type: 'main',
-            label: `Nuevo Objetivo`,
+            label: 'Proyecto Marketing',
             description: '',
             parentId: null,
             x: count === 0 ? viewportCenterX : x,
@@ -352,19 +401,33 @@ const App: React.FC<{ overrideClientId?: string }> = ({ overrideClientId }) => {
             newType = 'secondary';
             limit = MAX_SECONDARY_PER_MAIN;
         } else if (parent.type === 'secondary') {
-            newType = 'post';
+            newType = 'concept'; // Changed from 'post' to 'concept'
             limit = MAX_POSTS_PER_SECONDARY;
         } else { return; }
 
         const siblings = nodes.filter(n => n.parentId === parentId);
         if (siblings.length >= limit) return;
 
-        const childDist = parent.type === 'main' ? 240 : 180;
-        const offsetAngle = siblings.length * 25 + 15;
+        // --- IMPROVED LAYOUT LOGIC to reduce overlap ---
+        const childDist = parent.type === 'main' ? 320 : 300; // Increased distance for better spacing
+
+        // Spread logic - More spacing for concepts to avoid overlap
+        const spreadBase = parent.type === 'main' ? 40 : 80; // Increased spacing significantly
+        const offsetAngle = siblings.length * spreadBase + 30;
+
+        // Determine label based on type and sibling count
+        let nodeLabel = '';
+        if (newType === 'secondary') {
+            // First secondary is "Principal", rest are "Secundario"
+            nodeLabel = siblings.length === 0 ? 'Objetivo Principal' : 'Objetivo Secundario';
+        } else {
+            nodeLabel = 'Concepto';
+        }
+
         const newNode: NodeData = {
             id: generateId(),
             type: newType,
-            label: newType === 'secondary' ? `Estrategia` : `Post`,
+            label: nodeLabel,
             description: '',
             parentId,
             x: parent.x + childDist,
@@ -379,16 +442,14 @@ const App: React.FC<{ overrideClientId?: string }> = ({ overrideClientId }) => {
     };
 
     const renderMapNode = (node: NodeData) => {
+        const isEditing = editingNodeId === node.id;
+        const isSelected = selectedNodeIds.has(node.id);
         const isMain = node.type === 'main';
         const isSec = node.type === 'secondary';
-        const isPost = node.type === 'post';
-        const isSelected = selectedNodeIds.has(node.id);
-        const isEditing = editingNodeId === node.id;
-
-        const childrenCount = nodes.filter(n => n.parentId === node.id).length;
-        let canAdd = false;
-        if (isMain && childrenCount < MAX_SECONDARY_PER_MAIN) canAdd = true;
-        if (isSec && childrenCount < MAX_POSTS_PER_SECONDARY) canAdd = true;
+        const isConcept = node.type === 'concept';
+        const isPost = node.type === 'post'; // Keep for backwards compatibility
+        const canAdd = (isMain && nodes.filter(n => n.parentId === node.id).length < MAX_SECONDARY_PER_MAIN) ||
+            (isSec && nodes.filter(n => n.parentId === node.id).length < MAX_POSTS_PER_SECONDARY);
 
         let baseClasses = "relative flex items-center gap-4 p-5 rounded-[24px] border transition-all duration-300 backdrop-blur-md";
         let typeClasses = "";
@@ -400,10 +461,21 @@ const App: React.FC<{ overrideClientId?: string }> = ({ overrideClientId }) => {
         } else if (isSec) {
             typeClasses = `w-[240px] glass-panel text-gray-800 border-white/60 ${isSelected ? 'ring-2 ring-accent-500 shadow-lg' : 'hover:shadow-float'}`;
             iconClasses = "bg-accent-50 text-accent-600";
+        } else if (isConcept || isPost) {
+            // Strategy v2 Concept Styling - Wider cards for full title visibility
+            typeClasses = `w-[280px] bg-white text-gray-700 border-gray-100 shadow-sm ${isSelected ? 'ring-2 ring-brand-primary' : 'hover:shadow-md'}`;
+            iconClasses = "bg-brand-primary/10 text-brand-primary";
         } else {
+            // Fallback
             typeClasses = `w-[200px] bg-white text-gray-600 border-gray-100 shadow-sm ${isSelected ? 'ring-2 ring-accent-400' : 'hover:shadow-md'}`;
             iconClasses = "bg-gray-50 text-gray-400";
         }
+
+        // Determine label text based on type
+        let typeLabel = "ELEMENTO";
+        if (isMain) typeLabel = "PROYECTO";
+        else if (isSec) typeLabel = "OBJETIVO";
+        else if (isConcept || isPost) typeLabel = "CONCEPTO";
 
         return (
             <div
@@ -416,12 +488,19 @@ const App: React.FC<{ overrideClientId?: string }> = ({ overrideClientId }) => {
                     <div className={`flex items-center justify-center w-10 h-10 rounded-2xl shrink-0 transition-transform group-hover:scale-110 ${iconClasses}`}>
                         {isMain && <Target size={20} />}
                         {isSec && <Zap size={18} fill="currentColor" className="opacity-90" />}
-                        {isPost && <FileText size={16} />}
+                        {(isConcept || isPost) && <Lightbulb size={18} />}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${isMain ? 'text-gray-400' : 'text-gray-400'}`}>
-                            {isMain ? 'Objetivo' : isSec ? 'Estrategia' : 'Contenido'}
-                        </p>
+                        <div className="flex items-center justify-between mb-0.5">
+                            <p className={`text-[10px] font-bold uppercase tracking-wider ${isMain ? 'text-gray-400' : 'text-gray-400'}`}>
+                                {typeLabel}
+                            </p>
+                            {isConcept && node.suggested_format && (
+                                <span className="text-[9px] px-1.5 py-0.5 bg-gray-100 rounded text-gray-500 uppercase font-bold tracking-tight">
+                                    {node.suggested_format}
+                                </span>
+                            )}
+                        </div>
 
                         {isEditing ? (
                             <input
@@ -438,15 +517,32 @@ const App: React.FC<{ overrideClientId?: string }> = ({ overrideClientId }) => {
                                 className="w-full bg-transparent border-b border-white/30 focus:border-accent-500 outline-none text-current font-bold"
                             />
                         ) : (
-                            <div
-                                onDoubleClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingNodeId(node.id);
-                                }}
-                                className={`font-bold truncate leading-tight ${isMain ? 'text-lg' : 'text-sm'}`}
-                                title="Doble clic para editar"
-                            >
-                                {node.label}
+                            <div className="flex flex-col gap-1">
+                                <div
+                                    onDoubleClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingNodeId(node.id);
+                                    }}
+                                    className={`font-bold truncate leading-tight ${isMain ? 'text-lg' : 'text-sm'}`}
+                                    title="Doble clic para editar"
+                                >
+                                    {node.label}
+                                </div>
+                                {/* Tags / Frequency */}
+                                {isConcept && (
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                        {node.suggested_frequency && (
+                                            <span className="text-[9px] px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded-full font-medium">
+                                                {node.suggested_frequency === 'high' ? 'Alta' : node.suggested_frequency === 'medium' ? 'Media' : 'Baja'}
+                                            </span>
+                                        )}
+                                        {node.tags && node.tags.slice(0, 2).map((tag, i) => (
+                                            <span key={i} className="text-[9px] px-1.5 py-0.5 bg-gray-50 text-gray-500 rounded-full">
+                                                #{tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -490,66 +586,322 @@ const App: React.FC<{ overrideClientId?: string }> = ({ overrideClientId }) => {
         );
 
         return (
-            <div className="max-w-4xl mx-auto px-6 pt-24 pb-40 space-y-2 overflow-y-auto h-full custom-scrollbar">
-
-                <h2 className="text-2xl font-bold text-gray-800 mb-8 pl-2 border-l-4 border-accent-500">Resumen Estratégico</h2>
-
+            <div className="max-w-7xl mx-auto px-4 pt-12 pb-40 space-y-8 overflow-y-auto h-full custom-scrollbar">
                 {mainNodes.map(main => {
-                    const secondaryNodes = nodes.filter(n => n.parentId === main.id);
+                    // Nivel 1: Objetivos (hijos directos del main)
+                    const objectiveNodes = nodes.filter(n => n.parentId === main.id);
+
                     return (
-                        <div key={main.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-                            {/* Main Objective Header */}
-                            <div className="p-6 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 flex items-start gap-4">
-                                <div className="p-2 bg-accent-100 text-accent-600 rounded-lg shrink-0 mt-1">
+                        <div key={main.id} className="space-y-8">
+                            {/* Project Header */}
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="p-3 bg-brand-dark text-white rounded-xl shadow-lg shadow-brand-dark/20">
                                     <Target size={20} />
                                 </div>
-                                <div className="flex-1">
-                                    <h3 className="text-lg font-bold text-gray-900">{main.label}</h3>
-                                    {main.description && <p className="text-sm text-gray-500 mt-1">{main.description}</p>}
+                                <div>
+                                    <h3 className="text-2xl font-bold text-gray-900">{main.label}</h3>
+                                    {main.description && <p className="text-gray-500">{main.description}</p>}
                                 </div>
                             </div>
 
-                            {/* Strategy List */}
-                            <div className="p-4 space-y-4">
-                                {secondaryNodes.length === 0 && <p className="text-sm text-gray-400 italic px-2">Sin estrategias definidas.</p>}
+                            {/* Objectives */}
+                            {objectiveNodes.map((objective, objIdx) => {
+                                // Nivel 2: Estrategias (hijos del objetivo)
+                                const strategyNodes = nodes.filter(n => n.parentId === objective.id);
 
-                                {secondaryNodes.map(sec => {
-                                    const postNodes = nodes.filter(n => n.parentId === sec.id);
-                                    return (
-                                        <div key={sec.id} className="pl-4 border-l-2 border-gray-200 ml-2">
-                                            <div className="flex items-center gap-3 mb-3">
-                                                <Zap size={16} className="text-accent-500 shrink-0" />
+                                return (
+                                    <div key={objective.id} className="bg-white rounded-[24px] border border-gray-100 shadow-sm p-6 space-y-6">
+                                        {/* Objective Header */}
+                                        <div className="flex items-start gap-4 pb-4 border-b border-gray-100">
+                                            <div className="p-2.5 bg-purple-50 text-purple-600 rounded-lg shrink-0">
+                                                <Zap size={18} fill="currentColor" className="opacity-90" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 block">
+                                                    Objetivo {objIdx + 1}
+                                                </label>
                                                 <input
                                                     type="text"
-                                                    value={sec.label}
-                                                    onChange={(e) => updateNodeData(sec.id, 'label', e.target.value)}
-                                                    className="font-semibold text-gray-800 bg-transparent border-none focus:ring-0 p-0 w-full placeholder-gray-400 text-sm"
-                                                    placeholder="Nombre de la estrategia..."
+                                                    value={objective.label}
+                                                    onChange={(e) => updateNodeData(objective.id, 'label', e.target.value)}
+                                                    className="text-lg font-bold text-gray-800 bg-transparent border-none focus:ring-0 p-0 w-full placeholder-gray-300"
+                                                    placeholder="Nombre del Objetivo..."
                                                 />
                                             </div>
-
-                                            {/* Posts */}
-                                            <div className="space-y-2 ml-7">
-                                                {postNodes.map(post => (
-                                                    <div key={post.id} className="flex items-center gap-3 group">
-                                                        <div className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-accent-400 transition-colors"></div>
-                                                        <input
-                                                            type="text"
-                                                            value={post.label}
-                                                            onChange={(e) => updateNodeData(post.id, 'label', e.target.value)}
-                                                            className="text-sm text-gray-600 bg-transparent border-none focus:ring-0 p-0 w-full hover:text-gray-900 transition-colors"
-                                                            placeholder="Idea de contenido..."
-                                                        />
-                                                    </div>
-                                                ))}
-                                                {postNodes.length === 0 && <p className="text-xs text-gray-400 italic">Sin contenidos.</p>}
-                                            </div>
                                         </div>
-                                    );
-                                })}
-                            </div>
+
+                                        {/* Strategies */}
+                                        {strategyNodes.length === 0 && (
+                                            <p className="text-sm text-gray-400 italic">Sin estrategias definidas para este objetivo.</p>
+                                        )}
+
+                                        {strategyNodes.map((strategy, stratIdx) => {
+                                            // Nivel 3: Conceptos (hijos de la estrategia)
+                                            const conceptNodes = nodes.filter(n => n.parentId === strategy.id);
+
+                                            return (
+                                                <div key={strategy.id} className="bg-gray-50/50 rounded-xl p-5 space-y-4">
+                                                    {/* Strategy Header */}
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0">
+                                                            <TrendingUp size={16} />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1 block">
+                                                                Estrategia {stratIdx + 1}
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={strategy.label}
+                                                                onChange={(e) => updateNodeData(strategy.id, 'label', e.target.value)}
+                                                                className="text-base font-semibold text-gray-700 bg-transparent border-none focus:ring-0 p-0 w-full placeholder-gray-300"
+                                                                placeholder="Nombre de la Estrategia..."
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Concepts Grid */}
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
+                                                        {conceptNodes.map(concept => {
+                                                            const isExpanded = expandedConceptIds.has(concept.id);
+
+                                                            const toggleExpanded = () => {
+                                                                const newSet = new Set(expandedConceptIds);
+                                                                if (isExpanded) {
+                                                                    newSet.delete(concept.id);
+                                                                } else {
+                                                                    newSet.add(concept.id);
+                                                                }
+                                                                setExpandedConceptIds(newSet);
+                                                            };
+
+                                                            return (
+                                                                <div
+                                                                    key={concept.id}
+                                                                    className="bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col group hover:border-brand-primary/30 transition-all overflow-hidden"
+                                                                >
+                                                                    {/* Concept Header - Clickable */}
+                                                                    <div
+                                                                        onClick={toggleExpanded}
+                                                                        className="p-4 cursor-pointer hover:bg-gray-50/50 transition-colors"
+                                                                    >
+                                                                        <div className="flex items-center justify-between mb-2">
+                                                                            <div className="p-1.5 bg-brand-primary/5 text-brand-primary rounded-md">
+                                                                                <Lightbulb size={14} />
+                                                                            </div>
+                                                                            <div className="flex items-center gap-2">
+                                                                                <span className="text-[9px] font-bold text-gray-300 uppercase tracking-wider">Concepto</span>
+                                                                                <ChevronDown
+                                                                                    size={14}
+                                                                                    className={`text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                                                                                />
+                                                                            </div>
+                                                                        </div>
+                                                                        <textarea
+                                                                            value={concept.label}
+                                                                            onChange={(e) => {
+                                                                                e.stopPropagation();
+                                                                                updateNodeData(concept.id, 'label', e.target.value);
+                                                                            }}
+                                                                            onClick={(e) => e.stopPropagation()}
+                                                                            className="text-sm font-medium text-gray-700 bg-transparent border-none focus:ring-0 p-0 w-full resize-none h-10 leading-snug placeholder-gray-300"
+                                                                            placeholder="Nombre del concepto..."
+                                                                        />
+                                                                    </div>
+
+                                                                    {/* Expanded Details */}
+                                                                    {isExpanded && (
+                                                                        <div className="px-4 pb-4 space-y-4 border-t border-gray-100 pt-4">
+                                                                            {/* Description */}
+                                                                            {concept.description && (
+                                                                                <div>
+                                                                                    <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1 block">
+                                                                                        Descripción
+                                                                                    </label>
+                                                                                    <p className="text-xs text-gray-600 leading-relaxed">
+                                                                                        {concept.description}
+                                                                                    </p>
+                                                                                </div>
+                                                                            )}
+
+                                                                            {/* Tags */}
+                                                                            {concept.tags && concept.tags.length > 0 && (
+                                                                                <div>
+                                                                                    <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-2 block">
+                                                                                        Tags
+                                                                                    </label>
+                                                                                    <div className="flex flex-wrap gap-1.5">
+                                                                                        {concept.tags.map((tag, idx) => (
+                                                                                            <span
+                                                                                                key={idx}
+                                                                                                className="inline-flex items-center gap-1 px-2 py-0.5 bg-brand-primary/5 text-brand-primary rounded-md text-[10px] font-medium"
+                                                                                            >
+                                                                                                <Tag size={10} />
+                                                                                                {tag}
+                                                                                            </span>
+                                                                                        ))}
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+
+                                                                            {/* Format & Frequency */}
+                                                                            <div className="grid grid-cols-2 gap-3">
+                                                                                {concept.suggested_format && (
+                                                                                    <div>
+                                                                                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1 block">
+                                                                                            Formato
+                                                                                        </label>
+                                                                                        <span className="text-xs text-gray-700 font-medium capitalize">
+                                                                                            {concept.suggested_format}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                )}
+                                                                                {concept.suggested_frequency && (
+                                                                                    <div>
+                                                                                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1 block">
+                                                                                            Frecuencia
+                                                                                        </label>
+                                                                                        <span className="text-xs text-gray-700 font-medium capitalize">
+                                                                                            {concept.suggested_frequency}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+
+                                                                            {/* Strategic Rationale */}
+                                                                            {concept.strategic_rationale && (
+                                                                                <div>
+                                                                                    <label className="text-[9px] font-bold text-purple-500 uppercase tracking-wider mb-1 block">
+                                                                                        🎯 Razón Estratégica
+                                                                                    </label>
+                                                                                    <p className="text-xs text-gray-600 leading-relaxed bg-purple-50/50 p-2 rounded-lg">
+                                                                                        {concept.strategic_rationale}
+                                                                                    </p>
+                                                                                </div>
+                                                                            )}
+
+                                                                            {/* Creative Hooks */}
+                                                                            {concept.creative_hooks && concept.creative_hooks.length > 0 && (
+                                                                                <div>
+                                                                                    <label className="text-[9px] font-bold text-pink-500 uppercase tracking-wider mb-2 block">
+                                                                                        💡 Hooks Creativos
+                                                                                    </label>
+                                                                                    <ul className="space-y-1.5">
+                                                                                        {concept.creative_hooks.map((hook, idx) => (
+                                                                                            <li
+                                                                                                key={idx}
+                                                                                                className="text-xs text-gray-600 leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-pink-400"
+                                                                                            >
+                                                                                                {hook}
+                                                                                            </li>
+                                                                                        ))}
+                                                                                    </ul>
+                                                                                </div>
+                                                                            )}
+
+                                                                            {/* Execution Guidelines */}
+                                                                            {concept.execution_guidelines && (
+                                                                                <div className="space-y-3">
+                                                                                    <label className="text-[9px] font-bold text-blue-500 uppercase tracking-wider block">
+                                                                                        📋 Guía de Ejecución
+                                                                                    </label>
+
+                                                                                    {/* Structure */}
+                                                                                    {concept.execution_guidelines.structure && (
+                                                                                        <div>
+                                                                                            <span className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider block mb-1">
+                                                                                                Estructura
+                                                                                            </span>
+                                                                                            <p className="text-xs text-gray-600 leading-relaxed bg-blue-50/50 p-2 rounded-lg">
+                                                                                                {concept.execution_guidelines.structure}
+                                                                                            </p>
+                                                                                        </div>
+                                                                                    )}
+
+                                                                                    {/* Key Elements */}
+                                                                                    {concept.execution_guidelines.key_elements && concept.execution_guidelines.key_elements.length > 0 && (
+                                                                                        <div>
+                                                                                            <span className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider block mb-1">
+                                                                                                Elementos Clave
+                                                                                            </span>
+                                                                                            <ul className="space-y-1">
+                                                                                                {concept.execution_guidelines.key_elements.map((element, idx) => (
+                                                                                                    <li
+                                                                                                        key={idx}
+                                                                                                        className="text-xs text-gray-600 pl-3 relative before:content-['✓'] before:absolute before:left-0 before:text-green-500"
+                                                                                                    >
+                                                                                                        {element}
+                                                                                                    </li>
+                                                                                                ))}
+                                                                                            </ul>
+                                                                                        </div>
+                                                                                    )}
+
+                                                                                    {/* Dos and Don'ts */}
+                                                                                    <div className="grid grid-cols-2 gap-2">
+                                                                                        {/* Dos */}
+                                                                                        {concept.execution_guidelines.dos && concept.execution_guidelines.dos.length > 0 && (
+                                                                                            <div>
+                                                                                                <span className="text-[9px] font-semibold text-green-600 uppercase tracking-wider block mb-1">
+                                                                                                    ✅ Hacer
+                                                                                                </span>
+                                                                                                <ul className="space-y-1">
+                                                                                                    {concept.execution_guidelines.dos.map((item, idx) => (
+                                                                                                        <li
+                                                                                                            key={idx}
+                                                                                                            className="text-[10px] text-gray-600 leading-snug"
+                                                                                                        >
+                                                                                                            • {item}
+                                                                                                        </li>
+                                                                                                    ))}
+                                                                                                </ul>
+                                                                                            </div>
+                                                                                        )}
+
+                                                                                        {/* Don'ts */}
+                                                                                        {concept.execution_guidelines.donts && concept.execution_guidelines.donts.length > 0 && (
+                                                                                            <div>
+                                                                                                <span className="text-[9px] font-semibold text-red-600 uppercase tracking-wider block mb-1">
+                                                                                                    ❌ Evitar
+                                                                                                </span>
+                                                                                                <ul className="space-y-1">
+                                                                                                    {concept.execution_guidelines.donts.map((item, idx) => (
+                                                                                                        <li
+                                                                                                            key={idx}
+                                                                                                            className="text-[10px] text-gray-600 leading-snug"
+                                                                                                        >
+                                                                                                            • {item}
+                                                                                                        </li>
+                                                                                                    ))}
+                                                                                                </ul>
+                                                                                            </div>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+
+                                                        {/* Add Concept Button */}
+                                                        <button
+                                                            onClick={() => addChildNode(strategy.id)}
+                                                            className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed border-gray-200 text-gray-400 hover:border-brand-primary/50 hover:text-brand-primary hover:bg-brand-primary/5 transition-all gap-2 h-full min-h-[100px]"
+                                                        >
+                                                            <Plus size={20} />
+                                                            <span className="text-xs font-bold">Agregar Concepto</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                );
+                            })}
                         </div>
-                    )
+                    );
                 })}
             </div>
         );
@@ -599,6 +951,7 @@ const App: React.FC<{ overrideClientId?: string }> = ({ overrideClientId }) => {
 
                 {/* Content Area */}
                 <div className="flex-1 relative h-full bg-brand-bg">
+
                     {/* MAP VIEW */}
                     <div
                         ref={canvasRef}
@@ -721,72 +1074,12 @@ const App: React.FC<{ overrideClientId?: string }> = ({ overrideClientId }) => {
                             </div>
                             <div className="w-px h-8 bg-gray-200 mx-2"></div>
 
-                            <button onClick={() => addMainObjective()} className="group flex items-center gap-3 bg-accent-500 text-white pl-5 pr-6 py-3.5 rounded-xl hover:bg-accent-600 transition-all shadow-lg">
-                                <Plus size={16} /> <span className="font-bold text-sm">Nuevo Objetivo</span>
-                            </button>
-                            <button onClick={() => setShowRecs(!showRecs)} className={`p-3.5 rounded-xl border transition-all ${showRecs ? 'bg-accent-50 border-accent-200 text-accent-700' : 'bg-white border-transparent hover:bg-gray-50'}`}>
-                                <Lightbulb size={20} className={showRecs ? 'fill-accent-500 text-accent-600' : 'text-gray-400'} />
-                            </button>
                         </div>
                     </div>
                 )}
             </main>
 
-            {/* RECOMMENDATIONS SIDEBAR */}
-            <aside
-                className={`absolute right-6 top-6 bottom-6 w-80 glass-panel border border-white/40 shadow-2xl rounded-[32px] p-6 flex flex-col transition-all duration-300 transform z-50 
-                ${showRecs ? 'translate-x-0 opacity-100' : 'translate-x-[120%] opacity-0 pointer-events-none'}`}
-            >
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 className="font-black text-lg text-brand-dark flex items-center gap-2">
-                            <Lightbulb size={18} className="text-yellow-500 fill-yellow-500" />
-                            Insights
-                        </h3>
-                        <p className="text-xs text-gray-400 font-medium">Arrastra al lienzo para crear objetivos</p>
-                    </div>
-                    <div className="bg-yellow-50 text-yellow-700 px-2 py-1 rounded-lg text-xs font-bold">
-                        {recommendations.length}
-                    </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto custom-scrollbar -mx-2 px-2 space-y-3">
-                    {recommendations.length === 0 ? (
-                        <div className="text-center py-10 text-gray-400 text-sm">
-                            No hay recomendaciones disponibles aún.
-                        </div>
-                    ) : (
-                        recommendations.map((rec, i) => (
-                            <div
-                                key={i}
-                                draggable
-                                onDragStart={(e) => {
-                                    e.dataTransfer.setData("application/json", JSON.stringify({
-                                        type: 'recommendation',
-                                        title: rec.titulo,
-                                        description: rec.descripcion
-                                    }));
-                                }}
-                                className="group relative bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-accent-200 cursor-grab active:cursor-grabbing transition-all hover:-translate-y-1"
-                            >
-                                <div className="absolute top-4 right-4 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <ArrowRight size={14} />
-                                </div>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full 
-                                        ${rec.prioridad === 'Alta' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
-                                        {rec.prioridad}
-                                    </span>
-                                    <span className="text-[10px] text-gray-400 font-bold uppercase">{rec.area}</span>
-                                </div>
-                                <h4 className="font-bold text-sm text-gray-800 leading-tight mb-1">{rec.titulo}</h4>
-                                <p className="text-xs text-gray-500 line-clamp-2">{rec.descripcion}</p>
-                            </div>
-                        ))
-                    )}
-                </div>
-            </aside>
-        </div>
+        </div >
     );
 };
 

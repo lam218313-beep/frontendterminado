@@ -364,7 +364,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({ type, data }) => {
                                     {isIdeal ? <Zap size={12} fill="currentColor" /> : <Ban size={12} />}
                                 </div>
                             </div>
-                            <div className={`px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wide ${isIdeal ? 'bg-primary-50 border-primary-100 text-primary-700' : 'bg-gray-100 border-gray-200 text-gray-500'}`}>
+                            <div className={`hidden px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wide ${isIdeal ? 'bg-primary-50 border-primary-100 text-primary-700' : 'bg-gray-100 border-gray-200 text-gray-500'}`}>
                                 {subTitle}
                             </div>
                         </div>
