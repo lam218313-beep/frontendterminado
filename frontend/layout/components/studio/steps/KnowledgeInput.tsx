@@ -54,10 +54,11 @@ export const KnowledgeInput: React.FC = () => {
                     // Flatten data for the reducer
                     const interviewBlocks = result.data.interviewBlocks.map((b: any) => ({ ...b, type: 'interview' }));
                     const analysisBlocks = result.data.analysisBlocks.map((b: any) => ({ ...b, type: 'analysis' }));
+                    const brandBlocks = (result.data.brandBlocks || []).map((b: any) => ({ ...b, type: 'brand' }));
 
                     dispatch({
                         type: 'LOAD_CONTEXT_BLOCKS',
-                        payload: [...interviewBlocks, ...analysisBlocks]
+                        payload: [...interviewBlocks, ...analysisBlocks, ...brandBlocks]
                     });
                 }
             } catch (error) {
@@ -77,6 +78,7 @@ export const KnowledgeInput: React.FC = () => {
     // Derived state for rendering
     const interviewBlocks = state.contextBlocks.filter(b => b.type === 'interview');
     const analysisBlocks = state.contextBlocks.filter(b => b.type === 'analysis');
+    const brandBlocks = state.contextBlocks.filter(b => b.type === 'brand');
 
     return (
         <motion.div
@@ -140,89 +142,118 @@ export const KnowledgeInput: React.FC = () => {
                 <div className="animate-fade-in-up">
                     {/* TASK DATA MODE */}
                     {state.taskData ? (
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-2 pb-4 border-b border-gray-200">
-                                <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-xl shadow-lg shadow-purple-200">
-                                    <Target size={24} />
+                        <div className="space-y-8">
+                            {/* BRAND MANUAL SECTION (Task Mode) */}
+                            {brandBlocks.length > 0 && (
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600 shadow-sm border border-orange-100">
+                                            <AlertCircle size={20} />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-xl font-bold text-gray-900">Manual de Marca</h3>
+                                            <p className="text-xs text-gray-500 uppercase tracking-wider font-bold">Identidad Core</p>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {brandBlocks.map(block => (
+                                            <ToggleCard
+                                                key={block.id}
+                                                title={block.label}
+                                                content={block.text}
+                                                isSelected={block.selected}
+                                                onToggle={() => dispatch({ type: 'TOGGLE_BLOCK', payload: { id: block.id } })}
+                                            />
+                                        ))}
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="text-gray-900 font-black text-2xl">Contexto de Diseño</h3>
-                                    <p className="text-gray-500 text-sm">Información extraída de la planificación de contenido</p>
-                                </div>
-                            </div>
+                            )}
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Title & Format */}
-                                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <ToggleCard
-                                        title="📌 Título & Formato"
-                                        content={`${state.taskData.title}\n(${state.taskData.format})`}
-                                        isSelected={!state.excludedTaskFields.includes('title_format')}
-                                        onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'title_format' } })}
-                                    />
-                                    <ToggleCard
-                                        title="🎯 Propósito Estratégico"
-                                        content={state.taskData.strategic_purpose || 'No definido'}
-                                        isSelected={!state.excludedTaskFields.includes('strategic_purpose')}
-                                        onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'strategic_purpose' } })}
-                                    />
+                            {/* TASK SPECIFIC CONTEXT */}
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-2 pb-4 border-b border-gray-200">
+                                    <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-xl shadow-lg shadow-purple-200">
+                                        <Target size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-gray-900 font-black text-2xl">Contexto de Diseño</h3>
+                                        <p className="text-gray-500 text-sm">Información extraída de la planificación de contenido</p>
+                                    </div>
                                 </div>
 
-                                {/* Core Content */}
-                                {state.taskData.selected_hook && (
-                                    <ToggleCard
-                                        title="💡 Hook (Gancho)"
-                                        content={state.taskData.selected_hook}
-                                        isSelected={!state.excludedTaskFields.includes('selected_hook')}
-                                        onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'selected_hook' } })}
-                                    />
-                                )}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* Title & Format */}
+                                    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <ToggleCard
+                                            title="📌 Título & Formato"
+                                            content={`${state.taskData.title}\n(${state.taskData.format})`}
+                                            isSelected={!state.excludedTaskFields.includes('title_format')}
+                                            onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'title_format' } })}
+                                        />
+                                        <ToggleCard
+                                            title="🎯 Propósito Estratégico"
+                                            content={state.taskData.strategic_purpose || 'No definido'}
+                                            isSelected={!state.excludedTaskFields.includes('strategic_purpose')}
+                                            onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'strategic_purpose' } })}
+                                        />
+                                    </div>
 
-                                {state.taskData.narrative_structure && (
-                                    <ToggleCard
-                                        title="📋 Estructura Narrativa"
-                                        content={state.taskData.narrative_structure}
-                                        isSelected={!state.excludedTaskFields.includes('narrative_structure')}
-                                        onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'narrative_structure' } })}
-                                    />
-                                )}
+                                    {/* Core Content */}
+                                    {state.taskData.selected_hook && (
+                                        <ToggleCard
+                                            title="💡 Hook (Gancho)"
+                                            content={state.taskData.selected_hook}
+                                            isSelected={!state.excludedTaskFields.includes('selected_hook')}
+                                            onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'selected_hook' } })}
+                                        />
+                                    )}
 
-                                {/* Lists */}
-                                {state.taskData.key_elements && state.taskData.key_elements.length > 0 && (
-                                    <ToggleCard
-                                        title="✓ Elementos Visuales Clave"
-                                        content={state.taskData.key_elements.join('\n')}
-                                        isSelected={!state.excludedTaskFields.includes('key_elements')}
-                                        onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'key_elements' } })}
-                                    />
-                                )}
+                                    {state.taskData.narrative_structure && (
+                                        <ToggleCard
+                                            title="📋 Estructura Narrativa"
+                                            content={state.taskData.narrative_structure}
+                                            isSelected={!state.excludedTaskFields.includes('narrative_structure')}
+                                            onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'narrative_structure' } })}
+                                        />
+                                    )}
 
-                                {state.taskData.dos && state.taskData.dos.length > 0 && (
-                                    <ToggleCard
-                                        title="✅ Do's (Qué incluir)"
-                                        content={state.taskData.dos.join('\n')}
-                                        isSelected={!state.excludedTaskFields.includes('dos')}
-                                        onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'dos' } })}
-                                    />
-                                )}
+                                    {/* Lists */}
+                                    {state.taskData.key_elements && state.taskData.key_elements.length > 0 && (
+                                        <ToggleCard
+                                            title="✓ Elementos Visuales Clave"
+                                            content={state.taskData.key_elements.join('\n')}
+                                            isSelected={!state.excludedTaskFields.includes('key_elements')}
+                                            onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'key_elements' } })}
+                                        />
+                                    )}
 
-                                {state.taskData.donts && state.taskData.donts.length > 0 && (
-                                    <ToggleCard
-                                        title="❌ Don'ts (Qué evitar)"
-                                        content={state.taskData.donts.join('\n')}
-                                        isSelected={!state.excludedTaskFields.includes('donts')}
-                                        onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'donts' } })}
-                                    />
-                                )}
+                                    {state.taskData.dos && state.taskData.dos.length > 0 && (
+                                        <ToggleCard
+                                            title="✅ Do's (Qué incluir)"
+                                            content={state.taskData.dos.join('\n')}
+                                            isSelected={!state.excludedTaskFields.includes('dos')}
+                                            onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'dos' } })}
+                                        />
+                                    )}
 
-                                {state.taskData.copy_suggestion && (
-                                    <ToggleCard
-                                        title="✍️ Sugerencia de Copy"
-                                        content={state.taskData.copy_suggestion}
-                                        isSelected={!state.excludedTaskFields.includes('copy_suggestion')}
-                                        onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'copy_suggestion' } })}
-                                    />
-                                )}
+                                    {state.taskData.donts && state.taskData.donts.length > 0 && (
+                                        <ToggleCard
+                                            title="❌ Don'ts (Qué evitar)"
+                                            content={state.taskData.donts.join('\n')}
+                                            isSelected={!state.excludedTaskFields.includes('donts')}
+                                            onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'donts' } })}
+                                        />
+                                    )}
+
+                                    {state.taskData.copy_suggestion && (
+                                        <ToggleCard
+                                            title="✍️ Sugerencia de Copy"
+                                            content={state.taskData.copy_suggestion}
+                                            isSelected={!state.excludedTaskFields.includes('copy_suggestion')}
+                                            onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'copy_suggestion' } })}
+                                        />
+                                    )}
+                                </div>
                             </div>
                         </div>
                     ) : (

@@ -72,14 +72,48 @@ class ContextBuilderService:
                         "selected": True
                     })
 
-            # 2. Fetch Brand Manual (Simulated/Placeholder for now as schema might vary)
-            # In a real scenario, this would query a 'brands' table or similar
-            # For now, we'll try to extract more deep branding info if available in interview or future tables
-            # Assuming 'brands' table access via a method or direct query if needed. 
-            # For this MVP, we stick to what we know exists in 'interview' which often acts as the brand base.
-            
-            # TODO: Add logic for 'brands' table when fully integrated
-            
+            # 2. Fetch Brand Manual (Real Data)
+            brand_identity = db.get_brand_identity(client_id)
+            if brand_identity:
+                if "mission" in brand_identity and brand_identity["mission"]:
+                    context_blocks["manual"].append({
+                        "id": "brand_mission",
+                        "label": "Misión",
+                        "text": brand_identity["mission"],
+                        "selected": True
+                    })
+                
+                if "archetype" in brand_identity and brand_identity["archetype"]:
+                    context_blocks["manual"].append({
+                        "id": "brand_archetype",
+                        "label": "Arquetipo",
+                        "text": brand_identity["archetype"],
+                        "selected": True
+                    })
+
+                # Tone Traits
+                if "tone_traits" in brand_identity and isinstance(brand_identity["tone_traits"], list):
+                    traits = [t.get("trait", "") for t in brand_identity["tone_traits"] if t.get("trait")]
+                    if traits:
+                        context_blocks["manual"].append({
+                            "id": "brand_tone",
+                            "label": "Tono de Voz",
+                            "text": ", ".join(traits),
+                            "selected": True
+                        })
+                
+                # Colors (Primary)
+                if "colors" in brand_identity and isinstance(brand_identity["colors"], dict):
+                     primary = brand_identity["colors"].get("primary")
+                     secondary = brand_identity["colors"].get("secondary")
+                     if primary:
+                         context_blocks["manual"].append({
+                            "id": "brand_colors",
+                            "label": "Colores",
+                            "text": f"Primario: {primary}, Secundario: {secondary or 'N/A'}",
+                            "selected": True
+                        })
+
             # 3. Fetch Strategy/Analysis Data
             # This brings high-level strategy pillars
             strategy_nodes = db.get_strategy_nodes(client_id)
