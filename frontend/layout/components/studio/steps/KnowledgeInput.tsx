@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useStudio } from '../../../contexts/StudioContext';
 import { ToggleCard } from '../ui/ToggleCard';
-import { getClients, Client } from '../../../services/api';
+import { getClients, Client, API_BASE_URL } from '../../../services/api';
 import { Loader2, AlertCircle, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -35,8 +35,9 @@ export const KnowledgeInput: React.FC = () => {
             try {
                 // Assuming we add a method to api.ts for this new endpoint
                 // TEMPORARY DIRECT FETCH until api.ts is updated
-                const token = localStorage.getItem('token');
-                const response = await fetch(`http://localhost:8000/api/v2/studio/context/${state.clientId}`, {
+                // TEMPORARY DIRECT FETCH until api.ts is updated
+                const token = localStorage.getItem('pixely_access_token'); // Use correct token key
+                const response = await fetch(`${API_BASE_URL}/studio/context/${state.clientId}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }

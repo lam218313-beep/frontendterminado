@@ -221,7 +221,7 @@ const AppContent: React.FC = () => {
       case 'img-generator':
         return (
           <ErrorBoundary key={viewKey}>
-            <ImageGeneratorPage />
+            <ImageStudioPage />
           </ErrorBoundary>
         );
       case 'wiki':
