@@ -224,29 +224,21 @@ export const KnowledgeInput: React.FC = () => {
                 </div>
             )}
 
-            {/* FLOATING ACTION BAR */}
-            <div className="fixed bottom-0 left-0 w-full bg-white/80 backdrop-blur-lg border-t border-gray-200 p-4 z-50">
-                <div className="max-w-7xl mx-auto flex justify-end items-center gap-4">
-                    <div className="hidden md:block text-sm text-gray-500 font-medium">
-                        {state.clientId && (
-                            <span>
-                                <strong className="text-primary-600">{interviewBlocks.filter(b => b.selected).length + analysisBlocks.filter(b => b.selected).length}</strong> bloques seleccionados
-                            </span>
-                        )}
-                    </div>
-                    <button
-                        onClick={() => dispatch({ type: 'NEXT_STEP' })}
-                        disabled={!state.clientId}
-                        className={`
-                            flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-base transition-all shadow-xl
-                            ${state.clientId
-                                ? 'bg-gradient-to-r from-primary-600 to-indigo-600 text-white hover:shadow-primary-500/30 hover:scale-105 active:scale-95'
-                                : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'}
-                        `}
-                    >
-                        Siguiente Paso <ArrowRight size={20} />
-                    </button>
-                </div>
+            {/* FLOATING NEXT BUTTON (Redesigned) */}
+            <div className="fixed bottom-8 right-8 z-50">
+                <button
+                    onClick={() => dispatch({ type: 'NEXT_STEP' })}
+                    disabled={!state.clientId}
+                    className={`
+                        flex items-center gap-3 px-6 py-4 rounded-full font-bold text-base transition-all shadow-2xl
+                        ${state.clientId
+                            ? 'bg-gradient-to-r from-primary-600 to-indigo-600 text-white hover:shadow-primary-500/40 hover:scale-105 active:scale-95 ring-2 ring-white/20'
+                            : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'}
+                    `}
+                >
+                    <span className="hidden md:inline">Siguiente Paso</span>
+                    <ArrowRight size={20} />
+                </button>
             </div>
         </motion.div>
     );
