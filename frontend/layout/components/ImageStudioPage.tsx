@@ -25,10 +25,8 @@ const WizardContent = () => {
 
 export const ImageStudioPage: React.FC = () => {
     return (
-    return (
         <StudioLayout>
             <WizardContent />
         </StudioLayout>
-    );
     );
 };
