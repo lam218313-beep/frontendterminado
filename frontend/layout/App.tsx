@@ -19,6 +19,7 @@ const BrandView = lazy(() => import('./components/BrandView.tsx').then(m => ({ d
 const ContentPlanView = lazy(() => import('./components/ContentPlanView.tsx').then(m => ({ default: m.ContentPlanView })));
 const StrategyView = lazy(() => import('./components/StrategyView.tsx').then(m => ({ default: m.StrategyView })));
 const BenefitsView = lazy(() => import('./components/BenefitsView.tsx').then(m => ({ default: m.BenefitsView })));
+const ImageGeneratorPage = lazy(() => import('./components/ImageGeneratorPage.tsx').then(m => ({ default: m.ImageGeneratorPage })));
 
 // =============================================================================
 // ERROR BOUNDARY
@@ -217,7 +218,11 @@ const AppContent: React.FC = () => {
           </ErrorBoundary>
         );
       case 'img-generator':
-        return null;
+        return (
+          <ErrorBoundary key={viewKey}>
+            <ImageGeneratorPage />
+          </ErrorBoundary>
+        );
       case 'wiki':
         return (
           <ErrorBoundary key={viewKey}>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutGrid, Users, Layers, FileText, BookOpen, Power, Hexagon, Shield, ClipboardList, Palette, CalendarRange, CheckCircle, CheckCircle2 } from 'lucide-react';
+import { LayoutGrid, Users, Layers, FileText, BookOpen, Power, Hexagon, Shield, ClipboardList, Palette, CalendarRange, CheckCircle, CheckCircle2, Sparkles } from 'lucide-react';
 import pixelyLogo from '../src/assets/logo.png';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -106,6 +106,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ isExpanded, setIsExpanded, act
                     label="Wiki"
                     viewId="wiki"
                     isActive={activeView === 'wiki'}
+                    onClick={setActiveView}
+                />
+
+                {/* 10. Studio (Image Gen) */}
+                <SidebarItem
+                    icon={Sparkles}
+                    label="Estudio AI"
+                    viewId="img-generator"
+                    isActive={activeView === 'img-generator'}
                     onClick={setActiveView}
                 />
 

@@ -11,15 +11,18 @@ router = APIRouter(prefix="/strategy", tags=["Strategy"])
 # --- Models ---
 class StrategyNode(BaseModel):
     id: str
-    type: str # 'main', 'secondary', 'post'
+    type: str # 'main', 'secondary', 'concept'
     label: str
     description: Optional[str] = ""
-    parentId: Optional[str] = None # Frontend sends 'parentId', DB col is 'parent_id', we map it manually or via alias
+    parentId: Optional[str] = None # Frontend sends 'parentId', DB col is 'parent_id'
     x: float
     y: float
     
-    # We might need to handle transformation to snake_case for DB
-    
+    # New fields for Strategy v2
+    suggested_format: Optional[str] = None
+    suggested_frequency: Optional[str] = None
+    tags: Optional[List[str]] = []
+
 class StrategySyncRequest(BaseModel):
     client_id: str
     nodes: List[StrategyNode]
@@ -31,10 +34,11 @@ async def get_strategy(client_id: str):
     """
     Get the full strategy map for a client.
     """
+    logger.info(f"🔍 GET /strategy/{client_id}")
+    
     nodes = db.get_strategy_nodes(client_id)
     
     # Transform DB snake_case to Frontend camelCase
-    # DB: parent_id -> Frontend: parentId
     frontend_nodes = []
     for n in nodes:
         frontend_nodes.append({
@@ -44,19 +48,26 @@ async def get_strategy(client_id: str):
             "description": n["description"],
             "parentId": n["parent_id"],
             "x": n["x"],
-            "y": n["y"]
+            "y": n["y"],
+            "suggested_format": n.get("suggested_format"),
+            "suggested_frequency": n.get("suggested_frequency"),
+            "tags": n.get("tags", [])
         })
-        
+    
+    logger.info(f"📤 Returning {len(frontend_nodes)} nodes for client {client_id}")
     return frontend_nodes
 
 @router.post("/sync")
 async def sync_strategy(request: StrategySyncRequest):
     """
-    Save the full state of the strategy map and auto-create tasks for 'post' nodes.
+    Save the full state of the strategy map.
+    NOTE: Strategy v2 does NOT auto-create tasks effectively. 
+    Planning is now handled by the Planning Module.
     """
+    logger.info(f"💾 POST /strategy/sync for client_id: {request.client_id} ({len(request.nodes)} nodes)")
+    
     # 1. Transform Frontend camelCase to DB snake_case for Strategy Nodes
     db_nodes = []
-    post_nodes = []
     
     for n in request.nodes:
         # Prepare for DB persistence
@@ -68,47 +79,20 @@ async def sync_strategy(request: StrategySyncRequest):
             "parent_id": n.parentId,
             "x": n.x,
             "y": n.y,
-            "client_id": request.client_id
+            "client_id": request.client_id,
+            "suggested_format": n.suggested_format,
+            "suggested_frequency": n.suggested_frequency,
+            "tags": n.tags
         })
-        
-        # Identify 'post' nodes for Task creation
-        # We also treat 'secondary' as potential tasks, but user specifically mentioned 'publicaciones' (posts)
-        if n.type == 'post':
-            post_nodes.append(n)
         
     try:
         # 2. Persist Strategy Nodes
+        # The db.sync_strategy_nodes method will handle the transaction
         db.sync_strategy_nodes(request.client_id, db_nodes)
         
-        # 3. Auto-Create Tasks from Post Nodes
-        if post_nodes:
-            # Fetch existing tasks to avoid duplicates (Simple check by title for now)
-            existing_tasks = db.get_tasks(request.client_id)
-            existing_titles = {t['title'] for t in existing_tasks}
-            
-            new_tasks = []
-            import uuid
-            
-            for p in post_nodes:
-                if p.label not in existing_titles:
-                    new_task = {
-                        "id": str(uuid.uuid4()),
-                        "client_id": request.client_id,
-                        "title": p.label,
-                        "description": p.description or "Generado desde Estrategia",
-                        "status": "PENDIENTE",
-                        "priority": "Media",
-                        "area_estrategica": "Contenido", # Default for posts
-                        "created_at": "now()"
-                    }
-                    new_tasks.append(new_task)
-            
-            if new_tasks:
-                db.create_tasks_batch(new_tasks)
-                logger.info(f"Auto-created {len(new_tasks)} tasks from Strategy Posts")
-            
-        return {"status": "synced", "count": len(db_nodes), "tasks_created": len(new_tasks) if 'new_tasks' in locals() else 0}
+        logger.info(f"✅ Strategy synced successfully for client {request.client_id}")
+        return {"status": "synced", "count": len(db_nodes)}
         
     except Exception as e:
-        logger.error(f"Strategy Sync Failed: {e}")
+        logger.error(f"❌ Strategy Sync Failed for client {request.client_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))

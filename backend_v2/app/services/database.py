@@ -334,6 +334,16 @@ class SupabaseService:
         except Exception as e:
             logger.error(f"DB Get Tasks Error: {e}")
             return []
+    
+    def get_task(self, task_id: str) -> Optional[dict]:
+        """Get a single task by ID."""
+        if not self.client: return None
+        try:
+            response = self.client.table("tasks").select("*").eq("id", task_id).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            logger.error(f"❌ DB Get Task Error: {e}")
+            return None
 
     # ============================================================================
     # Interview / Context
@@ -388,10 +398,21 @@ class SupabaseService:
     def get_strategy_nodes(self, client_id: str) -> list[dict]:
         if not self.client: return []
         try:
-            response = self.client.table("strategy_nodes").select("*").eq("client_id", client_id).execute()
+            logger.info(f"🔍 Fetching strategy nodes for client_id: {client_id}")
+            
+            # Order by type (main first, then secondary, then concept/post)
+            # Then by created_at for consistent ordering within each type
+            response = self.client.table("strategy_nodes")\
+                .select("*")\
+                .eq("client_id", client_id)\
+                .order("created_at", desc=False)\
+                .execute()
+            
+            logger.info(f"📊 Found {len(response.data) if response.data else 0} nodes for client {client_id}")
+            
             return response.data if response.data else []
         except Exception as e:
-            logger.error(f"DB Get Strategy Error: {e}")
+            logger.error(f"❌ DB Get Strategy Error: {e}")
             return []
 
     def sync_strategy_nodes(self, client_id: str, nodes: list[dict]):
@@ -401,8 +422,11 @@ class SupabaseService:
         """
         if not self.client: return
         try:
+            logger.info(f"💾 Syncing strategy nodes for client_id: {client_id} ({len(nodes)} nodes)")
+            
             # 1. Delete all current nodes for this client
-            self.client.table("strategy_nodes").delete().eq("client_id", client_id).execute()
+            delete_response = self.client.table("strategy_nodes").delete().eq("client_id", client_id).execute()
+            logger.info(f"🗑️ Deleted existing nodes for client {client_id}")
             
             # 2. Bulk Insert new nodes
             if nodes:
@@ -411,10 +435,12 @@ class SupabaseService:
                     n["client_id"] = client_id
                 
                 self.client.table("strategy_nodes").insert(nodes).execute()
+                logger.info(f"✅ Strategy nodes synced for {client_id} ({len(nodes)} nodes)")
+            else:
+                logger.info(f"ℹ️ No nodes to insert for client {client_id}")
                 
-            logger.info(f"✅ Strategy nodes synced for {client_id} ({len(nodes)} nodes)")
         except Exception as e:
-            logger.error(f"DB Sync Strategy Error: {e}")
+            logger.error(f"❌ DB Sync Strategy Error for client {client_id}: {e}")
             raise e
 
     # ============================================================================

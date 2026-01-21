@@ -11,9 +11,11 @@ import {
     Video,
     Instagram,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Sparkles
 } from 'lucide-react';
 import * as api from '../services/api';
+import ImageGenerationModal from './ImageGenerationModal';
 
 interface PlanningViewProps {
     clientId: string;
@@ -44,6 +46,11 @@ const PlanningView: React.FC<PlanningViewProps> = ({ clientId }) => {
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // Image Generation Modal State
+    const [imageModalOpen, setImageModalOpen] = useState(false);
+    const [selectedTaskForImage, setSelectedTaskForImage] = useState<api.GeneratedTask | null>(null);
+    const [taskImages, setTaskImages] = useState<Record<string, string>>({});
 
     // Handlers
     // Handlers
@@ -103,6 +110,22 @@ const PlanningView: React.FC<PlanningViewProps> = ({ clientId }) => {
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const handleOpenImageModal = (task: api.GeneratedTask) => {
+        setSelectedTaskForImage(task);
+        setImageModalOpen(true);
+    };
+
+    const handleImageGenerated = (imageUrl: string, imageId: string) => {
+        if (selectedTaskForImage?.id) {
+            setTaskImages(prev => ({
+                ...prev,
+                [selectedTaskForImage.id]: imageUrl
+            }));
+        }
+        setImageModalOpen(false);
+        setSelectedTaskForImage(null);
     };
 
     // Helper for Month Name
@@ -299,6 +322,17 @@ const PlanningView: React.FC<PlanningViewProps> = ({ clientId }) => {
                             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                                 {generatedTasks.map((task, idx) => (
                                     <div key={idx} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all group flex flex-col">
+                                        {/* Task Image Thumbnail */}
+                                        {taskImages[task.id] && (
+                                            <div className="mb-3 rounded-lg overflow-hidden">
+                                                <img
+                                                    src={taskImages[task.id]}
+                                                    alt={task.title}
+                                                    className="w-full h-32 object-cover"
+                                                />
+                                            </div>
+                                        )}
+
                                         <div className="flex justify-between items-start mb-3">
                                             <div className="flex items-center gap-2">
                                                 <span className={`p-1.5 rounded-lg ${task.format === 'video' || task.format === 'reel' ? 'bg-purple-50 text-purple-600' :
@@ -388,6 +422,15 @@ const PlanningView: React.FC<PlanningViewProps> = ({ clientId }) => {
                                                 <p className="text-xs text-gray-600 italic line-clamp-3">"{task.copy_suggestion}"</p>
                                             </div>
                                         )}
+
+                                        {/* Generate Image Button */}
+                                        <button
+                                            onClick={() => handleOpenImageModal(task)}
+                                            className="mt-3 w-full py-2 px-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-lg text-xs font-medium transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5"
+                                        >
+                                            <Sparkles size={14} />
+                                            {taskImages[task.id] ? 'Regenerar Imagen' : 'Generar Imagen'}
+                                        </button>
                                     </div>
                                 ))}
                             </div>
@@ -395,6 +438,19 @@ const PlanningView: React.FC<PlanningViewProps> = ({ clientId }) => {
                     )}
                 </div>
             </div>
+
+            {/* Image Generation Modal */}
+            <ImageGenerationModal
+                isOpen={imageModalOpen}
+                onClose={() => {
+                    setImageModalOpen(false);
+                    setSelectedTaskForImage(null);
+                }}
+                clientId={clientId}
+                taskId={selectedTaskForImage?.id}
+                conceptId={selectedTaskForImage?.concept_id}
+                onImageGenerated={handleImageGenerated}
+            />
         </div>
     );
 };

@@ -508,3 +508,72 @@ async def seed_strategy_manually(brand_id: str):
     except Exception as e:
         logger.error(f"❌ Error en generación manual de estrategia: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/brands/{brand_id}/reset-strategy")
+async def reset_brand_strategy(brand_id: str):
+    """
+    Reset and regenerate the strategy for a brand using AI (Admin only).
+    Deletes all existing nodes and generates a new complete strategy.
+    """
+    try:
+        logger.info(f"🔄 Resetting and regenerating strategy for brand {brand_id}")
+        
+        # 1. Get brand info
+        brand = db.get_client(brand_id)
+        if not brand:
+            raise HTTPException(status_code=404, detail="Brand not found")
+        
+        brand_name = brand.get("nombre", "Marca")
+        plan_type = brand.get("plan", "free_trial")
+        
+        # 2. Get interview data
+        interview_data = db.get_interview(brand_id)
+        if not interview_data:
+            logger.warning(f"⚠️ No interview data found for {brand_name}, using minimal data")
+            interview_data = {
+                "brand_name": brand_name,
+                "industry": brand.get("industry", "General"),
+                "target_audience": "Público general",
+                "objectives": ["Aumentar visibilidad", "Generar engagement"]
+            }
+        
+        # 3. Get analysis data
+        analysis = db.get_latest_completed_report(brand_id)
+        if not analysis:
+            logger.warning(f"⚠️ No analysis data found for {brand_name}, using minimal data")
+            analysis = {
+                "frontend_compatible_json": {
+                    "summary": "Análisis pendiente",
+                    "recommendations": []
+                }
+            }
+        else:
+            analysis = analysis.get("frontend_compatible_json", {})
+        
+        # 4. Generate strategy with AI
+        logger.info(f"🤖 Generating AI strategy for {brand_name}")
+        strategy_json = await gemini_service.generate_strategic_plan(
+            interview_data=interview_data,
+            analysis_json=analysis,
+            plan_type=plan_type
+        )
+        
+        # 5. Convert JSON to visual nodes
+        strategy_nodes = aggregator.convert_tree_to_nodes(brand_id, strategy_json)
+        
+        # 6. Save to database (this will delete old nodes and create new ones)
+        db.sync_strategy_nodes(brand_id, strategy_nodes)
+        
+        logger.info(f"✅ Strategy regenerated for {brand_name}: {len(strategy_nodes)} nodes created")
+        
+        return {
+            "status": "success",
+            "message": f"Strategy regenerated for {brand_name}",
+            "nodes_created": len(strategy_nodes)
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Error regenerating strategy for brand {brand_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+

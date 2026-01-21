@@ -35,6 +35,11 @@ create table tasks (
   area_estrategica text,
   score_impacto integer,
   score_esfuerzo integer,
+  format text, -- reel, story, post, etc. (NEW for Planning)
+  month_group text, -- "2026-02" (NEW for Planning)
+  concept_id text, -- ID from strategy_nodes (NEW for Planning)
+  execution_date date, -- Specific date (NEW for Planning)
+  copy_suggestion text, -- (NEW)
   created_at timestamptz default now(),
   completed_at timestamptz
 );
@@ -48,3 +53,18 @@ create table client_interviews (
 );
 
 
+
+create table strategy_nodes (
+  id text primary key,
+  client_id text references clients(id),
+  type text, -- 'main', 'secondary', 'concept'
+  label text,
+  description text,
+  parent_id text, -- Self reference logically, but strict FK might be tricky if parent inserted after
+  x float,
+  y float,
+  suggested_format text,
+  suggested_frequency text,
+  tags text[],
+  created_at timestamptz default now()
+);

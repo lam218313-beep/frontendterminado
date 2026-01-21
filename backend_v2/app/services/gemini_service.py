@@ -492,67 +492,152 @@ async def generate_brand_identity(interview_data: dict) -> dict:
 # =============================================================================
 
 STRATEGY_PLAYBOOK_PROMPT = """
-Actúa como un Director de Estrategia de Contenidos. Tu misión es crear un PLAYBOOK ESTRATÉGICO 
-que servirá como "Constitución" de la marca para guiar TODO el contenido futuro.
+Eres un ESTRATEGA SENIOR DE CONTENIDOS con experiencia profunda en marketing digital y creación de contenido viral.
+Tu misión es crear un PLAYBOOK ESTRATÉGICO INNOVADOR que servirá como la "Constitución" de contenido de la marca.
 
-⚠️ IMPORTANTE: NO generes posts específicos. Genera ARQUETIPOS DE CONTENIDO (conceptos reutilizables).
+⚠️ CRÍTICO: NO generes posts específicos. Genera ARQUETIPOS DE CONTENIDO (plantillas reutilizables).
 
-FUENTES DE VERDAD:
+---
 
-1. CONTEXTO PROFUNDO DEL CLIENTE (Entrevista Completa):
+🎯 CONTEXTO ESTRATÉGICO:
+
+**ENTREVISTA COMPLETA (Objetivos, Audiencia, Diferenciadores):**
 {interview_context}
 
-2. DIAGNÓSTICO DE DATOS (Análisis de Redes):
+**ANÁLISIS DE DATOS (Insights de Redes Sociales):**
 {analysis_insights}
 
-PLAN DEL CLIENTE: {plan_type}
+**PLAN DEL CLIENTE:** {plan_type}
+**NOMBRE DE LA MARCA:** {brand_name}
 
-INSTRUCCIONES DE GENERACIÓN:
+---
 
-1. Extrae TODOS los objetivos mencionados en la entrevista (ventas, branding, comunidad, educación, etc.)
-2. Para cada objetivo, define 2-3 estrategias que lo aborden
-3. Para cada estrategia, define 2-4 CONCEPTOS DE CONTENIDO (arquetipos reutilizables)
+🧠 TU TAREA (Pensamiento Estratégico Profundo):
 
-SOBRE LOS CONCEPTOS:
-- Un "concepto" es un TIPO de contenido que se puede producir múltiples veces
-- Ejemplo: "Tutorial Rápido" es un concepto. "5 tips para usar X" es un post específico (NO generar esto)
-- Cada concepto debe tener:
-  * label: Nombre corto del arquetipo (2-4 palabras)
-  * description: Qué logra este tipo de contenido y cómo ejecutarlo
-  * suggested_format: post | story | reel | carousel | video
-  * suggested_frequency: high (3-4/semana) | medium (1-2/semana) | low (1-2/mes)
-  * tags: Lista de 2-3 etiquetas temáticas
+1. **OBJETIVOS ESTRATÉGICOS:**
+   - Extrae TODOS los objetivos de negocio de la entrevista
+   - Prioriza el MÁS CRÍTICO como "Objetivo Principal"
+   - Clasifica los demás como "Objetivos Secundarios"
+   - Para cada objetivo, explica POR QUÉ es importante (cruce con datos)
 
-FORMATO JSON ESTRICTO:
+2. **ESTRATEGIAS TÁCTICAS (2-3 por objetivo):**
+   - Cada estrategia debe ser ACCIONABLE y ESPECÍFICA
+   - Debe tener un ángulo DIFERENCIADOR
+   - Incluye el "por qué" estratégico, no solo el "qué"
+
+3. **ARQUETIPOS DE CONTENIDO (3-4 por estrategia):**
+   
+   Para cada arquetipo, define:
+   
+   **A. IDENTIDAD DEL CONCEPTO:**
+   - `label`: Nombre memorable y específico (2-4 palabras)
+   - `description`: Qué es y qué logra (2-3 frases DESCRIPTIVAS)
+   - `strategic_rationale`: Por qué este concepto es CRÍTICO para el objetivo (1-2 frases)
+   
+   **B. GUÍA DE EJECUCIÓN DETALLADA:**
+   - `execution_guidelines`:
+     * `structure`: Estructura narrativa paso a paso (ej: "Hook emocional (3s) → Problema (10s) → Solución (20s) → CTA (5s)")
+     * `key_elements`: 3-4 elementos OBLIGATORIOS que debe tener el contenido
+     * `dos`: 3-4 mejores prácticas ESPECÍFICAS
+     * `donts`: 3-4 errores ESPECÍFICOS a evitar
+   
+   **C. CREATIVIDAD E INNOVACIÓN:**
+   - `creative_hooks`: 4-6 hooks/ángulos creativos ESPECÍFICOS y USABLES para captar atención
+     (Ejemplo: "Pensé que era imposible hasta que probé [producto]..." NO "Hook emocional")
+   
+   **D. FORMATOS Y FRECUENCIA:**
+   - `suggested_format`: post | story | reel | carousel | video | live
+   - `suggested_frequency`: high (3-4/semana) | medium (1-2/semana) | low (1-2/mes)
+   - `tags`: 2-3 etiquetas temáticas
+
+---
+
+📋 FORMATO JSON ESTRICTO:
+
 {{
-  "root_label": "Playbook Estratégico 2026",
+  "root_label": "Proyecto Marketing",
   "objectives": [
     {{
-      "title": "Objetivo: [Nombre del objetivo]",
-      "rationale": "Por qué este objetivo es crítico según el cruce entrevista+análisis",
+      "title": "Objetivo Principal",
+      "rationale": "Por qué es crítico según cruce entrevista+análisis (2-3 frases)",
       "strategies": [
         {{
-          "title": "Estrategia: [Enfoque táctico]",
+          "title": "Estrategia: [Nombre Específico y Accionable]",
           "concepts": [
             {{
-              "label": "Nombre del Arquetipo (ej: Testimonio Cliente)",
-              "description": "Video corto mostrando experiencia real de un cliente satisfecho",
+              "label": "Testimonio Cliente Transformador",
+              "description": "Video de 45-60s mostrando la experiencia real de un cliente, enfocado en el viaje emocional desde el problema hasta el resultado medible, usando su lenguaje auténtico y mostrando pruebas visuales del cambio.",
+              "strategic_rationale": "Genera confianza mediante prueba social auténtica y supera objeciones de compra al mostrar resultados reales de personas similares a la audiencia objetivo.",
+              "execution_guidelines": {{
+                "structure": "Hook emocional con problema (5s) → Presentación del cliente y contexto (10s) → Descubrimiento de la solución (15s) → Proceso y experiencia (15s) → Resultado medible con emoción (10s) → CTA sutil (5s)",
+                "key_elements": [
+                  "Cliente real identificable con nombre y contexto",
+                  "Métrica concreta de resultado (ej: 'aumenté ventas 40% en 2 meses')",
+                  "Quote auténtico destacado visualmente",
+                  "Antes/Después visual o narrativo claro"
+                ],
+                "dos": [
+                  "Capturar emoción genuina del cliente (no actuada)",
+                  "Usar lenguaje natural y cotidiano del cliente",
+                  "Mostrar resultados medibles y específicos",
+                  "Incluir contexto del cliente para identificación"
+                ],
+                "donts": [
+                  "Sonar a publicidad forzada o guión sobre-producido",
+                  "Usar jerga técnica o lenguaje corporativo",
+                  "Exagerar resultados sin pruebas",
+                  "Hacer el video demasiado largo (máx 60s)"
+                ]
+              }},
+              "creative_hooks": [
+                "Pensé que era imposible hasta que probé [producto] y todo cambió...",
+                "En solo 30 días logré [resultado específico] que llevaba años intentando",
+                "Mi mayor error fue no hacer esto antes. Ahora [resultado positivo]",
+                "Nadie me dijo que sería TAN fácil conseguir [beneficio]",
+                "De [estado negativo específico] a [estado positivo específico] en [tiempo concreto]",
+                "Lo que más me sorprendió no fue [beneficio obvio], sino [beneficio inesperado]"
+              ],
               "suggested_format": "reel",
               "suggested_frequency": "medium",
-              "tags": ["social-proof", "confianza", "UGC"]
+              "tags": ["social-proof", "testimonios", "resultados"]
             }}
           ]
         }}
       ]
+    }},
+    {{
+      "title": "Objetivo Secundario",
+      "rationale": "Segundo objetivo más importante...",
+      "strategies": [...]
     }}
   ]
 }}
 
-REGLAS:
-- Mínimo 3 objetivos (extraer de la entrevista)
+---
+
+🎨 PRINCIPIOS DE EXCELENCIA:
+
+1. **SÉ ESPECÍFICO:** Evita conceptos genéricos. "Post Motivacional" ❌ → "Micro-Lección de 30s con Aplicación Inmediata" ✅
+2. **SÉ DESCRIPTIVO:** La description debe pintar una imagen clara del contenido
+3. **SÉ ACCIONABLE:** Los execution_guidelines deben ser tan claros que cualquiera pueda crear el contenido
+4. **SÉ CREATIVO:** Los creative_hooks deben ser USABLES, no genéricos
+5. **SÉ ESTRATÉGICO:** Cada concepto debe tener un propósito claro alineado al objetivo
+
+---
+
+⚡ REGLAS CRÍTICAS:
+
+- El root_label DEBE ser exactamente: "Proyecto Marketing"
+- El primer objetivo DEBE tener title: "Objetivo Principal"
+- Los demás objetivos DEBEN tener title: "Objetivo Secundario"
+- Los labels de conceptos NO deben incluir el prefijo "Concepto:", solo el nombre
+- Mínimo 3 objetivos (1 principal + 2 secundarios)
 - Mínimo 2 estrategias por objetivo
-- Mínimo 2 conceptos por estrategia
-- NUNCA incluir títulos de posts específicos, solo arquetipos
+- Mínimo 3 conceptos por estrategia (para dar opciones)
+- TODOS los campos solicitados son OBLIGATORIOS
+- Los creative_hooks deben ser ESPECÍFICOS y DIRECTAMENTE USABLES
+- Los execution_guidelines deben ser PASO A PASO y ACCIONABLES
+- NUNCA generes títulos de posts específicos, solo arquetipos reutilizables
 """
 
 def _format_interview_data(data: dict) -> str:
@@ -592,6 +677,9 @@ async def generate_strategic_plan(interview_data: dict, analysis_json: dict, pla
     """
     # 1. Formatear la Entrevista completa (No solo objetivos)
     interview_context_str = _format_interview_data(interview_data)
+    
+    # Extract brand name from interview data
+    brand_name = interview_data.get("businessName") or interview_data.get("brand_name") or "Marca"
 
     # 2. Extraer Insights del Análisis
     q9_recs = analysis_json.get("Q9", {}).get("results", {}).get("lista_recomendaciones", [])
@@ -607,8 +695,9 @@ async def generate_strategic_plan(interview_data: dict, analysis_json: dict, pla
     prompt = STRATEGY_PLAYBOOK_PROMPT.format(
         interview_context=interview_context_str, # <--- Aquí va TODO
         analysis_insights=insights_str,
-        plan_type=plan_type
+        plan_type=plan_type,
+        brand_name=brand_name  # Pass brand name to prompt
     )
     
-    # Usamos gpt-5-mini para asegurar capacidad de razonamiento con tanto contexto (User said gpt-4o but model config says gpt-5-mini in this file, defaulting to gpt-5-mini for consistency or respecting 'gpt-4o' if accepted by _call_gemini, but _call_gemini currently defaults to gpt-5-mini and checks for 'gpt'. I will use 'gpt-5-mini' which seems to be the alias used in this project or 'gpt-4o' if the user insisted. The user code snippet uses 'gpt-4o'. I will stick to 'gpt-4o' as requested, hoping _call_gemini supports it or maps it.)
-    return await _call_gemini(prompt, temperature=0.7, model="gpt-4o")
+    # Use gpt-5-mini for better reasoning and more detailed strategy generation
+    return await _call_gemini(prompt, temperature=0.7, model="gpt-5-mini")
