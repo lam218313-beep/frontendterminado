@@ -160,7 +160,6 @@ export const KnowledgeInput: React.FC = () => {
                                             {/* Strategic Purpose */}
                                             {state.taskData.strategic_purpose && (
                                                 <ToggleCard
-                                                    id="task_purpose"
                                                     title="🎯 Propósito Estratégico"
                                                     content={state.taskData.strategic_purpose}
                                                     isSelected={true}
@@ -170,7 +169,6 @@ export const KnowledgeInput: React.FC = () => {
                                             {/* Hook */}
                                             {state.taskData.selected_hook && (
                                                 <ToggleCard
-                                                    id="task_hook"
                                                     title="💡 Hook Creativo"
                                                     content={state.taskData.selected_hook}
                                                     isSelected={true}
@@ -180,7 +178,6 @@ export const KnowledgeInput: React.FC = () => {
                                             {/* Key Elements */}
                                             {state.taskData.key_elements && state.taskData.key_elements.length > 0 && (
                                                 <ToggleCard
-                                                    id="task_elements"
                                                     title="✓ Elementos Clave"
                                                     content={state.taskData.key_elements.join('\n')}
                                                     isSelected={true}
@@ -190,7 +187,6 @@ export const KnowledgeInput: React.FC = () => {
                                             {/* Narrative */}
                                             {state.taskData.narrative_structure && (
                                                 <ToggleCard
-                                                    id="task_narrative"
                                                     title="📋 Estructura Narrativa"
                                                     content={state.taskData.narrative_structure}
                                                     isSelected={true}
