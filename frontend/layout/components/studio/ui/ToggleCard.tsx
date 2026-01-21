@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Check, X } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 interface ToggleCardProps {
     title: string;
@@ -22,23 +22,22 @@ export const ToggleCard: React.FC<ToggleCardProps> = ({ title, content, isSelect
                 }
             `}
         >
-            <Check size={14} strokeWidth={3} />
-        </div>
-                </div >
+            <div className="flex justify-between items-start mb-3">
+                <h4 className={`font-bold text-sm ${isSelected ? 'text-primary-700' : 'text-gray-700'}`}>
+                    {title}
+                </h4>
 
-    <p className="text-gray-300 text-sm leading-relaxed line-clamp-3 group-hover:line-clamp-none transition-all duration-1000">
-        {content || <span className="text-gray-600 italic">Sin contenido disponible...</span>}
-    </p>
+                <div className={`
+                    w-6 h-6 rounded-full flex items-center justify-center transition-colors
+                    ${isSelected ? 'bg-primary-500 text-white' : 'bg-gray-200 text-gray-400'}
+                `}>
+                    {isSelected ? <Check size={14} /> : <div className="w-2 h-2 rounded-full bg-gray-400" />}
+                </div>
+            </div>
 
-{/* Hover Actions (Edit Mockup) */ }
-{
-    isSelected && (
-        <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-            <span className="text-[10px] uppercase text-indigo-400 font-bold mr-2">Incluido en Prompt</span>
-        </div>
-    )
-}
-            </div >
-        </div >
+            <p className={`text-xs leading-relaxed line-clamp-4 ${isSelected ? 'text-gray-700' : 'text-gray-500'}`}>
+                {content}
+            </p>
+        </motion.div>
     );
 };
