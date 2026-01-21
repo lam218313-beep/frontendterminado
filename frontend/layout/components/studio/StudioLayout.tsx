@@ -1,7 +1,7 @@
 import React from 'react';
 import { useStudio } from '../../contexts/StudioContext';
 import { motion } from 'framer-motion';
-import { ChevronRight, Sparkles } from 'lucide-react';
+import { Sparkles, Check, ChevronRight } from 'lucide-react';
 
 interface StudioLayoutProps {
     children: React.ReactNode;
@@ -20,66 +20,91 @@ export const StudioLayout: React.FC<StudioLayoutProps> = ({ children }) => {
     const progress = (state.currentStep / state.totalSteps) * 100;
 
     return (
-        <div className="flex flex-col h-full bg-[#1A1A1A] text-white overflow-hidden">
-            {/* HEADER */}
-            <header className="flex items-center justify-between px-8 py-6 border-b border-white/5 bg-black/20 backdrop-blur-sm">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 rounded-lg border border-white/10">
-                        <Sparkles className="w-5 h-5 text-indigo-400" />
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                            Pixely Creative Studio
-                        </h1>
-                        <p className="text-xs text-gray-500">AI Image Generation Wizard v2.0</p>
-                    </div>
-                </div>
+        <div className="min-h-screen bg-brand-bg relative overflow-hidden flex flex-col">
+            {/* Background Gradients (Orbital Effect) */}
+            <div className="absolute top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-white/80 to-transparent z-0 pointer-events-none" />
+            <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-primary-100/30 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute top-[10%] right-[-10%] w-[40%] h-[40%] bg-blue-100/30 rounded-full blur-[100px] pointer-events-none" />
 
-                {/* STEP INDICATOR */}
-                <div className="flex items-center gap-2">
-                    {STEPS.map((step) => (
-                        <div key={step.id} className="flex items-center">
-                            <div
-                                className={`
-                            w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300
-                            ${state.currentStep === step.id
-                                        ? 'bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)] border border-indigo-400'
-                                        : state.currentStep > step.id
-                                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
-                                            : 'bg-white/5 text-gray-500 border border-white/5'
-                                    }
-                        `}
-                            >
-                                {state.currentStep > step.id ? '✓' : step.id}
+            {/* MAIN CONTAINER */}
+            <div className="relative z-10 flex-1 flex flex-col max-w-7xl mx-auto w-full px-4 md:px-6 lg:px-8 py-6">
+
+                {/* HEADER CARD */}
+                <div className="bg-white/70 backdrop-blur-xl border border-white/40 shadow-xl shadow-brand-dark/5 rounded-[2rem] p-6 mb-8">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                        {/* Title & Brand */}
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-gradient-to-tr from-primary-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-primary-500/30">
+                                <Sparkles size={24} />
                             </div>
-                            {step.id < STEPS.length && (
-                                <div className={`w-8 h-[2px] mx-2 rounded-full transition-colors duration-300 ${state.currentStep > step.id ? 'bg-emerald-500/30' : 'bg-white/5'}`} />
-                            )}
+                            <div>
+                                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+                                    Studio Creativo
+                                </h1>
+                                <p className="text-sm text-gray-500 font-medium">Asistente de Generación IA v2.0</p>
+                            </div>
                         </div>
-                    ))}
+
+                        {/* STEPPER */}
+                        <div className="flex items-center gap-1 md:gap-3 bg-white/50 px-4 py-2 rounded-2xl border border-white/50">
+                            {STEPS.map((step, idx) => (
+                                <React.Fragment key={step.id}>
+                                    <div className="flex flex-col items-center relative group">
+                                        <div
+                                            className={`
+                                                w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 relative z-10
+                                                ${state.currentStep === step.id
+                                                    ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/40 scale-110'
+                                                    : state.currentStep > step.id
+                                                        ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
+                                                        : 'bg-gray-100 text-gray-400 border border-gray-200'
+                                                }
+                                            `}
+                                        >
+                                            {state.currentStep > step.id ? <Check size={14} strokeWidth={3} /> : step.id}
+                                        </div>
+                                        <span className={`
+                                            absolute -bottom-6 text-[10px] font-bold tracking-wide whitespace-nowrap transition-colors duration-300
+                                            ${state.currentStep === step.id ? 'text-primary-700' : 'text-gray-400'}
+                                        `}>
+                                            {step.label}
+                                        </span>
+                                    </div>
+
+                                    {/* Connector Line */}
+                                    {idx < STEPS.length - 1 && (
+                                        <div className="w-6 md:w-12 h-[2px] rounded-full bg-gray-200 relative overflow-hidden">
+                                            <div
+                                                className={`absolute top-0 left-0 h-full bg-gradient-to-r from-emerald-500 to-primary-500 transition-all duration-500 ease-out`}
+                                                style={{ width: state.currentStep > step.id ? '100%' : '0%' }}
+                                            />
+                                        </div>
+                                    )}
+                                </React.Fragment>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* PROGRESS BAR (Subtle bottom line) */}
+                    <div className="w-full h-1 bg-gray-100 rounded-full mt-8 overflow-hidden">
+                        <motion.div
+                            className="h-full bg-gradient-to-r from-primary-500 to-indigo-600 rounded-full"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${progress}%` }}
+                            transition={{ type: "spring", stiffness: 50, damping: 15 }}
+                        />
+                    </div>
                 </div>
-            </header>
 
-            {/* PROGRESS BAR */}
-            <div className="w-full h-1 bg-white/5">
-                <motion.div
-                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 shadow-[0_0_10px_rgba(139,92,246,0.3)]"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progress}%` }}
-                    transition={{ type: "spring", stiffness: 100, damping: 20 }}
-                />
-            </div>
-
-            {/* MAIN CONTENT AREA */}
-            <main className="flex-1 overflow-y-auto px-8 py-8 relative">
-                <div className="max-w-6xl mx-auto h-full">
+                {/* DYNAMIC CONTENT AREA (Card Style) */}
+                <main className="flex-1 min-h-0 relative">
+                    {/* The content itself (KnowledgeInput, etc) should handle its own layout/cards, 
+                         but we provide a wrapper if needed. For now, just render children directly 
+                         so they can use full width grids. */}
                     {children}
-                </div>
-            </main>
+                </main>
 
-            {/* FOOTER ACTIONS (Generic placeholder, specific implementations usually inside steps but can be global) */}
-            {/* This area can be used for global "Next" / "Back" buttons if desired, 
-          but usually steps manage their own validation logic before enabling "Next". */}
+            </div>
         </div>
     );
 };
