@@ -16,9 +16,11 @@ import {
 } from 'lucide-react';
 import * as api from '../services/api';
 import ImageGenerationModal from './ImageGenerationModal';
+import { useStudio } from '../contexts/StudioContext';
 
 interface PlanningViewProps {
     clientId: string;
+    onNavigate?: (view: string) => void;
 }
 
 const formatOptions = [
@@ -27,13 +29,16 @@ const formatOptions = [
     { id: 'story', label: 'Story', icon: Instagram },
 ];
 
-const PlanningView: React.FC<PlanningViewProps> = ({ clientId }) => {
+const PlanningView: React.FC<PlanningViewProps> = ({ clientId, onNavigate }) => {
+    // Studio Context for navigation / integration
+    const { dispatch } = useStudio();
+
     // State for inputs
     const now = new Date();
-    const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1); // 1-12 (Next month by default usually? defaulting to current for simplicity)
+    const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1); // 1-12
     const [selectedYear, setSelectedYear] = useState(now.getFullYear());
 
-    // Quotas State
+    // ... (keep quotas, lists state same)
     const [quotas, setQuotas] = useState<api.Quotas>({
         photo: 4,
         video: 4,
@@ -52,7 +57,6 @@ const PlanningView: React.FC<PlanningViewProps> = ({ clientId }) => {
     const [selectedTaskForImage, setSelectedTaskForImage] = useState<api.GeneratedTask | null>(null);
     const [taskImages, setTaskImages] = useState<Record<string, string>>({});
 
-    // Handlers
     // Handlers
     const fetchExistingPlan = React.useCallback(async () => {
         if (!clientId) return;
@@ -100,10 +104,6 @@ const PlanningView: React.FC<PlanningViewProps> = ({ clientId }) => {
         try {
             await api.saveMonthlyPlan(clientId, generatedTasks);
             setSaveSuccess(true);
-            // setTimeout(() => setSaveSuccess(false), 3000); // Keep permanent as "Enviado"
-
-            // Refetch to ensure everything is synced (optional)
-            // fetchExistingPlan(); 
         } catch (err: any) {
             console.error(err);
             setError(err.message || "Error al guardar el plan");
@@ -112,20 +112,23 @@ const PlanningView: React.FC<PlanningViewProps> = ({ clientId }) => {
         }
     };
 
-    const handleOpenImageModal = (task: api.GeneratedTask) => {
-        setSelectedTaskForImage(task);
-        setImageModalOpen(true);
-    };
+    const handleOpenStudio = (task: api.GeneratedTask) => {
+        // Initialize Studio with this task's context
+        dispatch({
+            type: 'SET_INITIAL_DATA',
+            payload: {
+                clientId,
+                taskId: task.id,
+                taskData: task
+            }
+        });
 
-    const handleImageGenerated = (imageUrl: string, imageId: string) => {
-        if (selectedTaskForImage?.id) {
-            setTaskImages(prev => ({
-                ...prev,
-                [selectedTaskForImage.id]: imageUrl
-            }));
+        // Navigate to Studio
+        if (onNavigate) {
+            onNavigate('img-generator');
+        } else {
+            console.warn('Navigation not available');
         }
-        setImageModalOpen(false);
-        setSelectedTaskForImage(null);
     };
 
     // Helper for Month Name
@@ -192,8 +195,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ clientId }) => {
                     <div className="space-y-6">
                         {/* Quota Inputs */}
                         <div className="space-y-4">
-                            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Cuotas de Contenido</label>
-
+                            {/* ... Config inputs remain same ... */}
                             <div className="bg-gray-50 p-4 rounded-xl space-y-4 border border-gray-100">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2 text-gray-700">
@@ -367,69 +369,13 @@ const PlanningView: React.FC<PlanningViewProps> = ({ clientId }) => {
                                             </div>
                                         )}
 
-                                        {/* Key Elements */}
-                                        {task.key_elements && task.key_elements.length > 0 && (
-                                            <div className="bg-blue-50/50 p-2.5 rounded-lg border border-blue-100 mb-3">
-                                                <p className="text-[9px] text-blue-600 font-bold uppercase mb-1.5">✓ Elementos Clave</p>
-                                                <ul className="space-y-1">
-                                                    {task.key_elements.map((el, i) => (
-                                                        <li key={i} className="text-[11px] text-gray-700 pl-3 relative before:content-['✓'] before:absolute before:left-0 before:text-green-500">
-                                                            {el}
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        )}
-
-                                        {/* Narrative Structure */}
-                                        {task.narrative_structure && (
-                                            <div className="bg-indigo-50/50 p-2.5 rounded-lg border border-indigo-100 mb-3">
-                                                <p className="text-[9px] text-indigo-600 font-bold uppercase mb-1">📋 Estructura</p>
-                                                <p className="text-[11px] text-gray-700 leading-relaxed">{task.narrative_structure}</p>
-                                            </div>
-                                        )}
-
-                                        {/* Dos and Don'ts */}
-                                        {(task.dos && task.dos.length > 0) || (task.donts && task.donts.length > 0) ? (
-                                            <div className="grid grid-cols-2 gap-2 mb-3">
-                                                {task.dos && task.dos.length > 0 && (
-                                                    <div className="bg-green-50/50 p-2 rounded-lg border border-green-100">
-                                                        <p className="text-[9px] text-green-600 font-bold uppercase mb-1">✅ Hacer</p>
-                                                        <ul className="space-y-0.5">
-                                                            {task.dos.slice(0, 2).map((item, i) => (
-                                                                <li key={i} className="text-[10px] text-gray-700 leading-snug">• {item}</li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                )}
-                                                {task.donts && task.donts.length > 0 && (
-                                                    <div className="bg-red-50/50 p-2 rounded-lg border border-red-100">
-                                                        <p className="text-[9px] text-red-600 font-bold uppercase mb-1">❌ Evitar</p>
-                                                        <ul className="space-y-0.5">
-                                                            {task.donts.slice(0, 2).map((item, i) => (
-                                                                <li key={i} className="text-[10px] text-gray-700 leading-snug">• {item}</li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ) : null}
-
-                                        {/* Copy Suggestion */}
-                                        {task.copy_suggestion && (
-                                            <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 mt-auto">
-                                                <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Copy Sugerido</p>
-                                                <p className="text-xs text-gray-600 italic line-clamp-3">"{task.copy_suggestion}"</p>
-                                            </div>
-                                        )}
-
-                                        {/* Generate Image Button */}
+                                        {/* Generate Image Button (Studio Integration) */}
                                         <button
-                                            onClick={() => handleOpenImageModal(task)}
-                                            className="mt-3 w-full py-2 px-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-lg text-xs font-medium transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5"
+                                            onClick={() => handleOpenStudio(task)}
+                                            className="mt-3 w-full py-2 px-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-lg text-xs font-bold transition-all shadow-md hover:shadow-lg hover:translate-y-[-1px] active:translate-y-[0px] flex items-center justify-center gap-1.5"
                                         >
-                                            <Sparkles size={14} />
-                                            {taskImages[task.id] ? 'Regenerar Imagen' : 'Generar Imagen'}
+                                            <Sparkles size={14} className="fill-white/20" />
+                                            {taskImages[task.id] ? 'Rediseñar en Estudio' : 'Diseñar en Estudio'}
                                         </button>
                                     </div>
                                 ))}
@@ -439,7 +385,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ clientId }) => {
                 </div>
             </div>
 
-            {/* Image Generation Modal */}
+            {/* Image Generation Modal (Legacy/Fallback) - can remove or keep if needed */}
             <ImageGenerationModal
                 isOpen={imageModalOpen}
                 onClose={() => {
@@ -449,7 +395,7 @@ const PlanningView: React.FC<PlanningViewProps> = ({ clientId }) => {
                 clientId={clientId}
                 taskId={selectedTaskForImage?.id}
                 conceptId={selectedTaskForImage?.concept_id}
-                onImageGenerated={handleImageGenerated}
+                onImageGenerated={() => { }} // No-op for now
             />
         </div>
     );

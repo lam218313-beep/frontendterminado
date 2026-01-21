@@ -6,6 +6,7 @@ import { AlertCircle, Calendar } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext.tsx';
 import { AnalysisProvider } from './hooks/useAnalysis.tsx';
 import { TasksProvider } from './hooks/useTasks.tsx';
+import { StudioProvider } from './contexts/StudioContext.tsx';
 
 // Lazy-loaded views for better performance
 const LabView = lazy(() => import('./components/LabView.tsx').then(m => ({ default: m.LabView })));
@@ -233,7 +234,7 @@ const AppContent: React.FC = () => {
       case 'admin':
         return (
           <ErrorBoundary key={viewKey}>
-            <AdminPanel />
+            <AdminPanel onNavigate={handleNavigate} />
           </ErrorBoundary>
         );
       // case 'dashboard': Removed
@@ -379,7 +380,9 @@ const App: React.FC = () => {
     <AuthProvider>
       <AnalysisProvider>
         <TasksProvider>
-          <AppContent />
+          <StudioProvider>
+            <AppContent />
+          </StudioProvider>
         </TasksProvider>
       </AnalysisProvider>
     </AuthProvider>

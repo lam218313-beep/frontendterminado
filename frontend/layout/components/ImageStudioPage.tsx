@@ -1,5 +1,5 @@
 import React from 'react';
-import { StudioProvider, useStudio } from '../contexts/StudioContext';
+import { useStudio } from '../contexts/StudioContext';
 import { StudioLayout } from './studio/StudioLayout';
 import { KnowledgeInput } from './studio/steps/KnowledgeInput';
 
@@ -25,10 +25,10 @@ const WizardContent = () => {
 
 export const ImageStudioPage: React.FC = () => {
     return (
-        <StudioProvider>
-            <StudioLayout>
-                <WizardContent />
-            </StudioLayout>
-        </StudioProvider>
+    return (
+        <StudioLayout>
+            <WizardContent />
+        </StudioLayout>
+    );
     );
 };

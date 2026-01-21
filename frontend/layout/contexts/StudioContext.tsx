@@ -85,6 +85,7 @@ type Action =
     | { type: 'TOGGLE_BLOCK'; payload: { id: string; block?: ContextBlock } }
     | { type: 'SET_CUSTOM_CONTEXT'; payload: string }
     | { type: 'LOAD_CONTEXT_BLOCKS'; payload: ContextBlock[] }
+    | { type: 'SET_INITIAL_DATA'; payload: { clientId: string; taskId?: string; taskData?: any } }
     | { type: 'RESET_WIZARD' };
 
 // --- REDUCER ---
@@ -127,6 +128,16 @@ const studioReducer = (state: StudioState, action: Action): StudioState => {
             };
         case 'SET_CUSTOM_CONTEXT':
             return { ...state, customContext: action.payload };
+        case 'SET_INITIAL_DATA':
+            // Pre-fills the wizard with data from an external source (e.g. Content Factory)
+            return {
+                ...state,
+                clientId: action.payload.clientId,
+                taskId: action.payload.taskId || '',
+                // We can mapped the incoming task data to specific steps here if needed
+                // For now we just ensure client is set so Step 1 works
+                currentStep: 1
+            };
         case 'RESET_WIZARD':
             return initialState;
         default:
