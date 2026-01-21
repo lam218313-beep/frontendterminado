@@ -1,7 +1,7 @@
 import React, { useState, useEffect, Component, ErrorInfo, ReactNode, Suspense, lazy } from 'react';
 import { LoginForm, WorkflowVisual, SuccessAnimation } from './components/LoginComponents.tsx';
 import { Sidebar } from './components/Sidebar.tsx';
-import { RightSidebar } from './components/RightSidebar.tsx';
+// import { RightSidebar } from './components/RightSidebar.tsx';
 import { AlertCircle, Calendar } from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext.tsx';
 import { AnalysisProvider } from './hooks/useAnalysis.tsx';
@@ -91,7 +91,7 @@ const AppContent: React.FC = () => {
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   // Mobile sidebar states
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
-  const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
+  // const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   // ... activeView ...
   const [activeView, setActiveView] = useState<string>('partners');
   const [viewCounter, setViewCounter] = useState(0);
@@ -363,15 +363,7 @@ const AppContent: React.FC = () => {
               </div>
             </main>
 
-            {/* Sidebar Right (Floating Card) */}
-            <RightSidebar
-              onNavigateToTasks={() => {
-                setActiveView('work');
-                setRightSidebarOpen(false); // Close sidebar on navigation
-              }}
-              isOpen={rightSidebarOpen}
-              onClose={() => setRightSidebarOpen(false)}
-            />
+            {/* Right Sidebar Removed */}
           </div>
         </div>
       )}
