@@ -440,7 +440,7 @@ export interface ClientStatus {
  * GET /clients/
  */
 export async function getClients(): Promise<Client[]> {
-  const response = await fetch(`${API_BASE_URL}/clients/`, {
+  const response = await fetch(`${API_BASE_URL}/clients`, {
     headers: getAuthHeaders(),
   });
   return handleResponse<Client[]>(response);
