@@ -23,7 +23,7 @@ export const KnowledgeInput: React.FC = () => {
                 }
             } catch (error) {
                 console.error("Failed to load clients", error);
-                setClientError("Error de conexión al cargar clientes.");
+                setClientError(`Error de conexión al cargar clientes (${API_BASE_URL}).`);
             } finally {
                 setIsLoadingClients(false);
             }
