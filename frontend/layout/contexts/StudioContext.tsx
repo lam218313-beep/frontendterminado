@@ -23,6 +23,7 @@ export interface StudioState {
     // PASO 2: Estrategia
     taskId: string;
     taskData?: any;
+    excludedTaskFields: string[]; // Fields deselected by user in Step 1
     strategyContext: {
         objective: string;
         keyMessage: string;
@@ -56,6 +57,7 @@ const initialState: StudioState = {
     contextBlocks: [],
     customContext: '',
     taskId: '',
+    excludedTaskFields: [],
     strategyContext: {
         objective: '',
         keyMessage: '',
@@ -87,6 +89,7 @@ type Action =
     | { type: 'SET_CUSTOM_CONTEXT'; payload: string }
     | { type: 'LOAD_CONTEXT_BLOCKS'; payload: ContextBlock[] }
     | { type: 'SET_INITIAL_DATA'; payload: { clientId: string; taskId?: string; taskData?: any } }
+    | { type: 'TOGGLE_TASK_FIELD'; payload: { field: string } }
     | { type: 'RESET_WIZARD' };
 
 // --- REDUCER ---
@@ -122,6 +125,16 @@ const studioReducer = (state: StudioState, action: Action): StudioState => {
             }
             return state;
         }
+        case 'TOGGLE_TASK_FIELD': {
+            const { field } = action.payload;
+            const isExcluded = state.excludedTaskFields.includes(field);
+            return {
+                ...state,
+                excludedTaskFields: isExcluded
+                    ? state.excludedTaskFields.filter(f => f !== field) // Remove from excluded (select it)
+                    : [...state.excludedTaskFields, field] // Add to excluded (deselect it)
+            };
+        }
         case 'LOAD_CONTEXT_BLOCKS':
             return {
                 ...state,
@@ -136,6 +149,7 @@ const studioReducer = (state: StudioState, action: Action): StudioState => {
                 clientId: action.payload.clientId,
                 taskId: action.payload.taskId || '',
                 taskData: action.payload.taskData,
+                excludedTaskFields: [], // Reset exclusion on new data load
                 // We can mapped the incoming task data to specific steps here if needed
                 // For now we just ensure client is set so Step 1 works
                 currentStep: 1

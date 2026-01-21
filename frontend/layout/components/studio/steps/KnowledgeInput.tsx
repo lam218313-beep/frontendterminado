@@ -157,14 +157,14 @@ export const KnowledgeInput: React.FC = () => {
                                     <ToggleCard
                                         title="📌 Título & Formato"
                                         content={`${state.taskData.title}\n(${state.taskData.format})`}
-                                        isSelected={true}
-                                        onToggle={() => { }}
+                                        isSelected={!state.excludedTaskFields.includes('title_format')}
+                                        onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'title_format' } })}
                                     />
                                     <ToggleCard
                                         title="🎯 Propósito Estratégico"
                                         content={state.taskData.strategic_purpose || 'No definido'}
-                                        isSelected={true}
-                                        onToggle={() => { }}
+                                        isSelected={!state.excludedTaskFields.includes('strategic_purpose')}
+                                        onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'strategic_purpose' } })}
                                     />
                                 </div>
 
@@ -173,8 +173,8 @@ export const KnowledgeInput: React.FC = () => {
                                     <ToggleCard
                                         title="💡 Hook (Gancho)"
                                         content={state.taskData.selected_hook}
-                                        isSelected={true}
-                                        onToggle={() => { }}
+                                        isSelected={!state.excludedTaskFields.includes('selected_hook')}
+                                        onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'selected_hook' } })}
                                     />
                                 )}
 
@@ -182,8 +182,8 @@ export const KnowledgeInput: React.FC = () => {
                                     <ToggleCard
                                         title="📋 Estructura Narrativa"
                                         content={state.taskData.narrative_structure}
-                                        isSelected={true}
-                                        onToggle={() => { }}
+                                        isSelected={!state.excludedTaskFields.includes('narrative_structure')}
+                                        onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'narrative_structure' } })}
                                     />
                                 )}
 
@@ -192,8 +192,8 @@ export const KnowledgeInput: React.FC = () => {
                                     <ToggleCard
                                         title="✓ Elementos Visuales Clave"
                                         content={state.taskData.key_elements.join('\n')}
-                                        isSelected={true}
-                                        onToggle={() => { }}
+                                        isSelected={!state.excludedTaskFields.includes('key_elements')}
+                                        onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'key_elements' } })}
                                     />
                                 )}
 
@@ -201,8 +201,8 @@ export const KnowledgeInput: React.FC = () => {
                                     <ToggleCard
                                         title="✅ Do's (Qué incluir)"
                                         content={state.taskData.dos.join('\n')}
-                                        isSelected={true}
-                                        onToggle={() => { }}
+                                        isSelected={!state.excludedTaskFields.includes('dos')}
+                                        onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'dos' } })}
                                     />
                                 )}
 
@@ -210,8 +210,8 @@ export const KnowledgeInput: React.FC = () => {
                                     <ToggleCard
                                         title="❌ Don'ts (Qué evitar)"
                                         content={state.taskData.donts.join('\n')}
-                                        isSelected={true}
-                                        onToggle={() => { }}
+                                        isSelected={!state.excludedTaskFields.includes('donts')}
+                                        onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'donts' } })}
                                     />
                                 )}
 
@@ -219,8 +219,8 @@ export const KnowledgeInput: React.FC = () => {
                                     <ToggleCard
                                         title="✍️ Sugerencia de Copy"
                                         content={state.taskData.copy_suggestion}
-                                        isSelected={true} // Optional?
-                                        onToggle={() => { }}
+                                        isSelected={!state.excludedTaskFields.includes('copy_suggestion')}
+                                        onToggle={() => dispatch({ type: 'TOGGLE_TASK_FIELD', payload: { field: 'copy_suggestion' } })}
                                     />
                                 )}
                             </div>
