@@ -1066,80 +1066,64 @@ export async function syncStrategy(clientId: string, nodes: StrategyNode[]): Pro
   return handleResponse(response);
 }
 
- 
- / /   = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =  
- / /   C L I E N T S   E N D P O I N T S  
- / /   = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =  
-  
- e x p o r t   i n t e r f a c e   C l i e n t   {  
-         i d :   s t r i n g ;  
-         n o m b r e :   s t r i n g ;  
-         t e l e f o n o ? :   s t r i n g ;  
-         i n d u s t r y ? :   s t r i n g ;  
-         i s _ a c t i v e :   b o o l e a n ;  
- }  
-  
- e x p o r t   a s y n c   f u n c t i o n   g e t C l i e n t s ( ) :   P r o m i s e < C l i e n t [ ] >   {  
-         c o n s t   r e s p o n s e   =   a w a i t   f e t c h ( ` $ { A P I _ B A S E _ U R L } / c l i e n t s ` ,   {  
-                 h e a d e r s :   g e t A u t h H e a d e r s ( ) ,  
-         } ) ;  
-         r e t u r n   h a n d l e R e s p o n s e ( r e s p o n s e ) ;  
- }  
-  
- / /   = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =  
- / /   I M A G E   G E N E R A T I O N   E N D P O I N T S  
- / /   = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =  
-  
- e x p o r t   i n t e r f a c e   G e n e r a t e I m a g e R e q u e s t   {  
-         c l i e n t _ i d :   s t r i n g ;  
-         t a s k _ i d ? :   s t r i n g ;  
-         c o n c e p t _ i d ? :   s t r i n g ;  
-         u s e r _ a d d i t i o n s ? :   s t r i n g ;  
-         s t y l e _ p r e s e t ? :   s t r i n g ;  
-         a s p e c t _ r a t i o ? :   s t r i n g ;  
-         m o o d _ t o n e ? :   s t r i n g ;  
-         n e g a t i v e _ p r o m p t ? :   s t r i n g ;  
-         c o l o r _ s u g g e s t i o n s ? :   s t r i n g ;  
- }  
-  
- e x p o r t   i n t e r f a c e   G e n e r a t e d I m a g e   {  
-         i d :   s t r i n g ;  
-         i m a g e _ u r l :   s t r i n g ;  
-         f i n a l _ p r o m p t :   s t r i n g ;  
-         c o s t _ u s d :   n u m b e r ;  
-         g e n e r a t i o n _ t i m e _ m s :   n u m b e r ;  
-         c r e a t e d _ a t :   s t r i n g ;  
-         a s p e c t _ r a t i o :   s t r i n g ;  
- }  
-  
- e x p o r t   a s y n c   f u n c t i o n   g e n e r a t e I m a g e ( d a t a :   G e n e r a t e I m a g e R e q u e s t ) :   P r o m i s e < {   s t a t u s :   s t r i n g ,   i m a g e :   G e n e r a t e d I m a g e   } >   {  
-         c o n s t   r e s p o n s e   =   a w a i t   f e t c h ( ` $ { A P I _ B A S E _ U R L } / i m a g e s / g e n e r a t e ` ,   {  
-                 m e t h o d :   ' P O S T ' ,  
-                 h e a d e r s :   {  
-                         . . . g e t A u t h H e a d e r s ( ) ,  
-                         ' C o n t e n t - T y p e ' :   ' a p p l i c a t i o n / j s o n '  
-                 } ,  
-                 b o d y :   J S O N . s t r i n g i f y ( d a t a )  
-         } ) ;  
-         r e t u r n   h a n d l e R e s p o n s e ( r e s p o n s e ) ;  
- }  
-  
- e x p o r t   a s y n c   f u n c t i o n   g e t T a s k I m a g e s ( t a s k I d :   s t r i n g ) :   P r o m i s e < {   s t a t u s :   s t r i n g ,   c o u n t :   n u m b e r ,   i m a g e s :   G e n e r a t e d I m a g e [ ]   } >   {  
-         c o n s t   r e s p o n s e   =   a w a i t   f e t c h ( ` $ { A P I _ B A S E _ U R L } / i m a g e s / t a s k / $ { t a s k I d } ` ,   {  
-                 h e a d e r s :   g e t A u t h H e a d e r s ( ) ,  
-         } ) ;  
-         r e t u r n   h a n d l e R e s p o n s e ( r e s p o n s e ) ;  
- }  
-  
- e x p o r t   a s y n c   f u n c t i o n   s e l e c t I m a g e F o r T a s k ( i m a g e I d :   s t r i n g ,   t a s k I d :   s t r i n g ) :   P r o m i s e < a n y >   {  
-         c o n s t   r e s p o n s e   =   a w a i t   f e t c h ( ` $ { A P I _ B A S E _ U R L } / i m a g e s / $ { i m a g e I d } / s e l e c t ` ,   {  
-                 m e t h o d :   ' P O S T ' ,  
-                 h e a d e r s :   {  
-                         . . . g e t A u t h H e a d e r s ( ) ,  
-                         ' C o n t e n t - T y p e ' :   ' a p p l i c a t i o n / j s o n '  
-                 } ,  
-                 b o d y :   J S O N . s t r i n g i f y ( {   t a s k _ i d :   t a s k I d   } )  
-         } ) ;  
-         r e t u r n   h a n d l e R e s p o n s e ( r e s p o n s e ) ;  
- }  
- 
+
+
+
+
+// =============================================================================
+// IMAGE GENERATION ENDPOINTS
+// =============================================================================
+
+
+export interface GenerateImageRequest {
+  client_id: string;
+  task_id?: string;
+  concept_id?: string;
+  user_additions?: string;
+  style_preset?: string;
+  aspect_ratio?: string;
+  mood_tone?: string;
+  negative_prompt?: string;
+  color_suggestions?: string;
+}
+
+export interface GeneratedImage {
+  id: string;
+  image_url: string;
+  final_prompt: string;
+  cost_usd: number;
+  generation_time_ms: number;
+  created_at: string;
+  aspect_ratio: string;
+}
+
+export async function generateImage(data: GenerateImageRequest): Promise<{ status: string, image: GeneratedImage }> {
+  const response = await fetch(`${API_BASE_URL}/images/generate`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  });
+  return handleResponse(response);
+}
+
+export async function getTaskImages(taskId: string): Promise<{ status: string, count: number, images: GeneratedImage[] }> {
+  const response = await fetch(`${API_BASE_URL}/images/task/${taskId}`, {
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(response);
+}
+
+export async function selectImageForTask(imageId: string, taskId: string): Promise<any> {
+  const response = await fetch(`${API_BASE_URL}/images/${imageId}/select`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ task_id: taskId })
+  });
+  return handleResponse(response);
+}
