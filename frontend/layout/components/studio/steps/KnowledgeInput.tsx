@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useStudio } from '../../../contexts/StudioContext';
 import { ToggleCard } from '../ui/ToggleCard';
 import { getClients, Client, API_BASE_URL } from '../../../services/api';
-import { Loader2, AlertCircle, ArrowRight, UserCircle2, BrainCircuit } from 'lucide-react';
+import { Loader2, AlertCircle, ArrowRight, UserCircle2, BrainCircuit, Target } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const KnowledgeInput: React.FC = () => {
@@ -147,6 +147,60 @@ export const KnowledgeInput: React.FC = () => {
                         <div className="space-y-8">
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {/* COLUMN 0: TASK CONTEXT (If available) */}
+                                {state.taskData && (
+                                    <div className="md:col-span-2 space-y-4">
+                                        <div className="flex items-center gap-2 pb-2 border-b border-gray-200">
+                                            <div className="p-1.5 bg-purple-100 text-purple-600 rounded-lg">
+                                                <Target size={16} />
+                                            </div>
+                                            <h3 className="text-gray-900 font-bold text-lg">Contexto de la Tarea Activa</h3>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {/* Strategic Purpose */}
+                                            {state.taskData.strategic_purpose && (
+                                                <ToggleCard
+                                                    id="task_purpose"
+                                                    title="🎯 Propósito Estratégico"
+                                                    content={state.taskData.strategic_purpose}
+                                                    isSelected={true}
+                                                    onToggle={() => { }} // Locked/Always Selected for now
+                                                />
+                                            )}
+                                            {/* Hook */}
+                                            {state.taskData.selected_hook && (
+                                                <ToggleCard
+                                                    id="task_hook"
+                                                    title="💡 Hook Creativo"
+                                                    content={state.taskData.selected_hook}
+                                                    isSelected={true}
+                                                    onToggle={() => { }} // Locked
+                                                />
+                                            )}
+                                            {/* Key Elements */}
+                                            {state.taskData.key_elements && state.taskData.key_elements.length > 0 && (
+                                                <ToggleCard
+                                                    id="task_elements"
+                                                    title="✓ Elementos Clave"
+                                                    content={state.taskData.key_elements.join('\n')}
+                                                    isSelected={true}
+                                                    onToggle={() => { }} // Locked
+                                                />
+                                            )}
+                                            {/* Narrative */}
+                                            {state.taskData.narrative_structure && (
+                                                <ToggleCard
+                                                    id="task_narrative"
+                                                    title="📋 Estructura Narrativa"
+                                                    content={state.taskData.narrative_structure}
+                                                    isSelected={true}
+                                                    onToggle={() => { }} // Locked
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* COLUMN 1: INTERVIEW */}
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-2 pb-2 border-b border-gray-200">

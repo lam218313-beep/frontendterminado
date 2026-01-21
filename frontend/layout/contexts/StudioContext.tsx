@@ -22,6 +22,7 @@ export interface StudioState {
 
     // PASO 2: Estrategia
     taskId: string;
+    taskData?: any;
     strategyContext: {
         objective: string;
         keyMessage: string;
@@ -134,6 +135,7 @@ const studioReducer = (state: StudioState, action: Action): StudioState => {
                 ...state,
                 clientId: action.payload.clientId,
                 taskId: action.payload.taskId || '',
+                taskData: action.payload.taskData,
                 // We can mapped the incoming task data to specific steps here if needed
                 // For now we just ensure client is set so Step 1 works
                 currentStep: 1
