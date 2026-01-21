@@ -3,8 +3,7 @@ import logging
 import json
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from google import genai
-from google.genai import types
+
 from ..config import settings
 from ..services.database import db
 from ..services.gemini_service import _call_gemini
