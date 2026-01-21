@@ -20,6 +20,7 @@ const ContentPlanView = lazy(() => import('./components/ContentPlanView.tsx').th
 const StrategyView = lazy(() => import('./components/StrategyView.tsx').then(m => ({ default: m.StrategyView })));
 const BenefitsView = lazy(() => import('./components/BenefitsView.tsx').then(m => ({ default: m.BenefitsView })));
 const ImageGeneratorPage = lazy(() => import('./components/ImageGeneratorPage.tsx').then(m => ({ default: m.ImageGeneratorPage })));
+const ImageStudioPage = lazy(() => import('./components/ImageStudioPage.tsx').then(m => ({ default: m.ImageStudioPage })));
 
 // =============================================================================
 // ERROR BOUNDARY
