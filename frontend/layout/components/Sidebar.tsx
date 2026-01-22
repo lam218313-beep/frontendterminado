@@ -109,14 +109,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isExpanded, setIsExpanded, act
                     onClick={setActiveView}
                 />
 
-                {/* 10. Studio (Image Gen) */}
-                <SidebarItem
-                    icon={Sparkles}
-                    label="Estudio AI"
-                    viewId="img-generator"
-                    isActive={activeView === 'img-generator'}
-                    onClick={setActiveView}
-                />
+
 
                 {/* Admin Panel - Only visible for admin users */}
                 {user?.isAdmin && (

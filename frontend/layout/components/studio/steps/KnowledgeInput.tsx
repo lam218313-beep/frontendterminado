@@ -54,7 +54,7 @@ export const KnowledgeInput: React.FC = () => {
                     // Flatten data for the reducer
                     const interviewBlocks = result.data.interviewBlocks.map((b: any) => ({ ...b, type: 'interview' }));
                     const analysisBlocks = result.data.analysisBlocks.map((b: any) => ({ ...b, type: 'analysis' }));
-                    const brandBlocks = (result.data.brandBlocks || []).map((b: any) => ({ ...b, type: 'brand' }));
+                    const brandBlocks = (result.data.brandBlocks || []).map((b: any) => ({ ...b, type: 'manual' }));
 
                     dispatch({
                         type: 'LOAD_CONTEXT_BLOCKS',
@@ -78,7 +78,7 @@ export const KnowledgeInput: React.FC = () => {
     // Derived state for rendering
     const interviewBlocks = state.contextBlocks.filter(b => b.type === 'interview');
     const analysisBlocks = state.contextBlocks.filter(b => b.type === 'analysis');
-    const brandBlocks = state.contextBlocks.filter(b => b.type === 'brand');
+    const brandBlocks = state.contextBlocks.filter(b => b.type === 'manual');
 
     return (
         <motion.div
