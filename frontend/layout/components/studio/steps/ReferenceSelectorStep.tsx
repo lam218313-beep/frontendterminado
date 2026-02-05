@@ -40,9 +40,12 @@ export const ReferenceSelectorStep: React.FC = () => {
         const loadTemplates = async () => {
             try {
                 const result = await getGenerationTemplates();
-                setTemplates(result.templates);
+                // Ensure result.templates is always an array
+                setTemplates(Array.isArray(result.templates) ? result.templates : []);
             } catch (err) {
                 console.error('Error loading templates:', err);
+                // Fallback to empty array on error
+                setTemplates([]);
             } finally {
                 setIsLoading(false);
             }

@@ -1279,7 +1279,12 @@ export async function getPendingTasks(clientId: string): Promise<{
   const response = await fetch(`${API_BASE_URL}/studio/pending-tasks/${clientId}`, {
     headers: getAuthHeaders(),
   });
-  return handleResponse(response);
+  const result = await handleResponse<any>(response);
+  return {
+    status: 'success',
+    tasks: result.data || [],
+    count: result.total || 0
+  };
 }
 
 // --- Generation Templates ---
@@ -1304,7 +1309,11 @@ export async function getGenerationTemplates(): Promise<{
   const response = await fetch(`${API_BASE_URL}/studio/templates`, {
     headers: getAuthHeaders(),
   });
-  return handleResponse(response);
+  const result = await handleResponse<any>(response);
+  return {
+    status: 'success',
+    templates: result.data || []
+  };
 }
 
 // --- NanoBanana Image Generation ---

@@ -31,10 +31,12 @@ export const TaskSelectorStep: React.FC = () => {
             setError(null);
             try {
                 const result = await getPendingTasks(state.clientId);
-                setTasks(result.tasks);
+                // Ensure result.tasks is an array
+                setTasks(Array.isArray(result.tasks) ? result.tasks : []);
             } catch (err) {
                 console.error('Error loading tasks:', err);
                 setError('Error cargando tareas pendientes');
+                setTasks([]); // Fallback
             } finally {
                 setIsLoading(false);
             }
