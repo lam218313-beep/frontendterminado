@@ -381,23 +381,61 @@ class NanoBananaService:
         # =====================================================================
         prompt_parts = []
         
-        # 1. MAIN SUBJECT - Use custom prompt or task description
-        if custom_prompt:
-            prompt_parts.append(f"Create an image of: {custom_prompt}")
-        elif task_description:
-            prompt_parts.append(f"Create an image: {task_description}")
-        elif task_title:
-            prompt_parts.append(f"Create an image for: {task_title}")
+        # Text-related elements to filter out (Imagen can't generate text)
+        TEXT_ELEMENTS = ['quote', 'text', 'letter', 'word', 'number', 'caption', 
+                         'headline', 'title', 'subtitle', 'cta', 'call to action',
+                         'rating', 'estadística', 'métrica', 'cifra', 'testimonio']
         
-        # 2. STRATEGIC CONTEXT - Hook and purpose
-        if selected_hook:
+        def is_text_element(element: str) -> bool:
+            """Check if element requires text generation"""
+            lower = element.lower()
+            return any(t in lower for t in TEXT_ELEMENTS)
+        
+        def has_meaningful_content(text: str) -> bool:
+            """Check if text has real content, not just 'Genera una' or similar"""
+            if not text:
+                return False
+            cleaned = text.strip().lower()
+            empty_patterns = ['genera una', 'genera un', 'create a', 'create an', 
+                             'imagen de', 'image of', 'foto de', 'photo of']
+            for pattern in empty_patterns:
+                if cleaned == pattern or cleaned.endswith(pattern + '.') or cleaned.endswith(pattern):
+                    return False
+            # Must have at least 10 chars of actual content
+            return len(cleaned) > 10
+        
+        # Filter key_elements to remove text-requiring items
+        if isinstance(key_elements, list):
+            visual_elements = [e for e in key_elements if e and not is_text_element(e)]
+            key_elements_text = ', '.join(visual_elements) if visual_elements else ''
+        
+        # 1. MAIN SUBJECT - Build from best available context
+        if has_meaningful_content(custom_prompt):
+            prompt_parts.append(f"Create an image of: {custom_prompt}")
+        elif has_meaningful_content(task_description):
+            prompt_parts.append(f"Create an image: {task_description}")
+        elif has_meaningful_content(task_title):
+            # Use title + hook for better context
+            subject = task_title
+            if selected_hook and has_meaningful_content(selected_hook):
+                subject += f" - {selected_hook}"
+            prompt_parts.append(f"Create an image for: {subject}")
+        else:
+            # Fallback: use brand essence + visual keywords
+            if brand_essence or keywords_text:
+                prompt_parts.append(f"Create a {mood} image showcasing {brand_essence or keywords_text}")
+            else:
+                prompt_parts.append("Create a professional commercial photograph")
+        
+        # 2. STRATEGIC CONTEXT - Only add if meaningful
+        if has_meaningful_content(selected_hook) and not any(selected_hook in p for p in prompt_parts):
             prompt_parts.append(f"The image should convey: {selected_hook}")
-        if strategic_purpose:
+        if has_meaningful_content(strategic_purpose):
             prompt_parts.append(f"Purpose: {strategic_purpose}")
         
-        # 3. KEY VISUAL ELEMENTS
+        # 3. KEY VISUAL ELEMENTS (filtered - no text elements)
         if key_elements_text:
-            prompt_parts.append(f"Include these elements: {key_elements_text}")
+            prompt_parts.append(f"Include these visual elements: {key_elements_text}")
         
         # 4. BRAND IDENTITY
         if brand_essence:
@@ -408,11 +446,15 @@ class NanoBananaService:
         # 5. TECHNICAL SPECIFICATIONS
         prompt_parts.append(f"Photography style: {style}, {mood} mood")
         prompt_parts.append(f"Lighting: {lighting}")
-        prompt_parts.append(f"Color palette: {color_palette}")
+        if color_palette and color_palette != 'professional color palette':
+            prompt_parts.append(f"Color palette: {color_palette}")
         
-        # 6. DOS (what to include/emphasize)
+        # 6. DOS (what to include/emphasize) - filter text-related instructions
         if dos_text:
-            prompt_parts.append(f"Emphasize: {dos_text}")
+            dos_list = dos_text.split(', ') if ', ' in dos_text else [dos_text]
+            visual_dos = [d for d in dos_list if d and not is_text_element(d)]
+            if visual_dos:
+                prompt_parts.append(f"Emphasize: {', '.join(visual_dos)}")
         
         # 7. FORMAT-SPECIFIC GUIDANCE
         format_guidance = {
