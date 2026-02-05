@@ -590,24 +590,30 @@ class NanoBananaService:
     
     async def get_pending_tasks(self, client_id: str) -> List[Dict[str, Any]]:
         """Get tasks that need image generation"""
+        if not db.client:
+            return []
+
+        # Try RPC first
         try:
-            if not db.client:
-                return []
-            
             response = db.client.rpc(
                 "get_pending_generation_tasks",
                 {"p_client_id": client_id}
             ).execute()
-            
-            # Fallback if RPC doesn't exist
-            if not response.data:
-                response = db.client.table("tasks")\
-                    .select("*")\
-                    .eq("client_id", client_id)\
-                    .in_("generation_status", ["pending", "rejected"])\
-                    .neq("status", "HECHO")\
-                    .order("execution_date", nullsfirst=False)\
-                    .execute()
+            if response.data:
+                return response.data
+        except Exception as e:
+            # If RPC fails (e.g. function not found), log warning and proceed to fallback
+            logger.warning(f"RPC get_pending_generation_tasks failed or empty: {e}")
+
+        # Fallback to direct query
+        try:
+            response = db.client.table("tasks")\
+                .select("*")\
+                .eq("client_id", client_id)\
+                .in_("generation_status", ["pending", "rejected"])\
+                .neq("status", "HECHO")\
+                .order("execution_date", nullsfirst=False)\
+                .execute()
             
             return response.data if response.data else []
         except Exception as e:
