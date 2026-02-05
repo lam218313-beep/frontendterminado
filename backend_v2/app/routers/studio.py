@@ -91,11 +91,15 @@ async def get_brand_visual_dna(client_id: str) -> Dict[str, Any]:
         if not db.client:
             raise HTTPException(status_code=500, detail="Database not configured")
         
+        logger.info(f"📥 Fetching brand DNA for client: {client_id}")
+        
         response = db.client.table("brand_visual_dna")\
             .select("*")\
             .eq("client_id", client_id)\
             .limit(1)\
             .execute()
+        
+        logger.info(f"📤 Response: {response}")
         
         # Get first result or None (equivalent to maybeSingle in JS)
         data = response.data[0] if response.data else None
@@ -106,8 +110,11 @@ async def get_brand_visual_dna(client_id: str) -> Dict[str, Any]:
             "is_configured": data.get("is_configured", False) if data else False
         }
     except Exception as e:
-        logger.error(f"Error fetching brand DNA for {client_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        error_details = traceback.format_exc()
+        logger.error(f"❌ Error fetching brand DNA for {client_id}: {e}")
+        logger.error(f"❌ Full traceback: {error_details}")
+        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {str(e)}")
 
 
 @router.post("/brand-dna/{client_id}")
@@ -117,21 +124,30 @@ async def upsert_brand_visual_dna(client_id: str, dna: BrandVisualDNACreate) -> 
         if not db.client:
             raise HTTPException(status_code=500, detail="Database not configured")
         
+        # Log incoming data for debugging
+        logger.info(f"📥 Received brand DNA for client {client_id}")
+        logger.info(f"📥 DNA payload: {dna.dict()}")
+        
         payload = {
             "client_id": client_id,
             **dna.dict(),
             "is_configured": True
         }
         
+        logger.info(f"📤 Upserting payload: {payload}")
+        
         response = db.client.table("brand_visual_dna")\
             .upsert(payload, on_conflict="client_id")\
             .execute()
         
-        logger.info(f"✅ Brand DNA saved for client {client_id}")
+        logger.info(f"✅ Brand DNA saved for client {client_id}, response: {response}")
         return {"data": response.data[0] if response.data else payload, "status": "success"}
     except Exception as e:
-        logger.error(f"Error saving brand DNA for {client_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        error_details = traceback.format_exc()
+        logger.error(f"❌ Error saving brand DNA for {client_id}: {e}")
+        logger.error(f"❌ Full traceback: {error_details}")
+        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {str(e)}")
 
 
 # =============================================================================
