@@ -373,15 +373,16 @@ async def approve_image_for_task(image_id: str) -> Dict[str, Any]:
         if not db.client:
             raise HTTPException(status_code=500, detail="Database not configured")
         
-        # Get the image to find its task_id
+        # Get the image to find its task_id (don't use .single() to avoid error on 0 rows)
         img_response = db.client.table("generated_images")\
             .select("task_id")\
             .eq("id", image_id)\
-            .single()\
+            .limit(1)\
             .execute()
         
-        if not img_response.data:
-            raise HTTPException(status_code=404, detail="Image not found")
+        if not img_response.data or len(img_response.data) == 0:
+            logger.error(f"Image not found in database: {image_id}")
+            raise HTTPException(status_code=404, detail=f"Image {image_id} not found in database")
         
         task_id = img_response.data.get("task_id")
         

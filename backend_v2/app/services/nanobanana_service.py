@@ -86,15 +86,18 @@ class NanoBananaService:
         }
     }
     
-    # Aspect ratio mappings
+    # Aspect ratio mappings (Imagen 3.0 only supports: 1:1, 9:16, 16:9, 4:3, 3:4)
     ASPECT_RATIOS = {
         'post': '1:1',       # Instagram post
         'story': '9:16',     # Instagram story/reel
         'reel': '9:16',      # Instagram reel
         'cover': '16:9',     # Facebook cover
-        'portrait': '4:5',   # Portrait post
-        'landscape': '3:2',  # Landscape
+        'portrait': '3:4',   # Portrait post (4:5 not supported, using 3:4)
+        'landscape': '4:3',  # Landscape (3:2 not supported, using 4:3)
     }
+    
+    # Valid aspect ratios for Imagen 3.0
+    VALID_ASPECT_RATIOS = ['1:1', '9:16', '16:9', '4:3', '3:4']
     
     def __init__(self):
         self._configure_client()
@@ -162,10 +165,15 @@ class NanoBananaService:
                 custom_prompt=custom_prompt
             )
             
-            # 5. Determine aspect ratio
+            # 5. Determine and validate aspect ratio
             if not aspect_ratio:
                 task_format = task.get('format', 'post')
                 aspect_ratio = self.ASPECT_RATIOS.get(task_format, '1:1')
+            
+            # Validate aspect ratio against Imagen 3.0 supported ratios
+            if aspect_ratio not in self.VALID_ASPECT_RATIOS:
+                logger.warning(f"Invalid aspect ratio {aspect_ratio}, falling back to 1:1")
+                aspect_ratio = '1:1'
             
             # 6. Call NanoBanana API
             model_key = 'pro' if use_pro_model else 'flash'
