@@ -16,6 +16,9 @@ import logging
 import uuid
 import base64
 import httpx
+import os
+import json
+import tempfile
 from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
 import vertexai
@@ -27,6 +30,41 @@ from .database import db
 from ..config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def _setup_google_credentials():
+    """
+    Setup Google credentials from environment variable for Railway/cloud deployment.
+    Supports both file path (GOOGLE_APPLICATION_CREDENTIALS) and JSON string (GOOGLE_APPLICATION_CREDENTIALS_JSON).
+    """
+    # Check if credentials JSON is provided as environment variable
+    creds_json = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
+    if creds_json:
+        try:
+            # Write credentials to a temp file
+            creds_dict = json.loads(creds_json)
+            temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False)
+            json.dump(creds_dict, temp_file)
+            temp_file.close()
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = temp_file.name
+            logger.info(f"✅ Google credentials loaded from GOOGLE_APPLICATION_CREDENTIALS_JSON")
+            return True
+        except Exception as e:
+            logger.error(f"❌ Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON: {e}")
+            return False
+    
+    # Check if file path is already set
+    creds_file = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+    if creds_file and os.path.exists(creds_file):
+        logger.info(f"✅ Google credentials file found: {creds_file}")
+        return True
+    
+    logger.warning("⚠️ No Google Cloud credentials configured")
+    return False
+
+
+# Setup credentials on module load
+_setup_google_credentials()
 
 
 class NanoBananaService:
