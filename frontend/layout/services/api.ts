@@ -1202,7 +1202,14 @@ export async function getImageBank(
   const response = await fetch(url, {
     headers: getAuthHeaders(),
   });
-  return handleResponse(response);
+  const result = await handleResponse<any>(response);
+  
+  // Normalize response (Backend returns { data: [], total: 0 })
+  return {
+    status: 'success',
+    images: result.data || [],
+    count: result.total || (result.data ? result.data.length : 0)
+  };
 }
 
 export async function uploadToImageBank(
