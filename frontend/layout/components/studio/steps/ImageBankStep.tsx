@@ -37,7 +37,7 @@ export const ImageBankStep: React.FC = () => {
                     category: activeCategory === 'all' ? undefined : activeCategory,
                     favoritesOnly: showFavoritesOnly
                 });
-                dispatch({ type: 'LOAD_IMAGE_BANK', payload: result.images });
+                dispatch({ type: 'LOAD_IMAGE_BANK', payload: (result.images || []).filter(Boolean) });
             } catch (err) {
                 console.error('Error loading image bank:', err);
             } finally {
@@ -87,7 +87,8 @@ export const ImageBankStep: React.FC = () => {
         }
     };
 
-    const filteredImages = state.imageBank.filter(img => {
+    const filteredImages = (state.imageBank || []).filter(img => {
+        if (!img) return false;
         if (activeCategory !== 'all' && img.category !== activeCategory) return false;
         if (showFavoritesOnly && !img.is_favorite) return false;
         return true;

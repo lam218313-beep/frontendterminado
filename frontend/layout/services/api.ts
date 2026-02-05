@@ -1205,10 +1205,11 @@ export async function getImageBank(
   const result = await handleResponse<any>(response);
   
   // Normalize response (Backend returns { data: [], total: 0 })
+  const images = (result.data || []).filter(Boolean);
   return {
     status: 'success',
-    images: result.data || [],
-    count: result.total || (result.data ? result.data.length : 0)
+    images,
+    count: result.total || images.length
   };
 }
 

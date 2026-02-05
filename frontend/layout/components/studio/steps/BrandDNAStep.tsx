@@ -26,11 +26,11 @@ const MOOD_OPTIONS = [
 ];
 
 const ARCHETYPE_OPTIONS = [
-    { id: 'PROMO', label: 'Promocional', icon: '🏷️' },
-    { id: 'LIFESTYLE', label: 'Lifestyle', icon: '✨' },
-    { id: 'PRODUCT_FOCUS', label: 'Producto', icon: '📦' },
-    { id: 'MINIMAL', label: 'Minimal', icon: '⚪' },
-    { id: 'EDITORIAL', label: 'Editorial', icon: '📰' },
+    { id: 'promotional', label: 'Promocional', icon: '🏷️' },
+    { id: 'lifestyle', label: 'Lifestyle', icon: '✨' },
+    { id: 'product_hero', label: 'Producto', icon: '📦' },
+    { id: 'minimalist', label: 'Minimal', icon: '⚪' },
+    { id: 'editorial', label: 'Editorial', icon: '📰' },
 ];
 
 export const BrandDNAStep: React.FC = () => {

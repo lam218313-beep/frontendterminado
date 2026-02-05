@@ -65,10 +65,10 @@ export const ReferenceSelectorStep: React.FC = () => {
         dispatch({ type: 'SET_TEMPLATE', payload: template });
     };
 
-    // Filter images by category for easier selection
-    const productImages = state.imageBank.filter(img => img.category === 'product');
-    const styleReferences = state.imageBank.filter(img => 
-        img.category === 'reference' || img.category === 'lifestyle' || img.category === 'background'
+    // Filter images by category for easier selection (with null-safety)
+    const productImages = (state.imageBank || []).filter(img => img && img.category === 'product');
+    const styleReferences = (state.imageBank || []).filter(img => 
+        img && (img.category === 'reference' || img.category === 'lifestyle' || img.category === 'background')
     );
 
     const canProceed = state.selectedStyleReferences.length > 0 || state.selectedProductImage;
