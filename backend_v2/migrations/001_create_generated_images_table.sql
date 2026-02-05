@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS generated_images (
     base_prompt TEXT NOT NULL, -- Auto-generated from context
     user_additions TEXT, -- Additional user inputs
     final_prompt TEXT NOT NULL, -- Actual prompt sent to API
+    revised_prompt TEXT, -- DALL-E 3's rewritten prompt (for audit)
     
     -- Configuration
     style_preset TEXT DEFAULT 'realistic', -- realistic, illustration, 3d_render, minimalist, vintage
@@ -26,7 +27,7 @@ CREATE TABLE IF NOT EXISTS generated_images (
     -- Result
     image_url TEXT NOT NULL, -- URL in Supabase Storage
     storage_path TEXT NOT NULL, -- Path in storage bucket
-    generation_model TEXT DEFAULT 'imagen-3',
+    generation_model TEXT DEFAULT 'dall-e-3',
     
     -- Metadata
     cost_usd DECIMAL(10,4) DEFAULT 0.03,
@@ -68,5 +69,6 @@ ORDER BY month DESC, client_id;
 COMMENT ON TABLE generated_images IS 'Stores AI-generated images with full context inheritance from strategy phases';
 COMMENT ON COLUMN generated_images.base_prompt IS 'Auto-generated prompt from inherited context (interview, strategy, task)';
 COMMENT ON COLUMN generated_images.user_additions IS 'Additional details provided by user';
-COMMENT ON COLUMN generated_images.final_prompt IS 'Complete prompt sent to Google Imagen 3 API';
+COMMENT ON COLUMN generated_images.final_prompt IS 'Complete prompt sent to DALL-E 3 API';
+COMMENT ON COLUMN generated_images.revised_prompt IS 'DALL-E 3 rewrites prompts internally - this stores that version for audit';
 COMMENT ON COLUMN generated_images.is_selected IS 'Whether this image was selected as the final choice for the task';

@@ -1071,7 +1071,7 @@ export async function syncStrategy(clientId: string, nodes: StrategyNode[]): Pro
 
 
 // =============================================================================
-// IMAGE GENERATION ENDPOINTS
+// IMAGE GENERATION ENDPOINTS (LEGACY DALL-E)
 // =============================================================================
 
 
@@ -1124,6 +1124,246 @@ export async function selectImageForTask(imageId: string, taskId: string): Promi
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ task_id: taskId })
+  });
+  return handleResponse(response);
+}
+
+
+// =============================================================================
+// NANOBANANA STUDIO ENDPOINTS
+// =============================================================================
+
+// --- Brand Visual DNA ---
+
+export interface BrandVisualDNA {
+  client_id: string;
+  color_primary_name?: string;
+  color_primary_hex?: string;
+  color_secondary_name?: string;
+  color_secondary_hex?: string;
+  color_accent_name?: string;
+  color_accent_hex?: string;
+  default_style: 'natural' | 'vivid';
+  default_lighting: string;
+  default_mood: string;
+  default_resolution: string;
+  preferred_archetypes: string[];
+  always_exclude: string[];
+  brand_essence?: string;
+  visual_keywords: string[];
+  industry_leader_instagram?: string;
+  is_configured: boolean;
+}
+
+export async function getBrandDNA(clientId: string): Promise<{ status: string; dna: BrandVisualDNA | null; is_configured: boolean }> {
+  const response = await fetch(`${API_BASE_URL}/studio/brand-dna/${clientId}`, {
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(response);
+}
+
+export async function saveBrandDNA(clientId: string, dna: Partial<BrandVisualDNA>): Promise<{ status: string; dna: BrandVisualDNA }> {
+  const response = await fetch(`${API_BASE_URL}/studio/brand-dna/${clientId}`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(dna)
+  });
+  return handleResponse(response);
+}
+
+// --- Image Bank ---
+
+export interface ImageBankItem {
+  id: string;
+  client_id: string;
+  image_url: string;
+  thumbnail_url?: string;
+  category: 'reference' | 'product' | 'background' | 'lifestyle' | 'competitor';
+  source: 'instagram_scrape' | 'manual_upload' | 'generated' | 'brand_assets';
+  name?: string;
+  is_favorite: boolean;
+  usage_count: number;
+  extracted_colors?: string[];
+  created_at: string;
+}
+
+export async function getImageBank(
+  clientId: string, 
+  options?: { category?: string; favoritesOnly?: boolean }
+): Promise<{ status: string; images: ImageBankItem[]; count: number }> {
+  const params = new URLSearchParams();
+  if (options?.category) params.append('category', options.category);
+  if (options?.favoritesOnly) params.append('favorites_only', 'true');
+  
+  const url = `${API_BASE_URL}/studio/image-bank/${clientId}${params.toString() ? '?' + params.toString() : ''}`;
+  const response = await fetch(url, {
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(response);
+}
+
+export async function uploadToImageBank(
+  clientId: string,
+  file: File,
+  category: ImageBankItem['category'],
+  name?: string
+): Promise<{ status: string; image: ImageBankItem }> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('category', category);
+  if (name) formData.append('name', name);
+
+  const response = await fetch(`${API_BASE_URL}/studio/image-bank/${clientId}/upload`, {
+    method: 'POST',
+    headers: getAuthHeaders(),  // Note: no Content-Type for multipart
+    body: formData
+  });
+  return handleResponse(response);
+}
+
+export async function deleteFromImageBank(clientId: string, imageId: string): Promise<{ status: string }> {
+  const response = await fetch(`${API_BASE_URL}/studio/image-bank/${clientId}/${imageId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(response);
+}
+
+export async function toggleImageFavorite(
+  clientId: string, 
+  imageId: string, 
+  isFavorite: boolean
+): Promise<{ status: string }> {
+  const response = await fetch(`${API_BASE_URL}/studio/image-bank/${clientId}/${imageId}/favorite`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ is_favorite: isFavorite })
+  });
+  return handleResponse(response);
+}
+
+// --- Pending Tasks ---
+
+export interface PendingTaskForGeneration {
+  id: string;
+  title: string;
+  format: string;
+  execution_date?: string;
+  selected_hook?: string;
+  key_elements?: string[];
+  dos?: string[];
+  donts?: string[];
+  strategic_purpose?: string;
+  description?: string;
+  generation_status: 'pending' | 'in_progress' | 'completed';
+}
+
+export async function getPendingTasks(clientId: string): Promise<{ 
+  status: string; 
+  tasks: PendingTaskForGeneration[]; 
+  count: number 
+}> {
+  const response = await fetch(`${API_BASE_URL}/studio/pending-tasks/${clientId}`, {
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(response);
+}
+
+// --- Generation Templates ---
+
+export interface GenerationTemplate {
+  id: string;
+  name: string;
+  display_name: string;
+  description?: string;
+  category: 'product' | 'lifestyle' | 'promotional' | 'minimalist' | 'editorial' | 'seasonal';
+  prompt_structure: string;
+  requires_product_image: boolean;
+  requires_style_reference: boolean;
+  recommended_model: string;
+  default_aspect_ratio: string;
+}
+
+export async function getGenerationTemplates(): Promise<{ 
+  status: string; 
+  templates: GenerationTemplate[] 
+}> {
+  const response = await fetch(`${API_BASE_URL}/studio/templates`, {
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(response);
+}
+
+// --- NanoBanana Image Generation ---
+
+export interface NanoBananaGenerateRequest {
+  client_id: string;
+  task_id: string;  // REQUIRED - must be from planning
+  template_id?: string;
+  style_reference_ids?: string[];  // IDs from image bank
+  product_image_id?: string;  // ID from image bank for high-fidelity
+  custom_prompt?: string;
+  excluded_task_fields?: string[];
+  aspect_ratio?: string;
+  resolution?: '1K' | '2K' | '4K';
+  use_pro_model?: boolean;
+}
+
+export interface NanoBananaGeneratedImage {
+  id: string;
+  image_url: string;
+  thumbnail_url?: string;
+  task_id: string;
+  aspect_ratio: string;
+  resolution: string;
+  model_used: string;
+  final_prompt: string;
+  generation_time_ms: number;
+  is_selected: boolean;
+  reference_images_used: string[];
+  thinking_images?: string[];
+  created_at: string;
+}
+
+export async function generateWithNanoBanana(
+  data: NanoBananaGenerateRequest
+): Promise<{ status: string; image: NanoBananaGeneratedImage; thinking_images?: string[] }> {
+  const response = await fetch(`${API_BASE_URL}/studio/generate`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  });
+  return handleResponse(response);
+}
+
+export async function approveGeneratedImage(imageId: string): Promise<{ 
+  status: string; 
+  image: NanoBananaGeneratedImage;
+  task_status: string;
+}> {
+  const response = await fetch(`${API_BASE_URL}/studio/approve/${imageId}`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(response);
+}
+
+export async function getTaskGeneratedImages(taskId: string): Promise<{ 
+  status: string; 
+  images: NanoBananaGeneratedImage[];
+  count: number 
+}> {
+  const response = await fetch(`${API_BASE_URL}/studio/task/${taskId}/images`, {
+    headers: getAuthHeaders(),
   });
   return handleResponse(response);
 }

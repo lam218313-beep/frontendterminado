@@ -23,7 +23,7 @@ Configure qué features tiene acceso cada plan. Edita este archivo y los cambios
 | Feature ID | Descripción | Planes con Acceso |
 |------------|-------------|-------------------|
 | `entrevista` | Formulario de entrevista inicial | free_trial, lite, basic, pro, premium |
-| `brand` | Brand Book / Manual de Marca | free_trial, lite, basic, pro, premium |
+| `brand` | Brand Book / Manual de Marca | basic, pro, premium |
 | `analisis_basico` | Lab - Vista básica | free_trial, lite, basic, pro, premium |
 | `analisis_completo` | Lab - Análisis completo con IA | basic, pro, premium |
 | `estrategia` | Mapa estratégico | pro, premium |

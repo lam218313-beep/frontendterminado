@@ -13,5 +13,6 @@ services:
       - SUPABASE_KEY=${SUPABASE_KEY}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - APIFY_TOKEN=${APIFY_TOKEN}
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
     restart: always
 

@@ -8,11 +8,11 @@ interface StudioLayoutProps {
 }
 
 const STEPS = [
-    { id: 1, label: 'Contexto' },
-    { id: 2, label: 'Estrategia' },
-    { id: 3, label: 'Assets' },
-    { id: 4, label: 'Estilo' },
-    { id: 5, label: 'Generación' },
+    { id: 1, label: 'ADN Visual' },
+    { id: 2, label: 'Banco' },
+    { id: 3, label: 'Tarea' },
+    { id: 4, label: 'Referencias' },
+    { id: 5, label: 'Generar' },
 ];
 
 export const StudioLayout: React.FC<StudioLayoutProps> = ({ children }) => {

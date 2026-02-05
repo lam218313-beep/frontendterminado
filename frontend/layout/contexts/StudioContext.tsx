@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 
-// --- DATA STRUCTURES ---
+// =============================================================================
+// DATA STRUCTURES
+// =============================================================================
 
 export interface ContextBlock {
     id: string;
@@ -10,114 +12,358 @@ export interface ContextBlock {
     type: 'interview' | 'manual' | 'analysis';
 }
 
+export interface BrandVisualDNA {
+    color_primary_name?: string;
+    color_primary_hex?: string;
+    color_secondary_name?: string;
+    color_secondary_hex?: string;
+    color_accent_name?: string;
+    color_accent_hex?: string;
+    default_style: 'natural' | 'vivid';
+    default_lighting: string;
+    default_mood: string;
+    default_resolution: string;
+    preferred_archetypes: string[];
+    always_exclude: string[];
+    brand_essence?: string;
+    visual_keywords: string[];
+    industry_leader_instagram?: string;
+    is_configured: boolean;
+}
+
+export interface ImageBankItem {
+    id: string;
+    image_url: string;
+    thumbnail_url?: string;
+    category: 'reference' | 'product' | 'background' | 'lifestyle' | 'competitor';
+    source: 'instagram_scrape' | 'manual_upload' | 'generated' | 'brand_assets';
+    name?: string;
+    is_favorite: boolean;
+    usage_count: number;
+}
+
+export interface GenerationTemplate {
+    id: string;
+    name: string;
+    display_name: string;
+    description?: string;
+    category: 'product' | 'lifestyle' | 'promotional' | 'minimalist' | 'editorial' | 'seasonal';
+    requires_product_image: boolean;
+    requires_style_reference: boolean;
+    recommended_model: string;
+    default_aspect_ratio: string;
+}
+
+export interface GeneratedImage {
+    id: string;
+    image_url: string;
+    aspect_ratio: string;
+    resolution: string;
+    model_used: string;
+    is_selected: boolean;
+    created_at: string;
+    generation_time_ms?: number;
+    thinking_images?: string[];
+}
+
+// =============================================================================
+// STUDIO STATE
+// =============================================================================
+
 export interface StudioState {
     // META
     currentStep: number;
     totalSteps: number;
+    isLoading: boolean;
+    error?: string;
 
-    // PASO 1: Contexto
+    // STEP 1: BRAND DNA (One-time setup per client)
     clientId: string;
+    brandDNA?: BrandVisualDNA;
+    isBrandDNAConfigured: boolean;
+
+    // STEP 2: IMAGE BANK (One-time + incremental per client)
+    imageBank: ImageBankItem[];
+    imageBankLoaded: boolean;
+
+    // STEP 3: TASK CONTEXT (Required - from Planning)
+    taskId: string;  // REQUIRED - must come from planning
+    taskData?: {
+        id: string;
+        title: string;
+        format: string;
+        selected_hook?: string;
+        key_elements?: string[];
+        dos?: string[];
+        donts?: string[];
+        strategic_purpose?: string;
+        description?: string;
+        execution_date?: string;
+    };
+    customPrompt: string;
+    excludedTaskFields: string[];  // Fields user chose to exclude
+
+    // STEP 4: REFERENCE SELECTION
+    selectedStyleReferences: string[];  // IDs from image bank
+    selectedProductImage?: string;  // ID from image bank (for high-fidelity)
+    selectedTemplate?: GenerationTemplate;
+    aspectRatio: string;
+    resolution: '1K' | '2K' | '4K';
+    useProModel: boolean;
+
+    // STEP 5: GENERATION RESULTS
+    generatedImages: GeneratedImage[];
+    isGenerating: boolean;
+    selectedImageId?: string;  // Image approved by user
+
+    // LEGACY SUPPORT (for backwards compatibility)
     contextBlocks: ContextBlock[];
-    customContext: string;
-
-    // PASO 2: Estrategia
-    taskId: string;
-    taskData?: any;
-    excludedTaskFields: string[]; // Fields deselected by user in Step 1
-    strategyContext: {
-        objective: string;
-        keyMessage: string;
-        targetAudience: string;
-    };
-
-    // PASO 3: Assets
-    assets: {
-        products: string[];
-        backgrounds: string[];
-        references: string[];
-    };
-
-    // PASO 4: Estilo
-    styleConfig: {
-        archetype: 'PROMO' | 'LIFESTYLE' | 'PRODUCT_FOCUS' | 'MINIMAL' | 'EDITORIAL' | 'NONE';
-        parameters: {
-            lighting: string;
-            mood: string;
-            colorPalette: string[];
-        };
-    };
 }
 
-// --- INITIAL STATE ---
+// =============================================================================
+// INITIAL STATE
+// =============================================================================
 
 const initialState: StudioState = {
     currentStep: 1,
     totalSteps: 5,
+    isLoading: false,
+
+    // Step 1
     clientId: '',
-    contextBlocks: [],
-    customContext: '',
+    isBrandDNAConfigured: false,
+
+    // Step 2
+    imageBank: [],
+    imageBankLoaded: false,
+
+    // Step 3
     taskId: '',
+    customPrompt: '',
     excludedTaskFields: [],
-    strategyContext: {
-        objective: '',
-        keyMessage: '',
-        targetAudience: '',
-    },
-    assets: {
-        products: [],
-        backgrounds: [],
-        references: [],
-    },
-    styleConfig: {
-        archetype: 'NONE',
-        parameters: {
-            lighting: 'Studio',
-            mood: 'Professional',
-            colorPalette: [],
-        },
-    },
+
+    // Step 4
+    selectedStyleReferences: [],
+    aspectRatio: '1:1',
+    resolution: '2K',
+    useProModel: false,
+
+    // Step 5
+    generatedImages: [],
+    isGenerating: false,
+
+    // Legacy
+    contextBlocks: [],
 };
 
-// --- ACTIONS ---
+// =============================================================================
+// ACTIONS
+// =============================================================================
 
 type Action =
-    | { type: 'SET_CLIENT'; payload: string }
+    // Navigation
     | { type: 'SET_STEP'; payload: number }
     | { type: 'NEXT_STEP' }
     | { type: 'PREV_STEP' }
+    | { type: 'RESET_WIZARD' }
+    
+    // Loading states
+    | { type: 'SET_LOADING'; payload: boolean }
+    | { type: 'SET_ERROR'; payload: string | undefined }
+    
+    // Step 1: Brand DNA
+    | { type: 'SET_CLIENT'; payload: string }
+    | { type: 'LOAD_BRAND_DNA'; payload: { dna?: BrandVisualDNA; isConfigured: boolean } }
+    | { type: 'UPDATE_BRAND_DNA'; payload: Partial<BrandVisualDNA> }
+    
+    // Step 2: Image Bank
+    | { type: 'LOAD_IMAGE_BANK'; payload: ImageBankItem[] }
+    | { type: 'ADD_TO_IMAGE_BANK'; payload: ImageBankItem }
+    | { type: 'REMOVE_FROM_IMAGE_BANK'; payload: string }
+    | { type: 'TOGGLE_FAVORITE'; payload: { id: string; isFavorite: boolean } }
+    
+    // Step 3: Task Context (REQUIRED)
+    | { type: 'SET_TASK'; payload: { taskId: string; taskData: any } }
+    | { type: 'SET_CUSTOM_PROMPT'; payload: string }
+    | { type: 'TOGGLE_TASK_FIELD'; payload: { field: string } }
+    
+    // Step 4: Reference Selection
+    | { type: 'TOGGLE_STYLE_REFERENCE'; payload: string }
+    | { type: 'SET_PRODUCT_IMAGE'; payload: string | undefined }
+    | { type: 'SET_TEMPLATE'; payload: GenerationTemplate | undefined }
+    | { type: 'SET_ASPECT_RATIO'; payload: string }
+    | { type: 'SET_RESOLUTION'; payload: '1K' | '2K' | '4K' }
+    | { type: 'SET_USE_PRO_MODEL'; payload: boolean }
+    
+    // Step 5: Generation
+    | { type: 'SET_GENERATING'; payload: boolean }
+    | { type: 'ADD_GENERATED_IMAGE'; payload: GeneratedImage }
+    | { type: 'SET_GENERATED_IMAGES'; payload: GeneratedImage[] }
+    | { type: 'SELECT_IMAGE'; payload: string }
+    | { type: 'APPROVE_IMAGE'; payload: string }
+    
+    // Legacy support
+    | { type: 'LOAD_CONTEXT_BLOCKS'; payload: ContextBlock[] }
     | { type: 'TOGGLE_BLOCK'; payload: { id: string; block?: ContextBlock } }
     | { type: 'SET_CUSTOM_CONTEXT'; payload: string }
-    | { type: 'LOAD_CONTEXT_BLOCKS'; payload: ContextBlock[] }
-    | { type: 'SET_INITIAL_DATA'; payload: { clientId: string; taskId?: string; taskData?: any } }
-    | { type: 'TOGGLE_TASK_FIELD'; payload: { field: string } }
-    | { type: 'RESET_WIZARD' };
+    | { type: 'SET_INITIAL_DATA'; payload: { clientId: string; taskId?: string; taskData?: any } };
 
-// --- REDUCER ---
+// =============================================================================
+// REDUCER
+// =============================================================================
 
 const studioReducer = (state: StudioState, action: Action): StudioState => {
     switch (action.type) {
-        case 'SET_CLIENT':
-            return { ...state, clientId: action.payload, contextBlocks: [] }; // Reset blocks on client change
+        // Navigation
         case 'SET_STEP':
             return { ...state, currentStep: action.payload };
         case 'NEXT_STEP':
             return { ...state, currentStep: Math.min(state.currentStep + 1, state.totalSteps) };
         case 'PREV_STEP':
             return { ...state, currentStep: Math.max(state.currentStep - 1, 1) };
-        case 'TOGGLE_BLOCK': {
-            const { id, block } = action.payload;
-            const exists = state.contextBlocks.find((b) => b.id === id);
-
-            if (exists) {
-                // Toggle existing selection
+        case 'RESET_WIZARD':
+            return { ...initialState };
+        
+        // Loading
+        case 'SET_LOADING':
+            return { ...state, isLoading: action.payload };
+        case 'SET_ERROR':
+            return { ...state, error: action.payload };
+        
+        // Step 1: Brand DNA
+        case 'SET_CLIENT':
+            return { 
+                ...state, 
+                clientId: action.payload, 
+                // Reset dependent state when client changes
+                brandDNA: undefined,
+                isBrandDNAConfigured: false,
+                imageBank: [],
+                imageBankLoaded: false,
+                contextBlocks: [] 
+            };
+        case 'LOAD_BRAND_DNA':
+            return { 
+                ...state, 
+                brandDNA: action.payload.dna,
+                isBrandDNAConfigured: action.payload.isConfigured 
+            };
+        case 'UPDATE_BRAND_DNA':
+            return { 
+                ...state, 
+                brandDNA: { ...state.brandDNA, ...action.payload } as BrandVisualDNA 
+            };
+        
+        // Step 2: Image Bank
+        case 'LOAD_IMAGE_BANK':
+            return { ...state, imageBank: action.payload, imageBankLoaded: true };
+        case 'ADD_TO_IMAGE_BANK':
+            return { ...state, imageBank: [action.payload, ...state.imageBank] };
+        case 'REMOVE_FROM_IMAGE_BANK':
+            return { 
+                ...state, 
+                imageBank: state.imageBank.filter(img => img.id !== action.payload),
+                selectedStyleReferences: state.selectedStyleReferences.filter(id => id !== action.payload),
+                selectedProductImage: state.selectedProductImage === action.payload ? undefined : state.selectedProductImage
+            };
+        case 'TOGGLE_FAVORITE':
+            return {
+                ...state,
+                imageBank: state.imageBank.map(img => 
+                    img.id === action.payload.id 
+                        ? { ...img, is_favorite: action.payload.isFavorite }
+                        : img
+                )
+            };
+        
+        // Step 3: Task Context
+        case 'SET_TASK':
+            return { 
+                ...state, 
+                taskId: action.payload.taskId,
+                taskData: action.payload.taskData,
+                excludedTaskFields: [],  // Reset exclusions for new task
+                // Set aspect ratio based on task format
+                aspectRatio: getAspectRatioForFormat(action.payload.taskData?.format)
+            };
+        case 'SET_CUSTOM_PROMPT':
+            return { ...state, customPrompt: action.payload };
+        case 'TOGGLE_TASK_FIELD': {
+            const field = action.payload.field;
+            const isExcluded = state.excludedTaskFields.includes(field);
+            return {
+                ...state,
+                excludedTaskFields: isExcluded
+                    ? state.excludedTaskFields.filter(f => f !== field)
+                    : [...state.excludedTaskFields, field]
+            };
+        }
+        
+        // Step 4: Reference Selection
+        case 'TOGGLE_STYLE_REFERENCE': {
+            const id = action.payload;
+            const isSelected = state.selectedStyleReferences.includes(id);
+            if (isSelected) {
                 return {
                     ...state,
-                    contextBlocks: state.contextBlocks.map((b) =>
+                    selectedStyleReferences: state.selectedStyleReferences.filter(ref => ref !== id)
+                };
+            } else if (state.selectedStyleReferences.length < 6) {  // Max 6 style refs
+                return {
+                    ...state,
+                    selectedStyleReferences: [...state.selectedStyleReferences, id]
+                };
+            }
+            return state;
+        }
+        case 'SET_PRODUCT_IMAGE':
+            return { ...state, selectedProductImage: action.payload };
+        case 'SET_TEMPLATE':
+            return { ...state, selectedTemplate: action.payload };
+        case 'SET_ASPECT_RATIO':
+            return { ...state, aspectRatio: action.payload };
+        case 'SET_RESOLUTION':
+            return { ...state, resolution: action.payload };
+        case 'SET_USE_PRO_MODEL':
+            return { ...state, useProModel: action.payload };
+        
+        // Step 5: Generation
+        case 'SET_GENERATING':
+            return { ...state, isGenerating: action.payload };
+        case 'ADD_GENERATED_IMAGE':
+            return { 
+                ...state, 
+                generatedImages: [action.payload, ...state.generatedImages],
+                isGenerating: false 
+            };
+        case 'SET_GENERATED_IMAGES':
+            return { ...state, generatedImages: action.payload };
+        case 'SELECT_IMAGE':
+            return { ...state, selectedImageId: action.payload };
+        case 'APPROVE_IMAGE':
+            return { 
+                ...state, 
+                selectedImageId: action.payload,
+                generatedImages: state.generatedImages.map(img => ({
+                    ...img,
+                    is_selected: img.id === action.payload
+                }))
+            };
+        
+        // Legacy support
+        case 'LOAD_CONTEXT_BLOCKS':
+            return { ...state, contextBlocks: action.payload };
+        case 'TOGGLE_BLOCK': {
+            const { id, block } = action.payload;
+            const exists = state.contextBlocks.find(b => b.id === id);
+            if (exists) {
+                return {
+                    ...state,
+                    contextBlocks: state.contextBlocks.map(b =>
                         b.id === id ? { ...b, selected: !b.selected } : b
                     ),
                 };
             } else if (block) {
-                // Add new block if provided (and not present)
                 return {
                     ...state,
                     contextBlocks: [...state.contextBlocks, { ...block, selected: true }]
@@ -125,43 +371,43 @@ const studioReducer = (state: StudioState, action: Action): StudioState => {
             }
             return state;
         }
-        case 'TOGGLE_TASK_FIELD': {
-            const { field } = action.payload;
-            const isExcluded = state.excludedTaskFields.includes(field);
-            return {
-                ...state,
-                excludedTaskFields: isExcluded
-                    ? state.excludedTaskFields.filter(f => f !== field) // Remove from excluded (select it)
-                    : [...state.excludedTaskFields, field] // Add to excluded (deselect it)
-            };
-        }
-        case 'LOAD_CONTEXT_BLOCKS':
-            return {
-                ...state,
-                contextBlocks: action.payload
-            };
         case 'SET_CUSTOM_CONTEXT':
-            return { ...state, customContext: action.payload };
+            return { ...state, customPrompt: action.payload };
         case 'SET_INITIAL_DATA':
-            // Pre-fills the wizard with data from an external source (e.g. Content Factory)
             return {
                 ...state,
                 clientId: action.payload.clientId,
                 taskId: action.payload.taskId || '',
                 taskData: action.payload.taskData,
-                excludedTaskFields: [], // Reset exclusion on new data load
-                // We can mapped the incoming task data to specific steps here if needed
-                // For now we just ensure client is set so Step 1 works
+                excludedTaskFields: [],
+                aspectRatio: getAspectRatioForFormat(action.payload.taskData?.format),
                 currentStep: 1
             };
-        case 'RESET_WIZARD':
-            return initialState;
+        
         default:
             return state;
     }
 };
 
-// --- CONTEXT ---
+// =============================================================================
+// HELPERS
+// =============================================================================
+
+function getAspectRatioForFormat(format?: string): string {
+    const formatMap: Record<string, string> = {
+        'post': '1:1',
+        'story': '9:16',
+        'reel': '9:16',
+        'cover': '16:9',
+        'portrait': '4:5',
+        'landscape': '3:2',
+    };
+    return formatMap[format || 'post'] || '1:1';
+}
+
+// =============================================================================
+// CONTEXT
+// =============================================================================
 
 interface StudioContextType {
     state: StudioState;
@@ -186,4 +432,21 @@ export const useStudio = () => {
         throw new Error('useStudio must be used within a StudioProvider');
     }
     return context;
+};
+
+// =============================================================================
+// CUSTOM HOOKS FOR COMMON OPERATIONS
+// =============================================================================
+
+export const useStudioValidation = () => {
+    const { state } = useStudio();
+    
+    return {
+        canProceedToStep2: state.isBrandDNAConfigured || state.clientId !== '',
+        canProceedToStep3: state.imageBankLoaded,
+        canProceedToStep4: state.taskId !== '',  // Task is REQUIRED
+        canProceedToStep5: state.taskId !== '' && state.selectedStyleReferences.length > 0,
+        canGenerate: state.taskId !== '' && !state.isGenerating,
+        isTaskRequired: true,  // Always true - generation requires a task
+    };
 };

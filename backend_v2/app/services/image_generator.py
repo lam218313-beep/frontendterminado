@@ -1,75 +1,43 @@
 """
 Image Generation Service
 ========================
-Handles AI image generation using Google Imagen 3 with context inheritance.
+Handles AI image generation using OpenAI DALL-E 3 with context inheritance.
 """
 
-import os
 import logging
 import uuid
-import json
+import base64
+import httpx
 from typing import Dict, Any, Optional, List
 from datetime import datetime
-import google.generativeai as genai
-from io import BytesIO
-import base64
+from openai import AsyncOpenAI
 
 from .database import db
+from ..config import settings
 
 logger = logging.getLogger(__name__)
 
-# Configure Google AI
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-if GOOGLE_API_KEY:
-    genai.configure(api_key=GOOGLE_API_KEY)
-else:
-    logger.warning("⚠️ GOOGLE_API_KEY not found in environment variables")
-
-
-# Prompt Template
-IMAGE_GENERATION_PROMPT_TEMPLATE = """
-Generate a high-quality {style_preset} image for social media content.
-
-BRAND CONTEXT:
-- Business: {business_name}
-- Industry: {industry}
-- Target Audience: {target_audience}
-- Brand Voice: {brand_voice}
-
-STRATEGIC CONTEXT:
-- Objective: {objective_context}
-- Strategy: {strategy_context}
-- Concept: {concept_label}
-- Strategic Purpose: {strategic_rationale}
-
-CONTENT DETAILS:
-- Format: {content_format} (post/reel/story)
-- Hook: {selected_hook}
-- Key Elements to Show: {key_elements_list}
-- Narrative Structure: {narrative_structure}
-
-VISUAL REQUIREMENTS:
-- Description: {visual_description}
-- Mood/Tone: {mood_tone}
-- Color Palette: {color_suggestions}
-
-USER ADDITIONS:
-{user_custom_input}
-
-TECHNICAL SPECS:
-- Aspect Ratio: {aspect_ratio}
-- Style: {style_preset}
-
-Create a visually compelling image that embodies this strategy and resonates with the target audience.
-"""
-
 
 class ImageGenerationService:
-    """Service for generating images with Google Imagen 3"""
+    """Service for generating images with OpenAI DALL-E 3"""
     
     def __init__(self):
-        self.model_name = "imagen-3.0-generate-001"
-        self.cost_per_image = 0.03  # USD
+        self.model_name = "dall-e-3"
+        self.cost_per_image = 0.04  # USD for 1024x1024 standard
+        self.cost_hd = 0.08  # USD for 1024x1024 HD
+    
+    def _get_dalle_size(self, aspect_ratio: str) -> str:
+        """
+        Map aspect ratio to DALL-E 3 supported sizes.
+        DALL-E 3 supports: 1024x1024, 1792x1024, 1024x1792
+        """
+        size_map = {
+            "1:1": "1024x1024",      # Square (post)
+            "16:9": "1792x1024",     # Landscape (cover)
+            "9:16": "1024x1792",     # Portrait (story/reel)
+            "4:3": "1024x1024",      # Fallback to square
+        }
+        return size_map.get(aspect_ratio, "1024x1024")
     
     async def generate_image(
         self,
@@ -84,52 +52,44 @@ class ImageGenerationService:
         negative_prompt: str = "text, watermark, blurry, low quality, distorted"
     ) -> Dict[str, Any]:
         """
-        Generate an image using Google Imagen 3 with full context inheritance.
-        
-        Args:
-            client_id: Client identifier
-            task_id: Optional task ID for context
-            concept_id: Optional concept ID for strategy context
-            user_additions: Additional user-provided details
-            style_preset: Visual style (realistic, illustration, 3d_render, minimalist, vintage)
-            aspect_ratio: Image proportion (1:1, 16:9, 9:16, 4:3)
-            mood_tone: Desired atmosphere
-            color_suggestions: Color palette guidance
-            negative_prompt: Elements to avoid
-            
-        Returns:
-            Dictionary with generated image data
+        Generate an image using OpenAI DALL-E 3 with full context inheritance.
         """
         try:
-            logger.info(f"🎨 Starting image generation for client {client_id}")
+            logger.info(f"🎨 Starting DALL-E 3 image generation for client {client_id}")
             
             # 1. Build context from inherited data
             context = await self._build_context(client_id, task_id, concept_id)
             
             # 2. Build final prompt
-            base_prompt = self._build_base_prompt(context, user_additions, style_preset, aspect_ratio, mood_tone, color_suggestions)
+            base_prompt = self._build_base_prompt(
+                context, user_additions, style_preset, 
+                aspect_ratio, mood_tone, color_suggestions
+            )
             
-            # 3. Generate image with Google Imagen 3
+            # 3. Generate image with DALL-E 3
             start_time = datetime.now()
-            image_data = await self._call_imagen_api(
+            image_data, revised_prompt = await self._call_dalle_api(
                 prompt=base_prompt,
-                negative_prompt=negative_prompt,
-                aspect_ratio=aspect_ratio
+                aspect_ratio=aspect_ratio,
+                style_preset=style_preset
             )
             generation_time_ms = int((datetime.now() - start_time).total_seconds() * 1000)
             
             # 4. Save to Supabase Storage
-            storage_path = f"generated_images/{client_id}/{uuid.uuid4()}.png"
+            image_id = str(uuid.uuid4())
+            storage_path = f"generated_images/{client_id}/{image_id}.png"
             image_url = await self._save_to_storage(image_data, storage_path)
             
             # 5. Save metadata to database
             image_record = await self._save_to_database(
+                image_id=image_id,
                 client_id=client_id,
                 task_id=task_id,
                 concept_id=concept_id,
                 base_prompt=context.get("base_prompt_summary", ""),
                 user_additions=user_additions,
                 final_prompt=base_prompt,
+                revised_prompt=revised_prompt,
                 image_url=image_url,
                 storage_path=storage_path,
                 style_preset=style_preset,
@@ -187,6 +147,7 @@ class ImageGenerationService:
                 context["industry"] = data.get("industry", context["industry"])
                 context["target_audience"] = data.get("targetAudience", context["target_audience"])
                 context["brand_voice"] = data.get("brandVoice", context["brand_voice"])
+                logger.info(f"📋 Loaded interview context for {context['business_name']}")
         except Exception as e:
             logger.warning(f"Could not fetch interview data: {e}")
         
@@ -197,11 +158,16 @@ class ImageGenerationService:
                 if task:
                     context["content_format"] = task.get("format", "post")
                     context["selected_hook"] = task.get("selected_hook", "")
-                    context["key_elements_list"] = ", ".join(task.get("key_elements", []))
+                    key_elements = task.get("key_elements", [])
+                    if isinstance(key_elements, list):
+                        context["key_elements_list"] = ", ".join(key_elements)
+                    else:
+                        context["key_elements_list"] = str(key_elements) if key_elements else ""
                     context["narrative_structure"] = task.get("narrative_structure", "")
                     context["visual_description"] = task.get("description", "")
                     # Override concept_id if task has one
                     concept_id = task.get("concept_id") or concept_id
+                    logger.info(f"📋 Loaded task context: {task.get('title', 'N/A')}")
             except Exception as e:
                 logger.warning(f"Could not fetch task data: {e}")
         
@@ -213,19 +179,21 @@ class ImageGenerationService:
                 
                 if concept:
                     context["concept_label"] = concept.get("label", "")
-                    context["strategic_rationale"] = concept.get("strategic_rationale", "")
+                    context["strategic_rationale"] = concept.get("strategic_rationale", concept.get("description", ""))
                     
                     # Find parent strategy
-                    parent_id = concept.get("parentId")
+                    parent_id = concept.get("parent_id") or concept.get("parentId")
                     strategy = next((n for n in nodes if n["id"] == parent_id), None)
                     if strategy:
                         context["strategy_context"] = strategy.get("label", "")
                         
                         # Find grandparent objective
-                        grandparent_id = strategy.get("parentId")
+                        grandparent_id = strategy.get("parent_id") or strategy.get("parentId")
                         objective = next((n for n in nodes if n["id"] == grandparent_id), None)
                         if objective:
                             context["objective_context"] = objective.get("label", "")
+                    
+                    logger.info(f"📋 Loaded strategy context: {context['concept_label']}")
             except Exception as e:
                 logger.warning(f"Could not fetch strategy data: {e}")
         
@@ -245,102 +213,168 @@ class ImageGenerationService:
     ) -> str:
         """
         Build the final prompt from context and user inputs.
+        Optimized for DALL-E 3 which prefers concise, descriptive prompts.
         """
-        # Fill in template
-        prompt = IMAGE_GENERATION_PROMPT_TEMPLATE.format(
-            style_preset=style_preset,
-            business_name=context.get("business_name", ""),
-            industry=context.get("industry", ""),
-            target_audience=context.get("target_audience", ""),
-            brand_voice=context.get("brand_voice", ""),
-            objective_context=context.get("objective_context", ""),
-            strategy_context=context.get("strategy_context", ""),
-            concept_label=context.get("concept_label", ""),
-            strategic_rationale=context.get("strategic_rationale", ""),
-            content_format=context.get("content_format", ""),
-            selected_hook=context.get("selected_hook", ""),
-            key_elements_list=context.get("key_elements_list", ""),
-            narrative_structure=context.get("narrative_structure", ""),
-            visual_description=context.get("visual_description", ""),
-            mood_tone=mood_tone or "professional and engaging",
-            color_suggestions=color_suggestions or "brand-appropriate colors",
-            user_custom_input=user_additions or "No additional requirements",
-            aspect_ratio=aspect_ratio
-        )
+        # Map style presets to descriptive terms
+        style_descriptions = {
+            "realistic": "photorealistic, professional photography",
+            "illustration": "digital illustration, artistic, vibrant",
+            "3d_render": "3D rendered, modern, cinematic lighting",
+            "minimalist": "minimalist, clean, simple, elegant",
+            "vintage": "vintage aesthetic, retro, nostalgic tones"
+        }
         
-        return prompt.strip()
+        style_desc = style_descriptions.get(style_preset, "professional")
+        
+        # Build a concise prompt for DALL-E 3
+        prompt_parts = []
+        
+        # Core visual description
+        if context.get("visual_description"):
+            prompt_parts.append(context["visual_description"])
+        
+        # Brand context (condensed)
+        brand_context = f"for {context['business_name']}"
+        if context.get("industry") and context["industry"] != "General":
+            brand_context += f" ({context['industry']})"
+        prompt_parts.append(brand_context)
+        
+        # Concept/purpose
+        if context.get("concept_label"):
+            prompt_parts.append(f"representing '{context['concept_label']}'")
+        
+        # Key elements
+        if context.get("key_elements_list"):
+            prompt_parts.append(f"featuring: {context['key_elements_list']}")
+        
+        # Mood and colors
+        mood = mood_tone or context.get("brand_voice", "professional")
+        prompt_parts.append(f"Mood: {mood}")
+        
+        if color_suggestions:
+            prompt_parts.append(f"Color palette: {color_suggestions}")
+        
+        # User additions
+        if user_additions:
+            prompt_parts.append(user_additions)
+        
+        # Style
+        prompt_parts.append(f"Style: {style_desc}")
+        
+        # Technical requirements
+        prompt_parts.append("High quality, suitable for social media. No text, watermarks, or logos.")
+        
+        final_prompt = ". ".join(prompt_parts)
+        
+        logger.info(f"📝 Built prompt ({len(final_prompt)} chars)")
+        
+        return final_prompt
     
-    async def _call_imagen_api(
+    async def _call_dalle_api(
         self,
         prompt: str,
-        negative_prompt: str,
-        aspect_ratio: str
-    ) -> bytes:
+        aspect_ratio: str,
+        style_preset: str
+    ) -> tuple[bytes, str]:
         """
-        Call Google Imagen 3 API to generate image.
+        Call OpenAI DALL-E 3 API to generate image.
         
-        Note: As of Jan 2026, Google Imagen 3 is available through Vertex AI.
-        This is a placeholder implementation. You'll need to use the actual
-        Vertex AI Python SDK or REST API.
+        Returns:
+            Tuple of (image_bytes, revised_prompt)
         """
+        if not settings.OPENAI_API_KEY:
+            raise ValueError("OPENAI_API_KEY not configured in environment")
+        
         try:
-            # TODO: Replace with actual Vertex AI Imagen 3 call
-            # For now, this is a placeholder that would need the proper SDK
+            # Determine size from aspect ratio
+            size = self._get_dalle_size(aspect_ratio)
             
-            # Example using Vertex AI (requires vertex-ai package):
-            # from vertexai.preview.vision_models import ImageGenerationModel
-            # model = ImageGenerationModel.from_pretrained("imagen-3.0-generate-001")
-            # response = model.generate_images(
-            #     prompt=prompt,
-            #     negative_prompt=negative_prompt,
-            #     aspect_ratio=aspect_ratio,
-            #     number_of_images=1
-            # )
-            # return response.images[0]._image_bytes
+            # Determine quality (use standard for faster generation)
+            quality = "standard"  # Options: "standard" or "hd"
             
-            logger.warning("⚠️ Imagen 3 API call is a placeholder. Implement actual Vertex AI integration.")
+            # DALL-E 3 style parameter
+            # "vivid" = hyper-real and dramatic
+            # "natural" = more natural, less hyper-real
+            dalle_style = "natural" if style_preset in ["realistic", "minimalist"] else "vivid"
             
-            # For development: return a placeholder
-            # In production, this should call the actual API
-            raise NotImplementedError(
-                "Google Imagen 3 API integration pending. "
-                "Please configure Vertex AI credentials and implement the actual API call."
-            )
+            logger.info(f"🖼️ Calling DALL-E 3: size={size}, quality={quality}, style={dalle_style}")
+            
+            async with AsyncOpenAI(api_key=settings.OPENAI_API_KEY) as client:
+                response = await client.images.generate(
+                    model="dall-e-3",
+                    prompt=prompt,
+                    size=size,
+                    quality=quality,
+                    style=dalle_style,
+                    n=1,
+                    response_format="url"
+                )
+            
+            # Get the image URL and revised prompt
+            image_url = response.data[0].url
+            revised_prompt = response.data[0].revised_prompt or prompt
+            
+            logger.info(f"📥 DALL-E 3 returned image, downloading...")
+            
+            # Download the image
+            async with httpx.AsyncClient() as http_client:
+                img_response = await http_client.get(image_url, timeout=60.0)
+                img_response.raise_for_status()
+                image_data = img_response.content
+            
+            logger.info(f"✅ Image downloaded: {len(image_data)} bytes")
+            
+            return image_data, revised_prompt
             
         except Exception as e:
-            logger.error(f"Imagen API call failed: {e}")
+            logger.error(f"❌ DALL-E 3 API call failed: {e}")
             raise
     
     async def _save_to_storage(self, image_data: bytes, storage_path: str) -> str:
         """
         Save generated image to Supabase Storage.
+        Uses admin_client (service role) to bypass RLS.
         """
         try:
+            # Use admin_client for storage operations (bypasses RLS)
+            storage_client = db.admin_client or db.client
+            
+            if not storage_client:
+                # Fallback: return a data URL if no storage configured
+                data_url = f"data:image/png;base64,{base64.b64encode(image_data).decode()}"
+                logger.warning("⚠️ No Supabase client, returning data URL")
+                return data_url
+            
             # Upload to Supabase Storage
-            response = db.client.storage.from_("generated-images").upload(
+            response = storage_client.storage.from_("generated-images").upload(
                 path=storage_path,
                 file=image_data,
-                file_options={"content-type": "image/png"}
+                file_options={"content-type": "image/png", "upsert": "true"}
             )
             
             # Get public URL
-            public_url = db.client.storage.from_("generated-images").get_public_url(storage_path)
+            public_url = storage_client.storage.from_("generated-images").get_public_url(storage_path)
             
             logger.info(f"✅ Image saved to storage: {storage_path}")
             return public_url
             
         except Exception as e:
             logger.error(f"Storage upload failed: {e}")
-            raise
+            # Fallback to data URL
+            data_url = f"data:image/png;base64,{base64.b64encode(image_data).decode()}"
+            logger.warning("⚠️ Using data URL fallback")
+            return data_url
     
     async def _save_to_database(
         self,
+        image_id: str,
         client_id: str,
         task_id: Optional[str],
         concept_id: Optional[str],
         base_prompt: str,
         user_additions: str,
         final_prompt: str,
+        revised_prompt: str,
         image_url: str,
         storage_path: str,
         style_preset: str,
@@ -354,41 +388,47 @@ class ImageGenerationService:
         """
         Save image metadata to database.
         """
+        record = {
+            "id": image_id,
+            "client_id": client_id,
+            "task_id": task_id,
+            "concept_id": concept_id,
+            "base_prompt": base_prompt,
+            "user_additions": user_additions,
+            "final_prompt": final_prompt,
+            "revised_prompt": revised_prompt,
+            "image_url": image_url,
+            "storage_path": storage_path,
+            "style_preset": style_preset,
+            "aspect_ratio": aspect_ratio,
+            "mood_tone": mood_tone,
+            "negative_prompt": negative_prompt,
+            "generation_model": self.model_name,
+            "cost_usd": self.cost_per_image,
+            "generation_time_ms": generation_time_ms,
+            "is_selected": False,
+            "objective_context": objective_context,
+            "strategy_context": strategy_context,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
         try:
-            record = {
-                "id": str(uuid.uuid4()),
-                "client_id": client_id,
-                "task_id": task_id,
-                "concept_id": concept_id,
-                "base_prompt": base_prompt,
-                "user_additions": user_additions,
-                "final_prompt": final_prompt,
-                "image_url": image_url,
-                "storage_path": storage_path,
-                "style_preset": style_preset,
-                "aspect_ratio": aspect_ratio,
-                "negative_prompt": negative_prompt,
-                "generation_model": self.model_name,
-                "cost_usd": self.cost_per_image,
-                "generation_time_ms": generation_time_ms,
-                "is_selected": False,
-                "objective_context": objective_context,
-                "strategy_context": strategy_context,
-                "created_at": datetime.utcnow().isoformat()
-            }
-            
-            response = db.client.table("generated_images").insert(record).execute()
-            
-            logger.info(f"✅ Image metadata saved to database: {record['id']}")
-            return response.data[0] if response.data else record
-            
+            if db.client:
+                response = db.client.table("generated_images").insert(record).execute()
+                logger.info(f"✅ Image metadata saved to database: {record['id']}")
+                return response.data[0] if response.data else record
+            else:
+                logger.warning("⚠️ No database client, returning record without persistence")
+                return record
         except Exception as e:
             logger.error(f"Database save failed: {e}")
-            raise
+            return record
     
     async def get_images_for_task(self, task_id: str) -> List[Dict[str, Any]]:
         """Get all generated images for a specific task."""
         try:
+            if not db.client:
+                return []
             response = db.client.table("generated_images")\
                 .select("*")\
                 .eq("task_id", task_id)\
@@ -407,6 +447,8 @@ class ImageGenerationService:
     ) -> List[Dict[str, Any]]:
         """Get recent generated images for a client (for gallery)."""
         try:
+            if not db.client:
+                return []
             response = db.client.table("generated_images")\
                 .select("*")\
                 .eq("client_id", client_id)\
@@ -422,6 +464,9 @@ class ImageGenerationService:
     async def select_image_for_task(self, image_id: str, task_id: str) -> bool:
         """Mark an image as selected for a task."""
         try:
+            if not db.client:
+                return False
+                
             # Unselect any previously selected images for this task
             db.client.table("generated_images")\
                 .update({"is_selected": False})\
@@ -445,6 +490,44 @@ class ImageGenerationService:
             
         except Exception as e:
             logger.error(f"Failed to select image: {e}")
+            return False
+    
+    async def delete_image(self, image_id: str) -> bool:
+        """Delete an image from storage and database."""
+        try:
+            if not db.client:
+                return False
+            
+            # Get image record to find storage path
+            response = db.client.table("generated_images")\
+                .select("storage_path")\
+                .eq("id", image_id)\
+                .single()\
+                .execute()
+            
+            if response.data:
+                storage_path = response.data.get("storage_path")
+                
+                # Delete from storage
+                if storage_path and not storage_path.startswith("data:"):
+                    try:
+                        db.client.storage.from_("generated-images").remove([storage_path])
+                    except Exception as e:
+                        logger.warning(f"Could not delete from storage: {e}")
+                
+                # Delete from database
+                db.client.table("generated_images")\
+                    .delete()\
+                    .eq("id", image_id)\
+                    .execute()
+                
+                logger.info(f"✅ Image {image_id} deleted")
+                return True
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"Failed to delete image: {e}")
             return False
 
 
