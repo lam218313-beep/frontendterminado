@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from typing import Dict, List, Any, Optional
 from pydantic import BaseModel
 from ..services.context_builder import context_builder
-from ..services.nanobanana_service import nanobanana_service
+from ..services.nanobanana_service_v2 import nanobanana_service_v2 as nanobanana_service
 from ..services.database import db
 import logging
 import uuid
@@ -41,16 +41,26 @@ class BrandVisualDNACreate(BaseModel):
     industry_leader_name: Optional[str] = None
 
 
+class CameraSettings(BaseModel):
+    """Camera and composition settings"""
+    angle: Optional[str] = None  # eye-level, 45-degree, low-angle, high-angle
+    shot: Optional[str] = None   # close-up, medium, wide, macro
+    lens: Optional[str] = None   # 35mm, 50mm portrait, 85mm bokeh
+    perspective: Optional[str] = None  # frontal, three-quarter, profile
+
+
 class GenerateImageRequest(BaseModel):
-    """Schema for image generation request"""
+    """Schema for image generation request - NanoBanana v2"""
     task_id: str  # REQUIRED - must link to a task
-    template_id: Optional[str] = None
+    template_id: Optional[str] = None  # Deprecated, use archetype
+    archetype: Optional[str] = None  # product_hero, lifestyle, promotional, minimalist, editorial
     reference_image_ids: List[str] = []
     product_image_id: Optional[str] = None
     custom_prompt: str = ""
     aspect_ratio: Optional[str] = None
-    resolution: str = "2K"
+    resolution: str = "2K"  # 1K, 2K, 4K
     use_pro_model: bool = False
+    camera_settings: Optional[CameraSettings] = None
 
 
 # =============================================================================
@@ -301,12 +311,48 @@ async def get_pending_tasks(client_id: str) -> Dict[str, Any]:
 
 @router.get("/templates")
 async def get_generation_templates(category: Optional[str] = None) -> Dict[str, Any]:
-    """Get available generation templates"""
+    """Get available generation templates (archetypes)"""
     try:
         templates = await nanobanana_service.get_templates(category)
         return {"data": templates, "total": len(templates)}
     except Exception as e:
         logger.error(f"Error fetching templates: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/generation-options")
+async def get_generation_options() -> Dict[str, Any]:
+    """
+    Get all available generation options for the UI.
+    
+    Returns camera options, lighting presets, moods, aspect ratios, etc.
+    """
+    try:
+        return {
+            "camera_options": nanobanana_service.get_camera_options(),
+            "lighting_presets": nanobanana_service.get_lighting_presets(),
+            "mood_options": nanobanana_service.get_mood_options(),
+            "aspect_ratios": nanobanana_service.get_valid_aspect_ratios(),
+            "format_mappings": nanobanana_service.get_format_mappings(),
+            "resolutions": ["1K", "2K", "4K"],
+            "archetypes": await nanobanana_service.get_templates(),
+            "models": {
+                "flash": {
+                    "id": "flash",
+                    "name": "NanoBanana Flash",
+                    "description": "Rápido, ideal para alto volumen",
+                    "max_references": 3
+                },
+                "pro": {
+                    "id": "pro",
+                    "name": "NanoBanana Pro",
+                    "description": "Profesional con modo thinking, hasta 14 referencias",
+                    "max_references": 14
+                }
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error fetching generation options: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -317,9 +363,15 @@ async def get_generation_templates(category: Optional[str] = None) -> Dict[str, 
 @router.post("/generate")
 async def generate_image(request: GenerateImageRequest) -> Dict[str, Any]:
     """
-    Generate an image for a task using NanoBanana.
+    Generate an image for a task using NanoBanana v2.
     
     IMPORTANT: task_id is required - all generations must be linked to a planning task.
+    
+    New in v2:
+    - archetype: Visual archetype (product_hero, lifestyle, promotional, minimalist, editorial)
+    - camera_settings: Camera angle, shot type, lens, perspective
+    - Supports all aspect ratios: 1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9
+    - Proper reference image support (up to 14 with Pro model)
     """
     try:
         if not request.task_id:
@@ -328,15 +380,22 @@ async def generate_image(request: GenerateImageRequest) -> Dict[str, Any]:
                 detail="task_id is required - image generation must be linked to a planning task"
             )
         
+        # Convert camera_settings to dict if provided
+        camera_settings_dict = None
+        if request.camera_settings:
+            camera_settings_dict = request.camera_settings.model_dump(exclude_none=True)
+        
         result = await nanobanana_service.generate_for_task(
             task_id=request.task_id,
             template_id=request.template_id,
+            archetype=request.archetype,
             reference_image_ids=request.reference_image_ids,
             product_image_id=request.product_image_id,
             custom_prompt=request.custom_prompt,
             aspect_ratio=request.aspect_ratio,
             resolution=request.resolution,
-            use_pro_model=request.use_pro_model
+            use_pro_model=request.use_pro_model,
+            camera_settings=camera_settings_dict
         )
         
         return result

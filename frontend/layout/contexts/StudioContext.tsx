@@ -107,9 +107,16 @@ export interface StudioState {
     selectedStyleReferences: string[];  // IDs from image bank
     selectedProductImage?: string;  // ID from image bank (for high-fidelity)
     selectedTemplate?: GenerationTemplate;
+    archetype: string;  // product_hero, lifestyle, promotional, minimalist, editorial
     aspectRatio: string;
     resolution: '1K' | '2K' | '4K';
     useProModel: boolean;
+    cameraSettings: {
+        angle?: string;
+        shot?: string;
+        lens?: string;
+        perspective?: string;
+    };
 
     // STEP 5: GENERATION RESULTS
     generatedImages: GeneratedImage[];
@@ -144,9 +151,11 @@ const initialState: StudioState = {
 
     // Step 4
     selectedStyleReferences: [],
+    archetype: 'lifestyle',
     aspectRatio: '1:1',
     resolution: '2K',
     useProModel: false,
+    cameraSettings: {},
 
     // Step 5
     generatedImages: [],
@@ -191,9 +200,12 @@ type Action =
     | { type: 'TOGGLE_STYLE_REFERENCE'; payload: string }
     | { type: 'SET_PRODUCT_IMAGE'; payload: string | undefined }
     | { type: 'SET_TEMPLATE'; payload: GenerationTemplate | undefined }
+    | { type: 'SET_ARCHETYPE'; payload: string }
     | { type: 'SET_ASPECT_RATIO'; payload: string }
     | { type: 'SET_RESOLUTION'; payload: '1K' | '2K' | '4K' }
     | { type: 'SET_USE_PRO_MODEL'; payload: boolean }
+    | { type: 'SET_CAMERA_SETTING'; payload: { key: 'angle' | 'shot' | 'lens' | 'perspective'; value: string | undefined } }
+    | { type: 'RESET_CAMERA_SETTINGS' }
     
     // Step 5: Generation
     | { type: 'SET_GENERATING'; payload: boolean }
@@ -320,12 +332,24 @@ const studioReducer = (state: StudioState, action: Action): StudioState => {
             return { ...state, selectedProductImage: action.payload };
         case 'SET_TEMPLATE':
             return { ...state, selectedTemplate: action.payload };
+        case 'SET_ARCHETYPE':
+            return { ...state, archetype: action.payload };
         case 'SET_ASPECT_RATIO':
             return { ...state, aspectRatio: action.payload };
         case 'SET_RESOLUTION':
             return { ...state, resolution: action.payload };
         case 'SET_USE_PRO_MODEL':
             return { ...state, useProModel: action.payload };
+        case 'SET_CAMERA_SETTING':
+            return { 
+                ...state, 
+                cameraSettings: {
+                    ...state.cameraSettings,
+                    [action.payload.key]: action.payload.value
+                }
+            };
+        case 'RESET_CAMERA_SETTINGS':
+            return { ...state, cameraSettings: {} };
         
         // Step 5: Generation
         case 'SET_GENERATING':

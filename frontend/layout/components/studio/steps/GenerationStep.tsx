@@ -27,10 +27,16 @@ export const GenerationStep: React.FC = () => {
         setThinkingImages([]);
         
         try {
+            // Build camera settings if any are set
+            const cameraSettings = Object.keys(state.cameraSettings || {}).length > 0 
+                ? state.cameraSettings 
+                : undefined;
+            
             const result = await generateWithNanoBanana({
                 client_id: state.clientId,
                 task_id: state.taskId,
                 template_id: state.selectedTemplate?.id,
+                archetype: state.archetype || state.selectedTemplate?.category,
                 style_reference_ids: state.selectedStyleReferences,
                 product_image_id: state.selectedProductImage,
                 custom_prompt: state.customPrompt || undefined,
@@ -38,6 +44,7 @@ export const GenerationStep: React.FC = () => {
                 aspect_ratio: state.aspectRatio,
                 resolution: state.resolution,
                 use_pro_model: state.useProModel,
+                camera_settings: cameraSettings,
             });
 
             setGenerationResult(result.image);

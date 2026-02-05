@@ -1317,19 +1317,28 @@ export async function getGenerationTemplates(): Promise<{
   };
 }
 
-// --- NanoBanana Image Generation ---
+// --- NanoBanana Image Generation V2 ---
+
+export interface CameraSettings {
+  angle?: string;   // eye-level, 45-degree, low-angle, high-angle, birds-eye
+  shot?: string;    // close-up, macro, medium, wide, full
+  lens?: string;    // 35mm, 50mm portrait, 85mm bokeh, 100mm macro
+  perspective?: string; // frontal, three-quarter, profile
+}
 
 export interface NanoBananaGenerateRequest {
   client_id: string;
   task_id: string;  // REQUIRED - must be from planning
-  template_id?: string;
+  template_id?: string;  // Deprecated, use archetype
+  archetype?: string;  // product_hero, lifestyle, promotional, minimalist, editorial
   style_reference_ids?: string[];  // IDs from image bank
   product_image_id?: string;  // ID from image bank for high-fidelity
   custom_prompt?: string;
   excluded_task_fields?: string[];
-  aspect_ratio?: string;
+  aspect_ratio?: string;  // 1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9
   resolution?: '1K' | '2K' | '4K';
   use_pro_model?: boolean;
+  camera_settings?: CameraSettings;
 }
 
 export interface NanoBananaGeneratedImage {

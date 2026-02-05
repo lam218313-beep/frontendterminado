@@ -4,25 +4,58 @@ import { getGenerationTemplates, GenerationTemplate } from '../../../services/ap
 import { motion } from 'framer-motion';
 import { 
     Layers, ArrowRight, ArrowLeft, Loader2, Check, 
-    Sparkles, Zap, Image, Package, Settings2
+    Sparkles, Zap, Image, Package, Settings2, Camera
 } from 'lucide-react';
 
+// All valid aspect ratios from NanoBanana Pro documentation
 const ASPECT_RATIOS = [
-    { id: '1:1', label: '1:1', desc: 'Cuadrado (Post)' },
-    { id: '9:16', label: '9:16', desc: 'Vertical (Story/Reel)' },
-    { id: '4:5', label: '4:5', desc: 'Retrato (Portrait)' },
-    { id: '16:9', label: '16:9', desc: 'Horizontal (Cover)' },
-    { id: '3:2', label: '3:2', desc: 'Landscape' },
+    { id: '1:1', label: '1:1', desc: 'Cuadrado (Post)', icon: '◻️' },
+    { id: '4:5', label: '4:5', desc: 'Retrato Instagram', icon: '📱' },
+    { id: '9:16', label: '9:16', desc: 'Vertical (Story/Reel)', icon: '📲' },
+    { id: '2:3', label: '2:3', desc: 'Pinterest', icon: '📌' },
+    { id: '3:4', label: '3:4', desc: 'Retrato clásico', icon: '🖼️' },
+    { id: '16:9', label: '16:9', desc: 'Horizontal (Cover)', icon: '🖥️' },
+    { id: '3:2', label: '3:2', desc: 'Landscape', icon: '🌅' },
+    { id: '4:3', label: '4:3', desc: 'TV clásico', icon: '📺' },
+    { id: '5:4', label: '5:4', desc: 'Cuadrado ancho', icon: '🔳' },
+    { id: '21:9', label: '21:9', desc: 'Ultra-wide cinematic', icon: '🎬' },
 ];
 
 const RESOLUTIONS = [
-    { id: '1K', label: '1K', desc: 'Rápido' },
-    { id: '2K', label: '2K', desc: 'Balanceado' },
-    { id: '4K', label: '4K', desc: 'Alta calidad' },
+    { id: '1K', label: '1K', desc: 'Rápido (~10s)' },
+    { id: '2K', label: '2K', desc: 'Balanceado (~20s)' },
+    { id: '4K', label: '4K', desc: 'Alta calidad (~40s)' },
+];
+
+// Camera angle options
+const CAMERA_ANGLES = [
+    { id: 'eye-level', label: 'A nivel de ojos' },
+    { id: '45-degree elevated', label: 'Elevado 45°' },
+    { id: 'low-angle', label: 'Contrapicado' },
+    { id: 'high-angle', label: 'Picado' },
+    { id: 'birds-eye', label: 'Cenital' },
+];
+
+// Shot type options
+const SHOT_TYPES = [
+    { id: 'close-up', label: 'Close-up' },
+    { id: 'macro', label: 'Macro' },
+    { id: 'medium shot', label: 'Plano medio' },
+    { id: 'wide shot', label: 'Plano general' },
+    { id: 'full shot', label: 'Plano entero' },
+];
+
+// Lens options
+const LENS_OPTIONS = [
+    { id: '35mm wide-angle', label: '35mm (Angular)' },
+    { id: '50mm portrait', label: '50mm (Retrato)' },
+    { id: '85mm bokeh', label: '85mm (Bokeh)' },
+    { id: '100mm macro', label: '100mm (Macro)' },
 ];
 
 const TEMPLATE_ICONS: Record<string, React.ReactNode> = {
     'product': <Package size={20} />,
+    'product_hero': <Package size={20} />,
     'lifestyle': <Sparkles size={20} />,
     'promotional': <Zap size={20} />,
     'minimalist': <span className="text-lg">⚪</span>,
@@ -250,18 +283,36 @@ export const ReferenceSelectorStep: React.FC = () => {
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-100 shadow-lg">
                     <h3 className="font-bold text-gray-900 mb-4">Aspect Ratio</h3>
                     <div className="grid grid-cols-5 gap-2">
-                        {ASPECT_RATIOS.map(ar => (
+                        {ASPECT_RATIOS.slice(0, 5).map(ar => (
                             <button
                                 key={ar.id}
                                 onClick={() => dispatch({ type: 'SET_ASPECT_RATIO', payload: ar.id })}
-                                className={`p-3 rounded-xl text-center transition-all border-2 ${
+                                className={`p-2 rounded-xl text-center transition-all border-2 ${
                                     state.aspectRatio === ar.id
                                         ? 'bg-indigo-100 border-indigo-500'
                                         : 'bg-gray-50 border-gray-200 hover:border-indigo-300'
                                 }`}
                             >
-                                <p className="font-bold text-gray-900">{ar.label}</p>
-                                <p className="text-xs text-gray-500">{ar.desc}</p>
+                                <span className="text-lg">{ar.icon}</span>
+                                <p className="font-bold text-sm text-gray-900">{ar.label}</p>
+                                <p className="text-[10px] text-gray-500 leading-tight">{ar.desc}</p>
+                            </button>
+                        ))}
+                    </div>
+                    <div className="grid grid-cols-5 gap-2 mt-2">
+                        {ASPECT_RATIOS.slice(5).map(ar => (
+                            <button
+                                key={ar.id}
+                                onClick={() => dispatch({ type: 'SET_ASPECT_RATIO', payload: ar.id })}
+                                className={`p-2 rounded-xl text-center transition-all border-2 ${
+                                    state.aspectRatio === ar.id
+                                        ? 'bg-indigo-100 border-indigo-500'
+                                        : 'bg-gray-50 border-gray-200 hover:border-indigo-300'
+                                }`}
+                            >
+                                <span className="text-lg">{ar.icon}</span>
+                                <p className="font-bold text-sm text-gray-900">{ar.label}</p>
+                                <p className="text-[10px] text-gray-500 leading-tight">{ar.desc}</p>
                             </button>
                         ))}
                     </div>
@@ -291,7 +342,7 @@ export const ReferenceSelectorStep: React.FC = () => {
                         <label className="flex items-center justify-between cursor-pointer">
                             <div>
                                 <p className="font-semibold text-gray-900">Usar Modelo Pro</p>
-                                <p className="text-xs text-gray-500">Mejor calidad con "thinking mode"</p>
+                                <p className="text-xs text-gray-500">Mejor calidad, hasta 14 referencias</p>
                             </div>
                             <div 
                                 onClick={() => dispatch({ type: 'SET_USE_PRO_MODEL', payload: !state.useProModel })}
@@ -308,6 +359,72 @@ export const ReferenceSelectorStep: React.FC = () => {
                 </div>
             </div>
 
+            {/* CAMERA CONTROLS (Advanced) */}
+            <details className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-100 shadow-lg">
+                <summary className="p-6 cursor-pointer flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Camera size={18} className="text-amber-500" />
+                        <h3 className="font-bold text-gray-900">Control de Cámara (Avanzado)</h3>
+                    </div>
+                    <span className="text-sm text-gray-500">Opcional</span>
+                </summary>
+                <div className="px-6 pb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Camera Angle */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Ángulo de cámara</label>
+                        <select 
+                            value={state.cameraSettings?.angle || ''}
+                            onChange={(e) => dispatch({ 
+                                type: 'SET_CAMERA_SETTING', 
+                                payload: { key: 'angle', value: e.target.value || undefined }
+                            })}
+                            className="w-full p-3 rounded-xl border border-gray-200 bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
+                        >
+                            <option value="">Auto (según arquetipo)</option>
+                            {CAMERA_ANGLES.map(opt => (
+                                <option key={opt.id} value={opt.id}>{opt.label}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Shot Type */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de plano</label>
+                        <select 
+                            value={state.cameraSettings?.shot || ''}
+                            onChange={(e) => dispatch({ 
+                                type: 'SET_CAMERA_SETTING', 
+                                payload: { key: 'shot', value: e.target.value || undefined }
+                            })}
+                            className="w-full p-3 rounded-xl border border-gray-200 bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
+                        >
+                            <option value="">Auto (según arquetipo)</option>
+                            {SHOT_TYPES.map(opt => (
+                                <option key={opt.id} value={opt.id}>{opt.label}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Lens */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Lente</label>
+                        <select 
+                            value={state.cameraSettings?.lens || ''}
+                            onChange={(e) => dispatch({ 
+                                type: 'SET_CAMERA_SETTING', 
+                                payload: { key: 'lens', value: e.target.value || undefined }
+                            })}
+                            className="w-full p-3 rounded-xl border border-gray-200 bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-200"
+                        >
+                            <option value="">Auto (según arquetipo)</option>
+                            {LENS_OPTIONS.map(opt => (
+                                <option key={opt.id} value={opt.id}>{opt.label}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+            </details>
+
             {/* SELECTION SUMMARY */}
             {(state.selectedProductImage || state.selectedStyleReferences.length > 0) && (
                 <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-5">
@@ -319,7 +436,10 @@ export const ReferenceSelectorStep: React.FC = () => {
                         )}
                         <li>📐 Aspect ratio: {state.aspectRatio}</li>
                         <li>🖼️ Resolución: {state.resolution}</li>
-                        {state.useProModel && <li>⚡ Modelo Pro activado</li>}
+                        {state.useProModel && <li>⚡ Modelo Pro activado (hasta 14 referencias)</li>}
+                        {state.cameraSettings?.angle && <li>📷 Ángulo: {state.cameraSettings.angle}</li>}
+                        {state.cameraSettings?.shot && <li>🎬 Plano: {state.cameraSettings.shot}</li>}
+                        {state.cameraSettings?.lens && <li>🔭 Lente: {state.cameraSettings.lens}</li>}
                     </ul>
                 </div>
             )}
