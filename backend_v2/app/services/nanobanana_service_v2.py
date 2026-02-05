@@ -174,10 +174,12 @@ class NanoBananaServiceV2:
     Based on official documentation: nanobananapro.md
     """
     
-    # Model configurations (from nanobananapro.md)
+    # Model configurations (from nanobananapro.md documentation)
+    # Flash: gemini-2.5-flash-image
+    # Pro: gemini-3-pro-image-preview
     MODELS = {
         'flash': {
-            'id': 'gemini-2.5-flash-preview-05-20',  # Latest flash with image gen
+            'id': 'gemini-2.5-flash-image',  # NanoBanana Flash
             'name': 'NanoBanana Flash',
             'description': 'Fast generation for high volume, optimized for speed',
             'max_references': 3,  # Flash works best with up to 3 images
@@ -186,7 +188,7 @@ class NanoBananaServiceV2:
             'cost_per_image': 0.02,
         },
         'pro': {
-            'id': 'gemini-2.5-pro-preview-05-06',  # Pro with image gen
+            'id': 'gemini-3-pro-image-preview',  # NanoBanana Pro
             'name': 'NanoBanana Pro',
             'description': 'Professional asset production with thinking mode',
             'max_references': 14,  # Pro supports up to 14 (6 objects + 5 humans + 3 style)
