@@ -17,6 +17,7 @@ import {
 import * as api from '../services/api';
 import ImageGenerationModal from './ImageGenerationModal';
 import { useStudio } from '../contexts/StudioContext';
+import { useAuth } from '../contexts/AuthContext';
 
 interface PlanningViewProps {
     clientId: string;
@@ -30,6 +31,8 @@ const formatOptions = [
 ];
 
 const PlanningView: React.FC<PlanningViewProps> = ({ clientId, onNavigate }) => {
+    // Auth context for admin check
+    const { user } = useAuth();
     // Studio Context for navigation / integration
     const { dispatch } = useStudio();
 
@@ -369,14 +372,16 @@ const PlanningView: React.FC<PlanningViewProps> = ({ clientId, onNavigate }) => 
                                             </div>
                                         )}
 
-                                        {/* Generate Image Button (Studio Integration) */}
-                                        <button
-                                            onClick={() => handleOpenStudio(task)}
-                                            className="mt-3 w-full py-2 px-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-lg text-xs font-bold transition-all shadow-md hover:shadow-lg hover:translate-y-[-1px] active:translate-y-[0px] flex items-center justify-center gap-1.5"
-                                        >
-                                            <Sparkles size={14} className="fill-white/20" />
-                                            {taskImages[task.id] ? 'Rediseñar en Estudio' : 'Diseñar en Estudio'}
-                                        </button>
+                                        {/* Generate Image Button (Studio Integration) - Admin Only */}
+                                        {user?.isAdmin && (
+                                            <button
+                                                onClick={() => handleOpenStudio(task)}
+                                                className="mt-3 w-full py-2 px-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-lg text-xs font-bold transition-all shadow-md hover:shadow-lg hover:translate-y-[-1px] active:translate-y-[0px] flex items-center justify-center gap-1.5"
+                                            >
+                                                <Sparkles size={14} className="fill-white/20" />
+                                                {taskImages[task.id] ? 'Rediseñar en Estudio' : 'Diseñar en Estudio'}
+                                            </button>
+                                        )}
                                     </div>
                                 ))}
                             </div>

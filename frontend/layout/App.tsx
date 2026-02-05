@@ -220,6 +220,11 @@ const AppContent: React.FC = () => {
           </ErrorBoundary>
         );
       case 'img-generator':
+        // Admin-only view - redirect non-admin users to partners
+        if (!authUser?.isAdmin) {
+          setActiveView('partners');
+          return null;
+        }
         return (
           <ErrorBoundary key={viewKey}>
             <ImageStudioPage />
