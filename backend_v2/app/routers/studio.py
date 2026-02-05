@@ -94,13 +94,16 @@ async def get_brand_visual_dna(client_id: str) -> Dict[str, Any]:
         response = db.client.table("brand_visual_dna")\
             .select("*")\
             .eq("client_id", client_id)\
-            .maybeSingle()\
+            .limit(1)\
             .execute()
         
+        # Get first result or None (equivalent to maybeSingle in JS)
+        data = response.data[0] if response.data else None
+        
         return {
-            "data": response.data,
-            "exists": response.data is not None,
-            "is_configured": response.data.get("is_configured", False) if response.data else False
+            "data": data,
+            "exists": data is not None,
+            "is_configured": data.get("is_configured", False) if data else False
         }
     except Exception as e:
         logger.error(f"Error fetching brand DNA for {client_id}: {e}")
