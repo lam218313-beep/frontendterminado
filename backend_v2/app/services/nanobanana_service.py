@@ -309,59 +309,134 @@ class NanoBananaService:
         template_id: Optional[str],
         custom_prompt: str
     ) -> str:
-        """Build the final prompt from task, brand DNA, and template"""
+        """
+        Build the final prompt using cascading context from:
+        - Task data (title, hook, key_elements, dos/donts, description)
+        - Brand DNA (colors, mood, lighting, style, keywords)
+        - Custom user instructions
+        """
         
-        # Get template if specified
-        template = None
-        if template_id and db.client:
-            try:
-                response = db.client.table("generation_templates")\
-                    .select("*")\
-                    .eq("id", template_id)\
-                    .single()\
-                    .execute()
-                template = response.data
-            except:
-                pass
+        # =====================================================================
+        # EXTRACT RICH CONTEXT FROM TASK
+        # =====================================================================
+        task_title = task.get('title', '')
+        task_format = task.get('format', 'post')
+        selected_hook = task.get('selected_hook', '')
+        strategic_purpose = task.get('strategic_purpose', '')
+        task_description = task.get('description', '')
         
-        # Build context dictionary for template substitution
-        context = {
-            # From task
-            'task_title': task.get('title', ''),
-            'format': task.get('format', 'post'),
-            'selected_hook': task.get('selected_hook', ''),
-            'key_elements': ', '.join(task.get('key_elements', [])) if isinstance(task.get('key_elements'), list) else str(task.get('key_elements', '')),
-            'strategic_purpose': task.get('strategic_purpose', ''),
-            'description': task.get('description', ''),
-            
-            # From brand DNA
-            'brand_name': brand_dna.get('brand_essence', ''),
-            'color_palette': self._format_colors(brand_dna),
-            'mood': brand_dna.get('default_mood', 'professional'),
-            'lighting': brand_dna.get('default_lighting', 'studio'),
-            'style': brand_dna.get('default_style', 'natural'),
-            
-            # Exclusions
-            'exclusions': ', '.join(brand_dna.get('always_exclude', ['text', 'watermarks', 'logos'])),
-        }
-        
-        if template and template.get('prompt_template'):
-            # Use template with substitutions
-            prompt = template['prompt_template']
-            for key, value in context.items():
-                prompt = prompt.replace(f'{{{key}}}', str(value))
-            
-            # Add custom prompt
-            if custom_prompt:
-                prompt += f"\n\nAdditional instructions: {custom_prompt}"
+        # Key elements (what to include)
+        key_elements = task.get('key_elements', [])
+        if isinstance(key_elements, list):
+            key_elements_text = ', '.join(key_elements) if key_elements else ''
         else:
-            # Build prompt from scratch
-            prompt = self._build_default_prompt(context, custom_prompt)
+            key_elements_text = str(key_elements) if key_elements else ''
         
-        # Always add the critical exclusion reminder
-        prompt += "\n\nCRITICAL: Do not include any text, words, letters, numbers, watermarks, or logos in the image."
+        # Dos (what to do)
+        dos = task.get('dos', [])
+        if isinstance(dos, list):
+            dos_text = ', '.join(dos) if dos else ''
+        else:
+            dos_text = str(dos) if dos else ''
         
-        return prompt
+        # Don'ts (what to avoid)
+        donts = task.get('donts', [])
+        if isinstance(donts, list):
+            donts_text = ', '.join(donts) if donts else ''
+        else:
+            donts_text = str(donts) if donts else ''
+        
+        # =====================================================================
+        # EXTRACT BRAND DNA  
+        # =====================================================================
+        brand_essence = brand_dna.get('brand_essence', '')
+        visual_keywords = brand_dna.get('visual_keywords', [])
+        if isinstance(visual_keywords, list):
+            keywords_text = ', '.join(visual_keywords) if visual_keywords else ''
+        else:
+            keywords_text = str(visual_keywords) if visual_keywords else ''
+        
+        color_palette = self._format_colors(brand_dna)
+        mood = brand_dna.get('default_mood', 'professional')
+        lighting = brand_dna.get('default_lighting', 'studio')
+        style = brand_dna.get('default_style', 'natural')
+        
+        # Exclusions from brand DNA
+        always_exclude = brand_dna.get('always_exclude', ['text', 'watermarks', 'logos'])
+        if isinstance(always_exclude, list):
+            exclusions = ', '.join(always_exclude)
+        else:
+            exclusions = 'text, watermarks, logos'
+        
+        # =====================================================================
+        # BUILD RICH PROMPT
+        # =====================================================================
+        prompt_parts = []
+        
+        # 1. MAIN SUBJECT - Use custom prompt or task description
+        if custom_prompt:
+            prompt_parts.append(f"Create an image of: {custom_prompt}")
+        elif task_description:
+            prompt_parts.append(f"Create an image: {task_description}")
+        elif task_title:
+            prompt_parts.append(f"Create an image for: {task_title}")
+        
+        # 2. STRATEGIC CONTEXT - Hook and purpose
+        if selected_hook:
+            prompt_parts.append(f"The image should convey: {selected_hook}")
+        if strategic_purpose:
+            prompt_parts.append(f"Purpose: {strategic_purpose}")
+        
+        # 3. KEY VISUAL ELEMENTS
+        if key_elements_text:
+            prompt_parts.append(f"Include these elements: {key_elements_text}")
+        
+        # 4. BRAND IDENTITY
+        if brand_essence:
+            prompt_parts.append(f"Brand personality: {brand_essence}")
+        if keywords_text:
+            prompt_parts.append(f"Visual style: {keywords_text}")
+        
+        # 5. TECHNICAL SPECIFICATIONS
+        prompt_parts.append(f"Photography style: {style}, {mood} mood")
+        prompt_parts.append(f"Lighting: {lighting}")
+        prompt_parts.append(f"Color palette: {color_palette}")
+        
+        # 6. DOS (what to include/emphasize)
+        if dos_text:
+            prompt_parts.append(f"Emphasize: {dos_text}")
+        
+        # 7. FORMAT-SPECIFIC GUIDANCE
+        format_guidance = {
+            'post': 'Square composition, clean and balanced',
+            'story': 'Vertical composition optimized for mobile viewing',
+            'reel': 'Dynamic vertical composition with motion-friendly framing',
+            'cover': 'Horizontal composition suitable for header/cover image'
+        }
+        if task_format in format_guidance:
+            prompt_parts.append(format_guidance[task_format])
+        
+        # 8. QUALITY REQUIREMENTS
+        prompt_parts.append("Professional commercial photography quality, high resolution, sharp focus")
+        
+        # Join all parts
+        final_prompt = ". ".join(prompt_parts)
+        
+        # =====================================================================
+        # ADD NEGATIVE INSTRUCTIONS (what to avoid)
+        # =====================================================================
+        avoid_parts = []
+        if donts_text:
+            avoid_parts.append(donts_text)
+        avoid_parts.append(exclusions)
+        avoid_parts.append("no text, no words, no letters, no numbers, no watermarks, no logos, no captions")
+        
+        final_prompt += f"\n\nAVOID: {', '.join(avoid_parts)}"
+        
+        logger.info(f"📝 Built prompt with {len(prompt_parts)} context blocks")
+        logger.debug(f"Final prompt: {final_prompt[:500]}...")
+        
+        return final_prompt
     
     def _format_colors(self, brand_dna: Dict[str, Any]) -> str:
         """Format brand colors for prompt"""
