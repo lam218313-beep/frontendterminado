@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useStudio } from '../../../contexts/StudioContext';
-import { getGenerationTemplates, GenerationTemplate } from '../../../services/api';
-import { motion } from 'framer-motion';
+import { useStudio, StyleAnalysis } from '../../../contexts/StudioContext';
+import { getGenerationTemplates, GenerationTemplate, analyzeReferenceStyle } from '../../../services/api';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Layers, ArrowRight, ArrowLeft, Loader2, Check, 
-    Sparkles, Zap, Image, Package, Settings2, Camera
+    Sparkles, Zap, Image, Package, Settings2, Camera, 
+    Wand2, Copy, Eye, Palette, Sun, Layout
 } from 'lucide-react';
 
 // All valid aspect ratios from NanoBanana Pro documentation
@@ -96,6 +97,33 @@ export const ReferenceSelectorStep: React.FC = () => {
 
     const selectTemplate = (template: GenerationTemplate | undefined) => {
         dispatch({ type: 'SET_TEMPLATE', payload: template });
+    };
+
+    // Copy Style feature handlers
+    const handleModeToggle = (mode: 'visual' | 'copy_style') => {
+        dispatch({ type: 'SET_REFERENCE_MODE', payload: mode });
+    };
+
+    const handleAnalyzeStyle = async (imageId: string) => {
+        if (state.isAnalyzingStyle) return;
+        
+        dispatch({ type: 'SET_ANALYZING_STYLE', payload: true });
+        
+        try {
+            const analysis = await analyzeReferenceStyle(imageId);
+            dispatch({ type: 'SET_STYLE_ANALYSIS', payload: { analysis, imageId } });
+        } catch (error) {
+            console.error('Error analyzing style:', error);
+            dispatch({ type: 'SET_ANALYZING_STYLE', payload: false });
+        }
+    };
+
+    const handleApplyStyle = () => {
+        dispatch({ type: 'APPLY_STYLE_ANALYSIS' });
+    };
+
+    const handleClearAnalysis = () => {
+        dispatch({ type: 'CLEAR_STYLE_ANALYSIS' });
     };
 
     // Filter images by category for easier selection (with null-safety)
@@ -217,23 +245,178 @@ export const ReferenceSelectorStep: React.FC = () => {
 
             {/* STYLE REFERENCES SELECTOR */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-100 shadow-lg">
-                <div className="flex items-center justify-between mb-2">
+                {/* Header with mode toggle */}
+                <div className="flex items-center justify-between mb-4">
                     <h3 className="font-bold text-gray-900 flex items-center gap-2">
                         <Sparkles size={18} className="text-violet-500" />
                         Referencias de Estilo
                     </h3>
-                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                        state.selectedStyleReferences.length >= 6 
-                            ? 'bg-amber-100 text-amber-700' 
-                            : 'bg-gray-100 text-gray-600'
-                    }`}>
-                        {state.selectedStyleReferences.length} / 6 seleccionadas
-                    </span>
+                    
+                    {/* Mode Toggle */}
+                    <div className="flex items-center gap-2 bg-gray-100 rounded-xl p-1">
+                        <button
+                            onClick={() => handleModeToggle('visual')}
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-all ${
+                                state.referenceMode === 'visual'
+                                    ? 'bg-white text-violet-700 shadow-sm'
+                                    : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                            <Eye size={14} />
+                            Visual
+                        </button>
+                        <button
+                            onClick={() => handleModeToggle('copy_style')}
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-all ${
+                                state.referenceMode === 'copy_style'
+                                    ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-sm'
+                                    : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                            <Wand2 size={14} />
+                            Copiar Estilo
+                        </button>
+                    </div>
                 </div>
+
+                {/* Mode-specific description */}
                 <p className="text-sm text-gray-500 mb-4">
-                    Selecciona hasta 6 imágenes para transferir estilo, composición y mood.
+                    {state.referenceMode === 'visual' 
+                        ? 'Selecciona hasta 6 imágenes para transferir estilo, composición y mood.'
+                        : 'Haz clic en una imagen para analizar su estilo y auto-configurar la generación.'
+                    }
                 </p>
 
+                {/* Selection/Analysis Counter */}
+                {state.referenceMode === 'visual' && (
+                    <div className="flex justify-end mb-4">
+                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                            state.selectedStyleReferences.length >= 6 
+                                ? 'bg-amber-100 text-amber-700' 
+                                : 'bg-gray-100 text-gray-600'
+                        }`}>
+                            {state.selectedStyleReferences.length} / 6 seleccionadas
+                        </span>
+                    </div>
+                )}
+
+                {/* Style Analysis Result Panel */}
+                <AnimatePresence>
+                    {state.referenceMode === 'copy_style' && state.styleAnalysis && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="mb-6 overflow-hidden"
+                        >
+                            <div className="bg-gradient-to-br from-violet-50 to-fuchsia-50 rounded-2xl p-6 border border-violet-200">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h4 className="font-bold text-violet-900 flex items-center gap-2">
+                                        <Wand2 size={18} className="text-violet-600" />
+                                        Análisis de Estilo Completado
+                                    </h4>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={handleApplyStyle}
+                                            className="px-4 py-2 bg-violet-600 text-white rounded-lg font-medium text-sm hover:bg-violet-700 transition-colors flex items-center gap-2"
+                                        >
+                                            <Check size={14} />
+                                            Aplicar Configuración
+                                        </button>
+                                        <button
+                                            onClick={handleClearAnalysis}
+                                            className="px-3 py-2 bg-white text-gray-600 rounded-lg text-sm hover:bg-gray-100 transition-colors"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Analysis Grid */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                    {/* Composition */}
+                                    <div className="bg-white/80 rounded-xl p-3">
+                                        <div className="flex items-center gap-2 text-violet-700 font-semibold mb-2">
+                                            <Layout size={14} />
+                                            Composición
+                                        </div>
+                                        <p className="text-gray-600"><strong>Ángulo:</strong> {state.styleAnalysis.composition.camera_angle}</p>
+                                        <p className="text-gray-600"><strong>Plano:</strong> {state.styleAnalysis.composition.shot_type}</p>
+                                        <p className="text-gray-600"><strong>Ratio:</strong> {state.styleAnalysis.composition.aspect_ratio}</p>
+                                    </div>
+
+                                    {/* Lighting */}
+                                    <div className="bg-white/80 rounded-xl p-3">
+                                        <div className="flex items-center gap-2 text-amber-700 font-semibold mb-2">
+                                            <Sun size={14} />
+                                            Iluminación
+                                        </div>
+                                        <p className="text-gray-600"><strong>Tipo:</strong> {state.styleAnalysis.lighting.type}</p>
+                                        <p className="text-gray-600"><strong>Dirección:</strong> {state.styleAnalysis.lighting.direction}</p>
+                                        <p className="text-gray-600"><strong>Temperatura:</strong> {state.styleAnalysis.lighting.color_temperature}</p>
+                                    </div>
+
+                                    {/* Colors */}
+                                    <div className="bg-white/80 rounded-xl p-3">
+                                        <div className="flex items-center gap-2 text-pink-700 font-semibold mb-2">
+                                            <Palette size={14} />
+                                            Colores
+                                        </div>
+                                        <div className="flex gap-2 mb-2">
+                                            <div 
+                                                className="w-6 h-6 rounded-full border border-gray-300" 
+                                                style={{ backgroundColor: state.styleAnalysis.color_palette.primary }}
+                                                title="Primario"
+                                            />
+                                            <div 
+                                                className="w-6 h-6 rounded-full border border-gray-300" 
+                                                style={{ backgroundColor: state.styleAnalysis.color_palette.secondary }}
+                                                title="Secundario"
+                                            />
+                                            {state.styleAnalysis.color_palette.accent && (
+                                                <div 
+                                                    className="w-6 h-6 rounded-full border border-gray-300" 
+                                                    style={{ backgroundColor: state.styleAnalysis.color_palette.accent }}
+                                                    title="Acento"
+                                                />
+                                            )}
+                                        </div>
+                                        <p className="text-gray-600 text-xs">{state.styleAnalysis.color_palette.mood}</p>
+                                    </div>
+
+                                    {/* Style */}
+                                    <div className="bg-white/80 rounded-xl p-3">
+                                        <div className="flex items-center gap-2 text-emerald-700 font-semibold mb-2">
+                                            <Sparkles size={14} />
+                                            Estilo
+                                        </div>
+                                        <p className="text-gray-600"><strong>Estética:</strong> {state.styleAnalysis.style.aesthetic}</p>
+                                        <p className="text-gray-600"><strong>Mood:</strong> {state.styleAnalysis.style.mood}</p>
+                                        <p className="text-gray-600"><strong>Arquetipo:</strong> {state.styleAnalysis.archetype_suggestion}</p>
+                                    </div>
+                                </div>
+
+                                {/* Reconstruction Summary */}
+                                {state.styleAnalysis.reconstruction_summary && (
+                                    <div className="mt-4 bg-white/80 rounded-xl p-3">
+                                        <p className="text-sm font-semibold text-gray-700 mb-1">Prompt sugerido:</p>
+                                        <p className="text-gray-600 text-sm italic">"{state.styleAnalysis.reconstruction_summary}"</p>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Loading State for Analysis */}
+                {state.isAnalyzingStyle && (
+                    <div className="mb-6 bg-violet-50 rounded-xl p-6 flex items-center justify-center gap-3">
+                        <Loader2 className="animate-spin text-violet-600" size={24} />
+                        <span className="text-violet-700 font-medium">Analizando estilo con IA...</span>
+                    </div>
+                )}
+
+                {/* Image Grid */}
                 {styleReferences.length === 0 ? (
                     <div className="bg-gray-50 rounded-xl p-6 text-center text-gray-500">
                         <Image size={32} className="mx-auto mb-2 opacity-50" />
@@ -244,18 +427,32 @@ export const ReferenceSelectorStep: React.FC = () => {
                         {styleReferences.map(img => {
                             const isSelected = state.selectedStyleReferences.includes(img.id);
                             const selectionIndex = state.selectedStyleReferences.indexOf(img.id);
+                            const isAnalyzed = state.analyzedImageId === img.id;
                             
                             return (
                                 <button
                                     key={img.id}
-                                    onClick={() => toggleReference(img.id)}
-                                    disabled={!isSelected && state.selectedStyleReferences.length >= 6}
+                                    onClick={() => {
+                                        if (state.referenceMode === 'copy_style') {
+                                            handleAnalyzeStyle(img.id);
+                                        } else {
+                                            toggleReference(img.id);
+                                        }
+                                    }}
+                                    disabled={
+                                        state.isAnalyzingStyle || 
+                                        (state.referenceMode === 'visual' && !isSelected && state.selectedStyleReferences.length >= 6)
+                                    }
                                     className={`relative aspect-square rounded-xl overflow-hidden border-3 transition-all ${
-                                        isSelected
-                                            ? 'border-violet-500 ring-4 ring-violet-200'
-                                            : state.selectedStyleReferences.length >= 6
-                                                ? 'border-transparent opacity-40 cursor-not-allowed'
-                                                : 'border-transparent hover:border-gray-300'
+                                        state.referenceMode === 'copy_style'
+                                            ? isAnalyzed
+                                                ? 'border-fuchsia-500 ring-4 ring-fuchsia-200'
+                                                : 'border-transparent hover:border-fuchsia-300 hover:scale-105'
+                                            : isSelected
+                                                ? 'border-violet-500 ring-4 ring-violet-200'
+                                                : state.selectedStyleReferences.length >= 6
+                                                    ? 'border-transparent opacity-40 cursor-not-allowed'
+                                                    : 'border-transparent hover:border-gray-300'
                                     }`}
                                 >
                                     <img
@@ -263,11 +460,27 @@ export const ReferenceSelectorStep: React.FC = () => {
                                         alt={img.name || 'Reference'}
                                         className="w-full h-full object-cover"
                                     />
-                                    {isSelected && (
+                                    
+                                    {/* Visual Mode: Selection indicator */}
+                                    {state.referenceMode === 'visual' && isSelected && (
                                         <div className="absolute top-1 right-1 w-5 h-5 bg-violet-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
                                             {selectionIndex + 1}
                                         </div>
                                     )}
+                                    
+                                    {/* Copy Style Mode: Wand indicator */}
+                                    {state.referenceMode === 'copy_style' && (
+                                        <div className={`absolute inset-0 flex items-center justify-center transition-opacity ${
+                                            isAnalyzed ? 'bg-fuchsia-500/30' : 'bg-black/0 hover:bg-black/20'
+                                        }`}>
+                                            {isAnalyzed ? (
+                                                <Check size={24} className="text-white drop-shadow-lg" />
+                                            ) : (
+                                                <Wand2 size={20} className="text-white opacity-0 hover:opacity-100 drop-shadow-lg transition-opacity" />
+                                            )}
+                                        </div>
+                                    )}
+                                    
                                     <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/60 text-white text-[10px] rounded">
                                         {img.category}
                                     </span>

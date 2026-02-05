@@ -66,6 +66,45 @@ export interface GeneratedImage {
     thinking_images?: string[];
 }
 
+export interface StyleAnalysisComposition {
+    camera_angle: string;
+    shot_type: string;
+    lens_style: string;
+    aspect_ratio: string;
+    focal_point: string;
+}
+
+export interface StyleAnalysisLighting {
+    type: string;
+    direction: string;
+    quality: string;
+    color_temperature: string;
+}
+
+export interface StyleAnalysisColors {
+    primary: string;
+    secondary: string;
+    accent?: string;
+    mood: string;
+}
+
+export interface StyleAnalysisStyle {
+    aesthetic: string;
+    mood: string;
+    texture_emphasis: string;
+    background_type: string;
+}
+
+export interface StyleAnalysis {
+    scene_type: string;
+    composition: StyleAnalysisComposition;
+    lighting: StyleAnalysisLighting;
+    color_palette: StyleAnalysisColors;
+    style: StyleAnalysisStyle;
+    archetype_suggestion: string;
+    reconstruction_summary: string;
+}
+
 // =============================================================================
 // STUDIO STATE
 // =============================================================================
@@ -117,6 +156,11 @@ export interface StudioState {
         lens?: string;
         perspective?: string;
     };
+    // Copy Style feature
+    referenceMode: 'visual' | 'copy_style';  // How to use reference images
+    styleAnalysis?: StyleAnalysis;  // Result from analyzing a reference
+    isAnalyzingStyle: boolean;  // Loading state for style analysis
+    analyzedImageId?: string;  // ID of the image being analyzed
 
     // STEP 5: GENERATION RESULTS
     generatedImages: GeneratedImage[];
@@ -156,6 +200,10 @@ const initialState: StudioState = {
     resolution: '2K',
     useProModel: false,
     cameraSettings: {},
+    referenceMode: 'visual',
+    styleAnalysis: undefined,
+    isAnalyzingStyle: false,
+    analyzedImageId: undefined,
 
     // Step 5
     generatedImages: [],
@@ -206,6 +254,12 @@ type Action =
     | { type: 'SET_USE_PRO_MODEL'; payload: boolean }
     | { type: 'SET_CAMERA_SETTING'; payload: { key: 'angle' | 'shot' | 'lens' | 'perspective'; value: string | undefined } }
     | { type: 'RESET_CAMERA_SETTINGS' }
+    // Copy Style feature
+    | { type: 'SET_REFERENCE_MODE'; payload: 'visual' | 'copy_style' }
+    | { type: 'SET_STYLE_ANALYSIS'; payload: { analysis: StyleAnalysis; imageId: string } }
+    | { type: 'SET_ANALYZING_STYLE'; payload: boolean }
+    | { type: 'CLEAR_STYLE_ANALYSIS' }
+    | { type: 'APPLY_STYLE_ANALYSIS' }  // Apply analyzed settings to generation config
     
     // Step 5: Generation
     | { type: 'SET_GENERATING'; payload: boolean }
@@ -350,6 +404,51 @@ const studioReducer = (state: StudioState, action: Action): StudioState => {
             };
         case 'RESET_CAMERA_SETTINGS':
             return { ...state, cameraSettings: {} };
+        
+        // Copy Style feature
+        case 'SET_REFERENCE_MODE':
+            return { 
+                ...state, 
+                referenceMode: action.payload,
+                // Clear analysis when switching modes
+                styleAnalysis: action.payload === 'visual' ? undefined : state.styleAnalysis,
+                analyzedImageId: action.payload === 'visual' ? undefined : state.analyzedImageId
+            };
+        case 'SET_STYLE_ANALYSIS':
+            return { 
+                ...state, 
+                styleAnalysis: action.payload.analysis,
+                analyzedImageId: action.payload.imageId,
+                isAnalyzingStyle: false
+            };
+        case 'SET_ANALYZING_STYLE':
+            return { ...state, isAnalyzingStyle: action.payload };
+        case 'CLEAR_STYLE_ANALYSIS':
+            return { 
+                ...state, 
+                styleAnalysis: undefined, 
+                analyzedImageId: undefined,
+                isAnalyzingStyle: false
+            };
+        case 'APPLY_STYLE_ANALYSIS': {
+            // Apply the analyzed style settings to generation config
+            if (!state.styleAnalysis) return state;
+            const analysis = state.styleAnalysis;
+            return {
+                ...state,
+                archetype: analysis.archetype_suggestion || state.archetype,
+                aspectRatio: analysis.composition.aspect_ratio || state.aspectRatio,
+                cameraSettings: {
+                    angle: analysis.composition.camera_angle,
+                    shot: analysis.composition.shot_type,
+                    lens: analysis.composition.lens_style.toLowerCase().includes('standard') 
+                        ? '50mm portrait' 
+                        : analysis.composition.lens_style.toLowerCase().includes('wide')
+                            ? '35mm'
+                            : '85mm bokeh'
+                }
+            };
+        }
         
         // Step 5: Generation
         case 'SET_GENERATING':

@@ -1098,6 +1098,160 @@ class NanoBananaServiceV2:
     def get_format_mappings(self) -> Dict[str, str]:
         """Get format to aspect ratio mappings"""
         return self.FORMAT_TO_RATIO
+    
+    # =========================================================================
+    # STYLE ANALYSIS (Copy Style feature)
+    # =========================================================================
+    
+    STYLE_ANALYSIS_PROMPT = """Analiza esta imagen de referencia para extraer los parámetros de estilo y composición.
+Responde ÚNICAMENTE con un JSON válido (sin markdown, sin explicaciones) con esta estructura exacta:
+
+{
+    "scene_type": "product_hero|lifestyle|editorial|minimal|promotional",
+    "composition": {
+        "camera_angle": "eye_level|low_angle|high_angle|birds_eye|worms_eye|dutch",
+        "shot_type": "extreme_close_up|close_up|medium_shot|full_shot|wide_shot|establishing",
+        "lens_style": "wide|standard|telephoto|macro|fisheye",
+        "aspect_ratio": "1:1|2:3|3:2|3:4|4:3|4:5|5:4|9:16|16:9|21:9",
+        "focal_point": "descripción breve del punto focal principal"
+    },
+    "lighting": {
+        "type": "natural|studio|dramatic|soft|hard|rim|split|butterfly|rembrandt",
+        "direction": "front|side|back|top|bottom|mixed",
+        "quality": "soft|hard|diffused|direct",
+        "color_temperature": "warm|neutral|cool|golden_hour|blue_hour"
+    },
+    "color_palette": {
+        "primary": "#hex del color dominante",
+        "secondary": "#hex del segundo color más presente",
+        "accent": "#hex del color de acento (si existe)",
+        "mood": "descripción del mood cromático"
+    },
+    "style": {
+        "aesthetic": "modern|vintage|minimal|luxurious|organic|technical|editorial|lifestyle",
+        "mood": "energetic|calm|dramatic|playful|sophisticated|raw|dreamy",
+        "texture_emphasis": "smooth|textured|mixed|glossy|matte",
+        "background_type": "solid|gradient|textured|environmental|blurred"
+    },
+    "archetype_suggestion": "product_hero|lifestyle|promotional|minimalist|editorial",
+    "reconstruction_summary": "Prompt en español de 2-3 oraciones para recrear esta imagen con NanoBanana"
+}
+
+Analiza la imagen proporcionada y devuelve el JSON con valores reales basados en lo que ves."""
+
+    async def analyze_style_image(
+        self,
+        image_data: bytes,
+        mime_type: str = "image/jpeg"
+    ) -> Dict[str, Any]:
+        """
+        Analyze a reference image to extract style and composition parameters.
+        Returns a structured JSON with all visual parameters detected.
+        
+        This enables the "Copy Style" feature - users can select a reference
+        and automatically configure generation settings from it.
+        """
+        logger.info("🔍 Analyzing reference image for style extraction...")
+        
+        try:
+            from google.genai import types
+            
+            if not self.client:
+                raise ValueError("NanoBanana client not initialized")
+            
+            # Build content with image + analysis prompt
+            content_parts = [
+                types.Part.from_bytes(
+                    data=image_data,
+                    mime_type=mime_type
+                ),
+                self.STYLE_ANALYSIS_PROMPT
+            ]
+            
+            # Use Pro model for better analysis (text-only response)
+            config = types.GenerateContentConfig(
+                response_modalities=['TEXT'],  # Text only for analysis
+                temperature=0.2,  # Lower temperature for consistent JSON
+            )
+            
+            # Call the API
+            response = self.client.models.generate_content(
+                model="gemini-2.5-pro-preview-05-06",  # Pro for analysis
+                contents=content_parts,
+                config=config
+            )
+            
+            # Extract text response
+            response_text = ""
+            if response.candidates:
+                for part in response.candidates[0].content.parts:
+                    if hasattr(part, 'text') and part.text:
+                        response_text += part.text
+            
+            if not response_text:
+                # Fallback if response.parts is used
+                if hasattr(response, 'text'):
+                    response_text = response.text
+            
+            logger.info(f"📄 Raw analysis response length: {len(response_text)}")
+            
+            # Clean and parse JSON
+            json_text = response_text.strip()
+            
+            # Remove markdown code blocks if present
+            if json_text.startswith("```json"):
+                json_text = json_text[7:]
+            elif json_text.startswith("```"):
+                json_text = json_text[3:]
+            if json_text.endswith("```"):
+                json_text = json_text[:-3]
+            
+            json_text = json_text.strip()
+            
+            try:
+                result = json.loads(json_text)
+                logger.info(f"✅ Style analysis complete: archetype={result.get('archetype_suggestion', 'unknown')}")
+                return result
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse analysis JSON: {e}")
+                logger.error(f"Raw response: {json_text[:500]}")
+                
+                # Return a minimal default response
+                return {
+                    "scene_type": "lifestyle",
+                    "composition": {
+                        "camera_angle": "eye_level",
+                        "shot_type": "medium_shot",
+                        "lens_style": "standard",
+                        "aspect_ratio": "1:1",
+                        "focal_point": "centro de la imagen"
+                    },
+                    "lighting": {
+                        "type": "natural",
+                        "direction": "front",
+                        "quality": "soft",
+                        "color_temperature": "neutral"
+                    },
+                    "color_palette": {
+                        "primary": "#FFFFFF",
+                        "secondary": "#808080",
+                        "accent": "#000000",
+                        "mood": "neutral"
+                    },
+                    "style": {
+                        "aesthetic": "modern",
+                        "mood": "calm",
+                        "texture_emphasis": "smooth",
+                        "background_type": "solid"
+                    },
+                    "archetype_suggestion": "lifestyle",
+                    "reconstruction_summary": "Imagen de estilo contemporáneo con iluminación natural.",
+                    "_parse_error": str(e)
+                }
+                
+        except Exception as e:
+            logger.error(f"❌ Style analysis failed: {e}")
+            raise ValueError(f"Style analysis failed: {str(e)}")
 
 
 # Singleton instance

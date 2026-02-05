@@ -63,6 +63,55 @@ class GenerateImageRequest(BaseModel):
     camera_settings: Optional[CameraSettings] = None
 
 
+class StyleAnalysisComposition(BaseModel):
+    """Composition analysis from image"""
+    camera_angle: str = "eye_level"
+    shot_type: str = "medium_shot"
+    lens_style: str = "standard"
+    aspect_ratio: str = "1:1"
+    focal_point: str = ""
+
+
+class StyleAnalysisLighting(BaseModel):
+    """Lighting analysis from image"""
+    type: str = "natural"
+    direction: str = "front"
+    quality: str = "soft"
+    color_temperature: str = "neutral"
+
+
+class StyleAnalysisColors(BaseModel):
+    """Color palette analysis from image"""
+    primary: str = "#FFFFFF"
+    secondary: str = "#808080"
+    accent: Optional[str] = None
+    mood: str = ""
+
+
+class StyleAnalysisStyle(BaseModel):
+    """Style/aesthetic analysis from image"""
+    aesthetic: str = "modern"
+    mood: str = "calm"
+    texture_emphasis: str = "smooth"
+    background_type: str = "solid"
+
+
+class StyleAnalysisResponse(BaseModel):
+    """Complete style analysis response"""
+    scene_type: str = "lifestyle"
+    composition: StyleAnalysisComposition
+    lighting: StyleAnalysisLighting
+    color_palette: StyleAnalysisColors
+    style: StyleAnalysisStyle
+    archetype_suggestion: str = "lifestyle"
+    reconstruction_summary: str = ""
+
+
+class AnalyzeStyleRequest(BaseModel):
+    """Request to analyze a reference image for style extraction"""
+    image_id: str  # ID of image from image bank
+
+
 # =============================================================================
 # CONTEXT ENDPOINTS (Step 1 - existing)
 # =============================================================================
@@ -470,4 +519,99 @@ async def approve_image_for_task(image_id: str) -> Dict[str, Any]:
         return {"status": "success", "message": "Image approved and task updated"}
     except Exception as e:
         logger.error(f"Error approving image {image_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# =============================================================================
+# STYLE ANALYSIS ENDPOINT (Copy Style feature)
+# =============================================================================
+
+@router.post("/analyze-style", response_model=StyleAnalysisResponse)
+async def analyze_reference_style(request: AnalyzeStyleRequest) -> Dict[str, Any]:
+    """
+    Analyze a reference image to extract style and composition parameters.
+    
+    This powers the "Copy Style" feature - users select a reference image
+    and the system extracts all visual parameters to auto-configure generation.
+    
+    Returns:
+        StyleAnalysisResponse with composition, lighting, colors, and style info
+    """
+    try:
+        if not db.client:
+            raise HTTPException(status_code=500, detail="Database not configured")
+        
+        # Fetch the image from image bank
+        response = db.client.table("image_bank")\
+            .select("*")\
+            .eq("id", request.image_id)\
+            .limit(1)\
+            .execute()
+        
+        if not response.data or len(response.data) == 0:
+            raise HTTPException(status_code=404, detail=f"Image {request.image_id} not found in image bank")
+        
+        image_record = response.data[0]
+        image_url = image_record.get("url") or image_record.get("image_url")
+        
+        if not image_url:
+            raise HTTPException(status_code=400, detail="Image has no URL")
+        
+        logger.info(f"🔍 Analyzing style from image: {request.image_id}")
+        
+        # Download the image
+        import httpx
+        async with httpx.AsyncClient() as client:
+            img_response = await client.get(image_url, timeout=30.0)
+            if img_response.status_code != 200:
+                raise HTTPException(status_code=400, detail="Failed to download image")
+            
+            image_data = img_response.content
+            mime_type = img_response.headers.get("content-type", "image/jpeg")
+        
+        # Call NanoBanana service to analyze
+        analysis_result = await nanobanana_service.analyze_style_image(
+            image_data=image_data,
+            mime_type=mime_type
+        )
+        
+        # Transform to response model
+        response_data = {
+            "scene_type": analysis_result.get("scene_type", "lifestyle"),
+            "composition": {
+                "camera_angle": analysis_result.get("composition", {}).get("camera_angle", "eye_level"),
+                "shot_type": analysis_result.get("composition", {}).get("shot_type", "medium_shot"),
+                "lens_style": analysis_result.get("composition", {}).get("lens_style", "standard"),
+                "aspect_ratio": analysis_result.get("composition", {}).get("aspect_ratio", "1:1"),
+                "focal_point": analysis_result.get("composition", {}).get("focal_point", "")
+            },
+            "lighting": {
+                "type": analysis_result.get("lighting", {}).get("type", "natural"),
+                "direction": analysis_result.get("lighting", {}).get("direction", "front"),
+                "quality": analysis_result.get("lighting", {}).get("quality", "soft"),
+                "color_temperature": analysis_result.get("lighting", {}).get("color_temperature", "neutral")
+            },
+            "color_palette": {
+                "primary": analysis_result.get("color_palette", {}).get("primary", "#FFFFFF"),
+                "secondary": analysis_result.get("color_palette", {}).get("secondary", "#808080"),
+                "accent": analysis_result.get("color_palette", {}).get("accent"),
+                "mood": analysis_result.get("color_palette", {}).get("mood", "")
+            },
+            "style": {
+                "aesthetic": analysis_result.get("style", {}).get("aesthetic", "modern"),
+                "mood": analysis_result.get("style", {}).get("mood", "calm"),
+                "texture_emphasis": analysis_result.get("style", {}).get("texture_emphasis", "smooth"),
+                "background_type": analysis_result.get("style", {}).get("background_type", "solid")
+            },
+            "archetype_suggestion": analysis_result.get("archetype_suggestion", "lifestyle"),
+            "reconstruction_summary": analysis_result.get("reconstruction_summary", "")
+        }
+        
+        logger.info(f"✅ Style analysis complete for image {request.image_id}")
+        return response_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Style analysis failed for image {request.image_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))

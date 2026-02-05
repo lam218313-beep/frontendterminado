@@ -1393,3 +1393,56 @@ export async function getTaskGeneratedImages(taskId: string): Promise<{
   });
   return handleResponse(response);
 }
+
+// --- Style Analysis (Copy Style Feature) ---
+
+export interface StyleAnalysisComposition {
+  camera_angle: string;
+  shot_type: string;
+  lens_style: string;
+  aspect_ratio: string;
+  focal_point: string;
+}
+
+export interface StyleAnalysisLighting {
+  type: string;
+  direction: string;
+  quality: string;
+  color_temperature: string;
+}
+
+export interface StyleAnalysisColors {
+  primary: string;
+  secondary: string;
+  accent?: string;
+  mood: string;
+}
+
+export interface StyleAnalysisStyle {
+  aesthetic: string;
+  mood: string;
+  texture_emphasis: string;
+  background_type: string;
+}
+
+export interface StyleAnalysis {
+  scene_type: string;
+  composition: StyleAnalysisComposition;
+  lighting: StyleAnalysisLighting;
+  color_palette: StyleAnalysisColors;
+  style: StyleAnalysisStyle;
+  archetype_suggestion: string;
+  reconstruction_summary: string;
+}
+
+export async function analyzeReferenceStyle(imageId: string): Promise<StyleAnalysis> {
+  const response = await fetch(`${API_BASE_URL}/studio/analyze-style`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ image_id: imageId }),
+  });
+  return handleResponse<StyleAnalysis>(response);
+}
