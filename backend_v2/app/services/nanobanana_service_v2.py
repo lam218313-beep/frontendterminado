@@ -219,18 +219,18 @@ class NanoBananaServiceV2:
         self._configure_client()
     
     def _configure_client(self):
-        """Configure the Google Generative AI client"""
+        """Configure the Google GenAI client (new google.genai package)"""
         try:
-            import google.generativeai as genai
+            from google import genai
             
             api_key = settings.GEMINI_API_KEY or os.getenv('GEMINI_API_KEY')
             if not api_key:
                 logger.warning("⚠️ GEMINI_API_KEY not configured - NanoBanana will not work")
                 return
             
-            genai.configure(api_key=api_key)
-            self.client = genai
-            logger.info("✅ NanoBanana client configured (Gemini native image generation)")
+            # New API uses Client() with api_key parameter
+            self.client = genai.Client(api_key=api_key)
+            logger.info("✅ NanoBanana client configured (google.genai native image generation)")
             
         except Exception as e:
             logger.error(f"❌ Failed to configure NanoBanana client: {e}")
@@ -650,7 +650,7 @@ class NanoBananaServiceV2:
         """
         Call the Gemini API for native image generation.
         
-        Uses google.generativeai with responseModalities=['IMAGE']
+        Uses new google.genai package (replacing deprecated google.generativeai)
         """
         model_config = self.MODELS[model_key]
         model_id = model_config['id']
@@ -660,64 +660,56 @@ class NanoBananaServiceV2:
         logger.info(f"   References: {len(reference_images)}, Product: {product_image is not None}")
         
         try:
-            import google.generativeai as genai
-            from google.generativeai import types
+            from google.genai import types
+            from PIL import Image as PILImage
             
-            # Build content parts
+            if not self.client:
+                raise ValueError("NanoBanana client not initialized")
+            
+            # Build content parts for the new API
             content_parts = []
             
             # Add reference images first (so model can see them before prompt)
             for ref in reference_images:
                 if ref.get('data'):
-                    content_parts.append({
-                        'inline_data': {
-                            'mime_type': ref.get('mime_type', 'image/jpeg'),
-                            'data': base64.b64encode(ref['data']).decode('utf-8')
-                        }
-                    })
+                    # New API uses types.Part.from_bytes()
+                    content_parts.append(
+                        types.Part.from_bytes(
+                            data=ref['data'],
+                            mime_type=ref.get('mime_type', 'image/jpeg')
+                        )
+                    )
             
             # Add product image with high-fidelity instruction
             if product_image and product_image.get('data'):
                 product_name = product_image.get('name', 'the product')
-                content_parts.append({
-                    'inline_data': {
-                        'mime_type': product_image.get('mime_type', 'image/jpeg'),
-                        'data': base64.b64encode(product_image['data']).decode('utf-8')
-                    }
-                })
+                content_parts.append(
+                    types.Part.from_bytes(
+                        data=product_image['data'],
+                        mime_type=product_image.get('mime_type', 'image/jpeg')
+                    )
+                )
                 # Add instruction for high-fidelity preservation
                 prompt = f"Keep this product ({product_name}) with perfect high-fidelity detail preservation in the generated image. {prompt}"
             
             # Add the text prompt
-            content_parts.append({'text': prompt})
+            content_parts.append(prompt)
             
-            # Configure generation
-            generation_config = {
-                'response_modalities': ['IMAGE', 'TEXT'],
-            }
-            
-            # Add image config for aspect ratio and resolution
-            # Note: The actual parameter names may vary based on API version
-            image_config = {
-                'aspect_ratio': aspect_ratio,
-            }
-            if resolution == '4K':
-                image_config['image_size'] = '4K'
-            elif resolution == '2K':
-                image_config['image_size'] = '2K'
-            else:
-                image_config['image_size'] = '1K'
-            
-            generation_config['image_config'] = image_config
-            
-            # Create the model
-            model = genai.GenerativeModel(
-                model_name=model_id,
-                generation_config=generation_config
+            # Configure generation with new API types
+            config = types.GenerateContentConfig(
+                response_modalities=['IMAGE', 'TEXT'],
+                image_config=types.ImageConfig(
+                    aspect_ratio=aspect_ratio,
+                    image_size=resolution  # '1K', '2K', or '4K'
+                )
             )
             
-            # Generate
-            response = model.generate_content(content_parts)
+            # Generate using the new client.models.generate_content API
+            response = self.client.models.generate_content(
+                model=model_id,
+                contents=content_parts,
+                config=config
+            )
             
             # Extract image from response
             image_data = None
@@ -727,16 +719,33 @@ class NanoBananaServiceV2:
             if response.candidates:
                 for part in response.candidates[0].content.parts:
                     if hasattr(part, 'inline_data') and part.inline_data:
-                        # This is an image
-                        image_bytes = base64.b64decode(part.inline_data.data)
-                        if not image_data:
-                            image_data = image_bytes
-                        else:
-                            # Additional images could be "thinking" images
-                            thinking_images.append(
-                                f"data:{part.inline_data.mime_type};base64,{part.inline_data.data}"
-                            )
+                        # This is an image - new API stores data directly as bytes
+                        if hasattr(part.inline_data, 'data'):
+                            image_bytes = part.inline_data.data
+                            if isinstance(image_bytes, str):
+                                # If it's base64 encoded string
+                                image_bytes = base64.b64decode(image_bytes)
+                            if not image_data:
+                                image_data = image_bytes
+                            else:
+                                # Additional images could be "thinking" images
+                                img_b64 = base64.b64encode(image_bytes).decode('utf-8')
+                                mime = getattr(part.inline_data, 'mime_type', 'image/png')
+                                thinking_images.append(f"data:{mime};base64,{img_b64}")
                     elif hasattr(part, 'text') and part.text:
+                        revised_prompt = part.text
+            
+            # Also check for as_image() helper method (new API)
+            if not image_data and hasattr(response, 'parts'):
+                for part in response.parts:
+                    if part.inline_data is not None:
+                        img = part.as_image()
+                        if img:
+                            buf = io.BytesIO()
+                            img.save(buf, format='PNG')
+                            image_data = buf.getvalue()
+                            break
+                    elif part.text is not None:
                         revised_prompt = part.text
             
             if not image_data:
