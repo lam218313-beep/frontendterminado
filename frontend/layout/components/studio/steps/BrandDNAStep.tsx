@@ -8,13 +8,21 @@ import {
 } from 'lucide-react';
 
 const LIGHTING_OPTIONS = [
-    'Studio profesional', 'Luz natural suave', 'Golden hour', 
-    'Dramático con sombras', 'Luz plana editorial', 'Neón/Artificial'
+    { value: 'studio', label: 'Studio profesional' },
+    { value: 'natural', label: 'Luz natural suave' },
+    { value: 'golden_hour', label: 'Golden hour' },
+    { value: 'dramatic', label: 'Dramático con sombras' },
+    { value: 'soft', label: 'Luz plana editorial' },
+    { value: 'neon', label: 'Neón/Artificial' }
 ];
 
 const MOOD_OPTIONS = [
-    'Aspiracional y premium', 'Amigable y cercano', 'Minimalista y clean',
-    'Energético y vibrante', 'Sereno y wellness', 'Bold y disruptivo'
+    { value: 'luxurious', label: 'Aspiracional y premium' },
+    { value: 'playful', label: 'Amigable y cercano' },
+    { value: 'professional', label: 'Minimalista y clean' },
+    { value: 'energetic', label: 'Energético y vibrante' },
+    { value: 'calm', label: 'Sereno y wellness' },
+    { value: 'bold', label: 'Bold y disruptivo' }
 ];
 
 const ARCHETYPE_OPTIONS = [
@@ -43,8 +51,8 @@ export const BrandDNAStep: React.FC = () => {
         color_accent_name: '',
         color_accent_hex: '#FF5500',
         default_style: 'natural' as 'natural' | 'vivid',
-        default_lighting: 'Studio profesional',
-        default_mood: 'Aspiracional y premium',
+        default_lighting: 'studio',
+        default_mood: 'luxurious',
         default_resolution: '2K',
         preferred_archetypes: [] as string[],
         always_exclude: ['text', 'letters', 'words', 'logos', 'watermarks'],
@@ -87,8 +95,8 @@ export const BrandDNAStep: React.FC = () => {
                         color_accent_name: result.dna.color_accent_name || '',
                         color_accent_hex: result.dna.color_accent_hex || '#FF5500',
                         default_style: result.dna.default_style || 'natural',
-                        default_lighting: result.dna.default_lighting || 'Studio profesional',
-                        default_mood: result.dna.default_mood || 'Aspiracional y premium',
+                        default_lighting: result.dna.default_lighting || 'studio',
+                        default_mood: result.dna.default_mood || 'luxurious',
                         default_resolution: result.dna.default_resolution || '2K',
                         preferred_archetypes: result.dna.preferred_archetypes || [],
                         always_exclude: result.dna.always_exclude || ['text', 'letters', 'words', 'logos', 'watermarks'],
@@ -271,15 +279,15 @@ export const BrandDNAStep: React.FC = () => {
                                     <div className="space-y-2">
                                         {LIGHTING_OPTIONS.map(option => (
                                             <button
-                                                key={option}
-                                                onClick={() => setFormData(prev => ({ ...prev, default_lighting: option }))}
+                                                key={option.value}
+                                                onClick={() => setFormData(prev => ({ ...prev, default_lighting: option.value }))}
                                                 className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                                                    formData.default_lighting === option
+                                                    formData.default_lighting === option.value
                                                         ? 'bg-amber-100 text-amber-800 border-2 border-amber-400'
                                                         : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100'
                                                 }`}
                                             >
-                                                {option}
+                                                {option.label}
                                             </button>
                                         ))}
                                     </div>
@@ -293,15 +301,15 @@ export const BrandDNAStep: React.FC = () => {
                                     <div className="space-y-2">
                                         {MOOD_OPTIONS.map(option => (
                                             <button
-                                                key={option}
-                                                onClick={() => setFormData(prev => ({ ...prev, default_mood: option }))}
+                                                key={option.value}
+                                                onClick={() => setFormData(prev => ({ ...prev, default_mood: option.value }))}
                                                 className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                                                    formData.default_mood === option
+                                                    formData.default_mood === option.value
                                                         ? 'bg-rose-100 text-rose-800 border-2 border-rose-400'
                                                         : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100'
                                                 }`}
                                             >
-                                                {option}
+                                                {option.label}
                                             </button>
                                         ))}
                                     </div>
