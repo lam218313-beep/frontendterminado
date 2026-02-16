@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Building2,
     Target,
     Lightbulb,
-    Rocket,
     CheckCircle2,
     ArrowRight,
     ArrowLeft,
@@ -17,15 +16,8 @@ import {
     BrainCircuit,
     Wallet,
     Activity,
-    UserCheck,
     ChevronDown,
     Check,
-    ScanSearch,
-    Sparkles,
-    Zap,
-    AlertTriangle,
-    RotateCw,
-    Ban,
     DollarSign,
     ShoppingBag,
     Globe,
@@ -48,7 +40,7 @@ import {
     Send
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { saveInterview, getInterview, generatePersonas } from '../../services/api';
+import { saveInterview, getInterview } from '../../services/api';
 
 // Step Definition
 const STEPS = [
@@ -65,9 +57,7 @@ const AUDIENCE_STEPS = [
     { id: 0, title: 'Demográfico', icon: Users },
     { id: 1, title: 'Psicográfico', icon: BrainCircuit },
     { id: 2, title: 'Económico', icon: Wallet },
-    { id: 3, title: 'Comportamiento', icon: Activity },
-    { id: 4, title: 'Anti-Persona', icon: Ban },
-    { id: 5, title: 'Perfil Ideal', icon: UserCheck }
+    { id: 3, title: 'Comportamiento', icon: Activity }
 ];
 
 // --- COMPONENTS ---
@@ -285,173 +275,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ label, value, onChange, opt
     );
 };
 
-// --- 3D PERSONA CARD COMPONENT ---
-interface PersonaCardProps {
-    type: 'ideal' | 'anti';
-    data: any;
-}
 
-const PersonaCard: React.FC<PersonaCardProps> = ({ type, data }) => {
-    const [isFlipped, setIsFlipped] = useState(false);
-    const cardRef = useRef<HTMLDivElement>(null);
-    const [rotation, setRotation] = useState({ x: 0, y: 0 });
-
-    // Config based on type
-    const isIdeal = type === 'ideal';
-    const title = data?.name || (isIdeal ? 'Cliente Ideal' : 'Anti-Persona');
-    const subTitle = isIdeal ? 'High Value Target' : 'Cliente No Deseado';
-    const badgeColor = isIdeal ? 'bg-green-500' : 'bg-red-500';
-    const gradient = isIdeal ? 'from-primary-500 to-purple-600' : 'from-gray-600 to-gray-800';
-    const avatarSeed = isIdeal
-        ? `${data.gender}${data.ageRange}&backgroundColor=b6e3f4`
-        : `anti${data.gender}&backgroundColor=ffdfbf`; // Different seed for anti
-
-    const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-        if (!cardRef.current || isFlipped) return;
-        const rect = cardRef.current.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-
-        // Multiplier controls the intensity of the tilt
-        const rotateX = ((y - centerY) / centerY) * -10;
-        const rotateY = ((x - centerX) / centerX) * 10;
-        setRotation({ x: rotateX, y: rotateY });
-    }, [isFlipped]);
-
-    const handleMouseLeave = () => setRotation({ x: 0, y: 0 });
-
-    // Helper to get display value - now data comes with real values from AI
-    const getDisplayValue = (key: string, originalValue: string) => {
-        return originalValue || 'N/A';
-    };
-
-    return (
-        <div
-            className="relative w-full max-w-md h-[600px] [perspective:1000px] group cursor-pointer mx-auto"
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            onClick={() => setIsFlipped(!isFlipped)}
-        >
-            <div
-                ref={cardRef}
-                className="w-full h-full relative transition-all duration-500 ease-out [transform-style:preserve-3d]"
-                style={{
-                    transform: `rotateX(${isFlipped ? 0 : rotation.x}deg) rotateY(${isFlipped ? 180 : rotation.y}deg)`
-                }}
-            >
-                {/* --- FRONT FACE --- */}
-                <div className="absolute inset-0 bg-white border border-gray-100 rounded-[30px] shadow-2xl overflow-hidden [backface-visibility:hidden]">
-                    {/* Header Banner */}
-                    <div className={`h-24 bg-gradient-to-r ${gradient} relative overflow-hidden`}>
-                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
-                        <div className="absolute top-4 right-4 text-white/80">
-                            {isIdeal ? <Sparkles size={20} className="animate-pulse" /> : <AlertTriangle size={20} />}
-                        </div>
-                    </div>
-
-                    <div className="px-8 pb-8 -mt-12 relative h-full flex flex-col">
-                        {/* Avatar & Badge */}
-                        <div className="flex justify-between items-end mb-4 shrink-0">
-                            <div className="relative">
-                                <div className="w-24 h-24 rounded-2xl bg-white p-1.5 shadow-lg">
-                                    <div className="w-full h-full rounded-xl bg-gray-50 overflow-hidden relative">
-                                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}`} alt="Avatar" className={`w-full h-full object-cover ${!isIdeal ? 'grayscale contrast-125' : ''}`} />
-                                    </div>
-                                </div>
-                                <div className={`absolute -bottom-2 -right-2 text-white p-1 rounded-full border-2 border-white shadow-sm ${badgeColor}`}>
-                                    {isIdeal ? <Zap size={12} fill="currentColor" /> : <Ban size={12} />}
-                                </div>
-                            </div>
-                            <div className={`hidden px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wide ${isIdeal ? 'bg-primary-50 border-primary-100 text-primary-700' : 'bg-gray-100 border-gray-200 text-gray-500'}`}>
-                                {subTitle}
-                            </div>
-                        </div>
-
-                        {/* Main Info */}
-                        <div className="shrink-0">
-                            <h3 className="text-2xl font-bold text-gray-900 leading-tight">{title}</h3>
-                            <p className="text-sm text-gray-500 font-medium mt-1">
-                                {data.occupation || 'Profesión'} • {data.location || 'Ubicación'}
-                            </p>
-                        </div>
-
-                        <div className="h-px w-full bg-gray-100 my-4 shrink-0"></div>
-
-                        {/* Stats Grid */}
-                        <div className="space-y-4 overflow-y-auto pr-2">
-                            <div className={`p-3 rounded-xl border transition-colors ${isIdeal ? 'bg-gray-50 border-gray-100' : 'bg-red-50 border-red-100'}`}>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <BrainCircuit size={14} className={isIdeal ? "text-primary-500" : "text-red-500"} />
-                                    <span className="text-xs font-bold text-gray-400 uppercase">Mentalidad</span>
-                                </div>
-                                <p className="text-sm font-medium text-gray-800 italic">
-                                    "{getDisplayValue('pain', data.painPoints)}"
-                                </p>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
-                                    <span className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Ingresos</span>
-                                    <p className="font-bold text-gray-800">{getDisplayValue('income', data.incomeLevel || 'N/A')}</p>
-                                </div>
-                                <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
-                                    <span className="block text-[10px] text-gray-400 uppercase font-bold mb-1">Lealtad</span>
-                                    <p className={`font-bold ${isIdeal ? 'text-primary-600' : 'text-gray-500'}`}>{getDisplayValue('loyalty', data.loyalty || 'N/A')}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Rotate Hint */}
-                    <div className="absolute bottom-3 right-4 flex items-center gap-1 text-[10px] text-gray-300 bg-white/80 px-2 py-1 rounded-full backdrop-blur-sm">
-                        <RotateCw size={10} />
-                        <span>Click para girar</span>
-                    </div>
-                </div>
-
-                {/* --- BACK FACE --- */}
-                <div className="absolute inset-0 bg-white border border-gray-100 rounded-[30px] shadow-2xl p-8 [backface-visibility:hidden] [transform:rotateY(180deg)] flex flex-col">
-                    <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4 shrink-0">
-                        <h3 className="text-xl font-bold text-gray-800">Datos {isIdeal ? 'Clave' : 'de Riesgo'}</h3>
-                        {isIdeal ? <CheckCircle2 className="text-green-500" /> : <AlertTriangle className="text-red-500" />}
-                    </div>
-
-                    <div className="flex-1 space-y-4 overflow-y-auto pr-2">
-                        <div className="space-y-1">
-                            <span className="text-xs text-gray-400 uppercase font-bold">Intereses</span>
-                            <div className="flex flex-wrap gap-1">
-                                {data.interests ? data.interests.split(',').map((tag: string, i: number) => (
-                                    <span key={i} className="px-2 py-1 bg-gray-50 rounded text-xs text-gray-600 border border-gray-100">{tag.trim()}</span>
-                                )) : <span className="text-gray-400 text-sm">-</span>}
-                            </div>
-                        </div>
-
-                        <div className="space-y-1">
-                            <span className="text-xs text-gray-400 uppercase font-bold">Valores</span>
-                            <p className="text-sm text-gray-700">{data.values || '-'}</p>
-                        </div>
-
-                        <div className="space-y-1">
-                            <span className="text-xs text-gray-400 uppercase font-bold">Hábitos de Gasto</span>
-                            <p className="text-sm text-gray-700">{data.spendingHabits || '-'}</p>
-                        </div>
-
-                        <div className="mt-4 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                            <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">{isIdeal ? 'Por qué es ideal' : 'Por qué evitarlo'}</span>
-                            <p className="text-xs text-gray-600 leading-relaxed">
-                                {isIdeal
-                                    ? (data?.ideal_reason || "Focalizar recursos de marketing en este segmento para maximizar ROI y LTV.")
-                                    : (data?.avoid_reason || "Evitar captación activa. Crear filtros en el funnel para descalificar tempranamente.")}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
 
 // --- SIMPLE INPUT FIELD COMPONENT (Module Level) ---
 interface InputFieldProps {
@@ -504,7 +328,6 @@ export const MultiStepForm: React.FC = () => {
     const [currentStep, setCurrentStep] = useState(1);
     const [audienceStep, setAudienceStep] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isFinished, setIsFinished] = useState(false);
 
@@ -532,9 +355,7 @@ export const MultiStepForm: React.FC = () => {
             frequency: '',
             loyalty: '',
             decisionRole: '',
-            usage: '',
-            antiPersona: null,
-            idealPersona: null
+            usage: ''
         },
         // Step 3 Data (Market)
         market: {
@@ -735,56 +556,11 @@ export const MultiStepForm: React.FC = () => {
     const nextStep = async () => {
         // Logic for Audience Step (Step 2)
         if (currentStep === 2) {
-            if (audienceStep < 5) {
-                if (audienceStep === 3) {
-                    // Skip AI generation if already finished or personas exist
-                    if (isFinished || (formData.audience.antiPersona && formData.audience.idealPersona)) {
-                        setAudienceStep(4);
-                        return;
-                    }
-
-                    setIsAnalyzing(true);
-
-                    try {
-                        // AI Generation Call
-                        if (clientId) {
-                            const personas = await generatePersonas(clientId, {
-                                audience_data: formData.audience,
-                                market_data: formData.market,
-                                brand_data: formData.brand,
-                                business_context: {
-                                    businessName: formData.businessName,
-                                    history: formData.history,
-                                    vision: formData.vision,
-                                    differentiator: formData.differentiator
-                                }
-                            });
-
-                            setFormData(prev => ({
-                                ...prev,
-                                audience: {
-                                    ...prev.audience,
-                                    antiPersona: personas.anti_persona,
-                                    idealPersona: personas.ideal_persona
-                                }
-                            }));
-                        } else {
-                            console.warn("No ClientID for AI generation");
-                        }
-                    } catch (error) {
-                        console.error("Error generating personas:", error);
-                        // Optionally show error, but we proceed to show placeholders/empty for now
-                    } finally {
-                        setAudienceStep(4);
-                        setIsAnalyzing(false);
-                    }
-                } else {
-                    setAudienceStep(prev => prev + 1);
-                }
+            if (audienceStep < 3) {
+                setAudienceStep(prev => prev + 1);
                 return;
             }
         }
-
 
         if (currentStep < 6) {
             setIsLoading(true);
@@ -803,7 +579,7 @@ export const MultiStepForm: React.FC = () => {
     };
 
     const jumpToStep = (stepId: number) => {
-        if (isLoading || isAnalyzing || isSubmitting) return;
+        if (isLoading || isSubmitting) return;
 
         // Allow jumping freely if finished, otherwise restrict to visited steps
         if (isFinished || stepId <= currentStep) {
@@ -842,7 +618,7 @@ export const MultiStepForm: React.FC = () => {
                     {STEPS.map((step) => {
                         const isActive = step.id === currentStep;
                         const isCompleted = step.id < currentStep || isFinished;
-                        const isClickable = (step.id <= currentStep && !isLoading && !isAnalyzing && !isSubmitting) || isFinished;
+                        const isClickable = (step.id <= currentStep && !isLoading && !isSubmitting) || isFinished;
 
                         return (
                             <div
@@ -890,7 +666,7 @@ export const MultiStepForm: React.FC = () => {
                             </h2>
                             <p className="text-gray-500 text-base max-w-lg mx-auto leading-relaxed">
                                 {currentStep === 1 && 'Completa la información básica para que podamos entender el ADN de tu marca.'}
-                                {currentStep === 2 && 'Vamos a descubrir el perfil de tu cliente no deseado y tu cliente ideal paso a paso.'}
+                                {currentStep === 2 && 'Define el perfil de tu cliente objetivo paso a paso.'}
                                 {currentStep === 3 && 'Entendamos tu posición actual, qué vendes y contra quién compites.'}
                                 {currentStep === 4 && 'Vamos a definir cómo te comunicas y gestionas tu presencia digital.'}
                                 {currentStep === 5 && 'Define tus metas de ventas y marca para trazar el camino al éxito.'}
@@ -900,11 +676,11 @@ export const MultiStepForm: React.FC = () => {
                     )}
 
                     {/* Navigation Buttons (Top Position) */}
-                    {(!isFinished || (isFinished && currentStep === 2)) && (
+                    {(!isFinished) && (
                         <div className="mb-6 flex items-center justify-between pb-4 border-b border-gray-100">
                             <button
                                 onClick={prevStep}
-                                disabled={(currentStep === 1 && audienceStep === 0) || isLoading || isAnalyzing || isSubmitting}
+                                disabled={(currentStep === 1 && audienceStep === 0) || isLoading || isSubmitting}
                                 className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all ${(currentStep === 1) || isSubmitting
                                     ? 'text-gray-300 cursor-not-allowed'
                                     : 'text-gray-600 hover:bg-gray-100'
@@ -918,17 +694,17 @@ export const MultiStepForm: React.FC = () => {
                             {currentStep < 6 && (
                                 <button
                                     onClick={nextStep}
-                                    disabled={isLoading || isAnalyzing || (isFinished && currentStep === 2 && audienceStep === 5)} // Disable next if finished and at last sub-step
-                                    className={`flex items-center gap-2 bg-primary-600 text-white px-8 py-3 rounded-full font-bold text-sm shadow-lg shadow-primary-600/20 hover:bg-primary-700 hover:shadow-primary-600/40 transition-all transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-80 disabled:cursor-not-allowed ${isFinished && currentStep === 2 && audienceStep === 5 ? 'opacity-50' : ''}`}
+                                    disabled={isLoading || isSubmitting}
+                                    className="flex items-center gap-2 bg-primary-600 text-white px-8 py-3 rounded-full font-bold text-sm shadow-lg shadow-primary-600/20 hover:bg-primary-700 hover:shadow-primary-600/40 transition-all transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-80 disabled:cursor-not-allowed"
                                 >
-                                    {isLoading || isAnalyzing ? (
+                                    {isLoading ? (
                                         <>
                                             <Loader2 size={18} className="animate-spin" />
-                                            <span>{isAnalyzing ? 'Analizando...' : 'Procesando...'}</span>
+                                            <span>Procesando...</span>
                                         </>
                                     ) : (
                                         <>
-                                            {(currentStep === 2 && audienceStep < 5) ? 'Siguiente' : 'Continuar'}
+                                            {(currentStep === 2 && audienceStep < 3) ? 'Siguiente' : 'Continuar'}
                                             <ArrowRight size={18} />
                                         </>
                                     )}
@@ -1059,48 +835,7 @@ export const MultiStepForm: React.FC = () => {
                                     </div>
                                 )}
 
-                                {/* 2.4 SCANNING & ANTI-PERSONA REVEAL */}
-                                {audienceStep === 4 && (
-                                    <div className="flex items-center justify-center py-4 relative min-h-[650px]">
-                                        {isAnalyzing ? (
-                                            // SCANNING STATE
-                                            <div className="absolute inset-0 flex flex-col items-center justify-center z-20 bg-white/80 backdrop-blur-sm animate-in fade-in duration-500">
-                                                <div className="relative">
-                                                    <div className="absolute inset-0 bg-primary-500 rounded-full animate-ping opacity-20"></div>
-                                                    <div className="absolute -inset-4 bg-primary-500 rounded-full animate-ping opacity-10 delay-150"></div>
-                                                    <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-xl border-4 border-primary-100 relative z-10">
-                                                        <ScanSearch size={40} className="text-primary-500 animate-pulse" />
-                                                    </div>
-                                                </div>
-                                                <h3 className="mt-8 text-2xl font-bold text-gray-900 animate-pulse">Analizando Perfil...</h3>
-                                                <div className="mt-2 h-6 overflow-hidden relative w-full text-center">
-                                                    <div className="animate-[slide-up_3s_linear_infinite]">
-                                                        <p className="text-sm text-gray-500 font-mono">Segmentando base de datos...</p>
-                                                        <p className="text-sm text-gray-500 font-mono">Identificando fricciones...</p>
-                                                        <p className="text-sm text-gray-500 font-mono">Calculando anti-patrones...</p>
-                                                    </div>
-                                                </div>
-                                                <div className="mt-6 w-64 h-2 bg-gray-100 rounded-full overflow-hidden">
-                                                    <div className="h-full bg-primary-500 animate-[loading_3.0s_ease-in-out_forwards] rounded-full"></div>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            // ANTI-PERSONA CARD
-                                            <div className="animate-in zoom-in-50 duration-700 ease-out-back fill-mode-forwards w-full">
-                                                <PersonaCard type="anti" data={formData.audience.antiPersona || formData.audience} />
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
 
-                                {/* 2.5 IDEAL PERSONA REVEAL */}
-                                {audienceStep === 5 && (
-                                    <div className="flex items-center justify-center py-4 relative min-h-[650px]">
-                                        <div className="animate-in zoom-in-50 duration-700 ease-out-back fill-mode-forwards w-full">
-                                            <PersonaCard type="ideal" data={formData.audience.idealPersona || formData.audience} />
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         )}
 
