@@ -945,7 +945,7 @@ export const MultiStepForm: React.FC = () => {
                                 {/* 4. Competitors */}
                                 <div className="space-y-4">
                                     <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2 border-b border-gray-100 pb-2">
-                                        <ScanSearch className="text-primary-500" size={20} /> Competencia y Referentes
+                                        <Compass className="text-primary-500" size={20} /> Competencia y Referentes
                                     </h3>
                                     <ListInput
                                         label="Links de Referencia (Instagram/TikTok)"
@@ -1125,7 +1125,7 @@ export const MultiStepForm: React.FC = () => {
                                                 className={`w-full bg-white border border-red-200 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all resize-none ${isFinished ? 'opacity-70 cursor-default' : ''}`}
                                             />
                                             <p className="text-xs text-red-400 pl-1 flex items-center gap-1">
-                                                <AlertTriangle size={10} /> Esta información es vital para no repetir errores.
+                                                <Flag size={10} /> Esta información es vital para no repetir errores.
                                             </p>
                                         </div>
                                     </div>
@@ -1219,7 +1219,7 @@ export const MultiStepForm: React.FC = () => {
                                         {/* Rocket */}
                                         <div className="relative z-10 animate-[rocket-fly_3s_ease-in-out_infinite]">
                                             <div className="w-32 h-32 bg-primary-50 rounded-full flex items-center justify-center shadow-2xl shadow-primary-500/30 relative">
-                                                <Rocket size={64} className="text-primary-500 transform -rotate-45" strokeWidth={1.5} fill="currentColor" fillOpacity={0.1} />
+                                                <Send size={64} className="text-primary-500 transform -rotate-45" strokeWidth={1.5} fill="currentColor" fillOpacity={0.1} />
                                                 {/* Engine Fire */}
                                                 <div className="absolute -bottom-4 left-0 w-full flex justify-center opacity-70">
                                                     <div className="w-2 h-6 bg-orange-400 rounded-full blur-[2px] animate-pulse"></div>
