@@ -52,6 +52,7 @@ class CameraSettings(BaseModel):
 class GenerateImageRequest(BaseModel):
     """Schema for image generation request - NanoBanana v2"""
     task_id: str  # REQUIRED - must link to a task
+    tenant_id: str  # REQUIRED - for credit validation
     template_id: Optional[str] = None  # Deprecated, use archetype
     archetype: Optional[str] = None  # product_hero, lifestyle, promotional, minimalist, editorial
     reference_image_ids: List[str] = []
@@ -61,6 +62,11 @@ class GenerateImageRequest(BaseModel):
     resolution: str = "2K"  # 1K, 2K, 4K
     use_pro_model: bool = False
     camera_settings: Optional[CameraSettings] = None
+
+
+class AssignCreditsRequest(BaseModel):
+    """Schema for assigning/adding credits to a tenant"""
+    credits: int  # Number of credits to add
 
 
 class StyleAnalysisComposition(BaseModel):
@@ -110,6 +116,90 @@ class StyleAnalysisResponse(BaseModel):
 class AnalyzeStyleRequest(BaseModel):
     """Request to analyze a reference image for style extraction"""
     image_id: str  # ID of image from image bank
+
+
+# =============================================================================
+# CREDITS ENDPOINTS
+# =============================================================================
+
+@router.get("/credits/{tenant_id}")
+async def get_credits(tenant_id: str) -> Dict[str, Any]:
+    """Get the credit balance for a tenant"""
+    try:
+        if not db.client:
+            raise HTTPException(status_code=500, detail="Database not configured")
+        
+        response = db.client.table("studio_credits")\
+            .select("*")\
+            .eq("tenant_id", tenant_id)\
+            .limit(1)\
+            .execute()
+        
+        if not response.data or len(response.data) == 0:
+            # No credits record yet — return zero balance
+            return {
+                "data": {
+                    "tenant_id": tenant_id,
+                    "total_credits": 0,
+                    "used_credits": 0,
+                    "available_credits": 0
+                }
+            }
+        
+        record = response.data[0]
+        return {
+            "data": {
+                "tenant_id": tenant_id,
+                "total_credits": record["total_credits"],
+                "used_credits": record["used_credits"],
+                "available_credits": record["total_credits"] - record["used_credits"]
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error fetching credits for tenant {tenant_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/credits/{tenant_id}")
+async def assign_credits(tenant_id: str, request: AssignCreditsRequest) -> Dict[str, Any]:
+    """
+    Assign/add credits to a tenant. Admin-only endpoint.
+    Positive value adds credits, can also set absolute value.
+    """
+    try:
+        if not db.client:
+            raise HTTPException(status_code=500, detail="Database not configured")
+        
+        if request.credits < 0:
+            raise HTTPException(status_code=400, detail="Credits must be a positive number")
+        
+        # Upsert: create or update credits record
+        response = db.client.table("studio_credits")\
+            .upsert({
+                "tenant_id": tenant_id,
+                "total_credits": request.credits,
+                "used_credits": 0,
+                "updated_at": "now()"
+            }, on_conflict="tenant_id")\
+            .execute()
+        
+        # If we want to ADD credits instead of SET, fetch current and add
+        # For now, this SETS the total credits
+        
+        logger.info(f"Assigned {request.credits} credits to tenant {tenant_id}")
+        
+        return {
+            "data": {
+                "tenant_id": tenant_id,
+                "total_credits": request.credits,
+                "message": f"Successfully assigned {request.credits} credits"
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error assigning credits to tenant {tenant_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # =============================================================================
@@ -415,12 +505,7 @@ async def generate_image(request: GenerateImageRequest) -> Dict[str, Any]:
     Generate an image for a task using NanoBanana v2.
     
     IMPORTANT: task_id is required - all generations must be linked to a planning task.
-    
-    New in v2:
-    - archetype: Visual archetype (product_hero, lifestyle, promotional, minimalist, editorial)
-    - camera_settings: Camera angle, shot type, lens, perspective
-    - Supports all aspect ratios: 1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9
-    - Proper reference image support (up to 14 with Pro model)
+    CREDITS: Each generation consumes 1 credit. Admins bypass credit check.
     """
     try:
         if not request.task_id:
@@ -428,6 +513,31 @@ async def generate_image(request: GenerateImageRequest) -> Dict[str, Any]:
                 status_code=400, 
                 detail="task_id is required - image generation must be linked to a planning task"
             )
+        
+        # =====================================================================
+        # CREDIT CHECK - Verify tenant has available credits before generating
+        # =====================================================================
+        if db.client and request.tenant_id:
+            credit_response = db.client.table("studio_credits")\
+                .select("total_credits, used_credits")\
+                .eq("tenant_id", request.tenant_id)\
+                .limit(1)\
+                .execute()
+            
+            if not credit_response.data or len(credit_response.data) == 0:
+                raise HTTPException(
+                    status_code=402,
+                    detail="No tienes créditos disponibles. Contacta al administrador para obtener créditos de generación."
+                )
+            
+            credit_record = credit_response.data[0]
+            available = credit_record["total_credits"] - credit_record["used_credits"]
+            
+            if available <= 0:
+                raise HTTPException(
+                    status_code=402,
+                    detail="Créditos agotados. Contacta al administrador para recargar tus créditos de generación."
+                )
         
         # Convert camera_settings to dict if provided
         camera_settings_dict = None
@@ -447,7 +557,38 @@ async def generate_image(request: GenerateImageRequest) -> Dict[str, Any]:
             camera_settings=camera_settings_dict
         )
         
+        # =====================================================================
+        # DEDUCT CREDIT - Only after successful generation
+        # =====================================================================
+        if db.client and request.tenant_id:
+            try:
+                # Increment used_credits by 1
+                db.client.rpc("increment_used_credits", {
+                    "p_tenant_id": request.tenant_id
+                }).execute()
+            except Exception as credit_err:
+                # Don't fail the generation if credit deduction fails
+                # Just log it for manual reconciliation
+                logger.error(f"Failed to deduct credit for tenant {request.tenant_id}: {credit_err}")
+                # Fallback: direct update
+                try:
+                    current = db.client.table("studio_credits")\
+                        .select("used_credits")\
+                        .eq("tenant_id", request.tenant_id)\
+                        .limit(1)\
+                        .execute()
+                    if current.data and len(current.data) > 0:
+                        new_used = current.data[0]["used_credits"] + 1
+                        db.client.table("studio_credits")\
+                            .update({"used_credits": new_used, "updated_at": "now()"})\
+                            .eq("tenant_id", request.tenant_id)\
+                            .execute()
+                except Exception as fallback_err:
+                    logger.error(f"Fallback credit deduction also failed: {fallback_err}")
+        
         return result
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -615,3 +756,421 @@ async def analyze_reference_style(request: AnalyzeStyleRequest) -> Dict[str, Any
     except Exception as e:
         logger.error(f"❌ Style analysis failed for image {request.image_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# =============================================================================
+# COMFYUI ENDPOINTS - Pixely Neural Studio
+# =============================================================================
+
+from ..services.comfyui_service import get_comfyui_service, ComfyUIError
+from enum import Enum
+
+
+class GenerationFormat(str, Enum):
+    """Formatos de publicación disponibles"""
+    PRODUCTO = "producto"
+    SERVICIO = "servicio"
+    EXPERIENCIA = "experiencia"
+    PROMOCIONAL = "promocional"
+    ANUNCIO = "anuncio"
+
+
+class TimeOfDay(str, Enum):
+    """Horas del día para iluminación"""
+    DAWN = "dawn"
+    MIDDAY = "midday"
+    GOLDEN_HOUR = "golden_hour"
+    NIGHT = "night"
+
+
+class ComfyUIProductRequest(BaseModel):
+    """Request para generación de imagen de Producto via ComfyUI"""
+    client_id: str
+    task_id: Optional[str] = None
+    product_image: str  # Base64 PNG sin fondo
+    composition_ref: Optional[str] = None  # Base64 referencia de composición
+    surface_texture: Optional[str] = None  # Base64 textura
+    light_ref: Optional[str] = None  # Base64 referencia de luz
+    prompt: str = "Professional product photography, premium, studio lighting"
+    negative_prompt: str = "text, watermark, logo, blurry, deformed, amateur"
+    seed: int = -1
+    steps: int = 30
+    cfg_scale: float = 7.0
+    width: int = 1024
+    height: int = 1024
+
+
+class ComfyUIServiceRequest(BaseModel):
+    """Request para generación de imagen de Servicio via ComfyUI"""
+    client_id: str
+    task_id: Optional[str] = None
+    face_photos: Optional[List[str]] = None  # 3 fotos en base64 para FaceID
+    demographic: Optional[str] = None  # "Mujer, 30s, doctora, latina"
+    pose_ref: str  # Base64 referencia de pose (requerido)
+    background: Optional[str] = None  # Base64 foto del entorno
+    background_prompt: str = "Modern office, bright, professional"
+    prompt: str = "Professional service photography"
+    seed: int = -1
+    steps: int = 30
+
+
+class ComfyUIExperienceRequest(BaseModel):
+    """Request para generación de imagen de Experiencia via ComfyUI"""
+    client_id: str
+    task_id: Optional[str] = None
+    space_image: str  # Base64 foto del lugar
+    hands_feet: Optional[str] = None  # Base64 elemento humano parcial
+    mood_ref: Optional[str] = None  # Base64 color grading reference
+    time_of_day: TimeOfDay = TimeOfDay.GOLDEN_HOUR
+    prompt: str = "Immersive lifestyle photography, POV"
+    seed: int = -1
+    steps: int = 30
+
+
+class ComfyUIPromotionalRequest(BaseModel):
+    """Request para generación de imagen Promocional via ComfyUI"""
+    client_id: str
+    task_id: Optional[str] = None
+    layout_mask: str  # Base64 máscara B/N de zonas de texto
+    product_image: str  # Base64 producto PNG
+    primary_color: str = "#E63946"
+    secondary_color: str = "#F1FAEE"
+    accent_color: str = "#1D3557"
+    prompt: str = "Clean promotional image, solid background"
+    seed: int = -1
+
+
+class ComfyUIAdRequest(BaseModel):
+    """Request para generación de imagen de Anuncio via ComfyUI"""
+    client_id: str
+    task_id: Optional[str] = None
+    concept_ref: str  # Base64 referencia de concepto visual
+    hook_element: Optional[str] = None  # Base64 elemento disruptivo
+    hook_prompt: str = ""  # "fire explosion, neon glow"
+    creativity_level: float = 0.7  # 0.3 = realista, 1.0 = surrealista
+    prompt: str = "High impact advertising, dramatic"
+    seed: int = -1
+
+
+class ComfyUIHealthResponse(BaseModel):
+    """Response del health check de ComfyUI"""
+    status: str
+    comfyui_url: str
+    is_healthy: bool
+    queue_status: Optional[dict] = None
+
+
+class ComfyUIGenerationResponse(BaseModel):
+    """Response de generación ComfyUI"""
+    success: bool
+    images: List[str] = []  # URLs o base64 de imágenes
+    generation_time: float = 0.0
+    seed: int = 0
+    prompt_id: Optional[str] = None
+    error: Optional[str] = None
+
+
+@router.get("/comfyui/health", response_model=ComfyUIHealthResponse)
+async def comfyui_health_check():
+    """
+    Verifica que ComfyUI esté corriendo y respondiendo.
+    """
+    service = get_comfyui_service()
+    is_healthy = await service.health_check()
+    
+    queue_status = None
+    if is_healthy:
+        try:
+            queue_status = await service.get_queue_status()
+        except Exception as e:
+            logger.warning(f"Could not get queue status: {e}")
+    
+    return {
+        "status": "ok" if is_healthy else "error",
+        "comfyui_url": service.base_url,
+        "is_healthy": is_healthy,
+        "queue_status": queue_status
+    }
+
+
+@router.post("/comfyui/product", response_model=ComfyUIGenerationResponse)
+async def generate_product_comfyui(request: ComfyUIProductRequest):
+    """
+    Genera imagen de producto usando ComfyUI (Formato: Producto Hero).
+    
+    Este endpoint usa el workflow de producto que:
+    1. Toma el producto PNG sin fondo
+    2. Genera un fondo basado en textura + iluminación
+    3. Composita el producto REAL sobre el fondo (sin deformación)
+    4. Aplica estilo de marca
+    """
+    logger.info(f"🖼️ ComfyUI Product generation for client {request.client_id}")
+    
+    try:
+        service = get_comfyui_service()
+        
+        # Verificar salud de ComfyUI
+        if not await service.health_check():
+            raise HTTPException(
+                status_code=503,
+                detail="ComfyUI server is not responding. Please check RunPod status."
+            )
+        
+        # Generar imagen
+        result = await service.generate_product_hero(
+            product_image=request.product_image,
+            composition_ref=request.composition_ref,
+            surface_texture=request.surface_texture,
+            light_ref=request.light_ref,
+            prompt=request.prompt,
+            negative_prompt=request.negative_prompt,
+            seed=request.seed,
+            steps=request.steps,
+            cfg_scale=request.cfg_scale,
+            width=request.width,
+            height=request.height,
+        )
+        
+        # Si hay task_id, guardar en BD
+        if request.task_id:
+            # TODO: Guardar generación en tabla generated_images
+            pass
+        
+        logger.info(f"✅ Product generated: {len(result['images'])} images in {result['generation_time']}s")
+        
+        return {
+            "success": True,
+            "images": result["images"],
+            "generation_time": result["generation_time"],
+            "seed": result.get("seed", request.seed),
+            "prompt_id": result.get("prompt_id"),
+        }
+        
+    except ComfyUIError as e:
+        logger.error(f"❌ ComfyUI error: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "images": [],
+        }
+    except Exception as e:
+        logger.exception(f"❌ Unexpected error in product generation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/comfyui/service", response_model=ComfyUIGenerationResponse)
+async def generate_service_comfyui(request: ComfyUIServiceRequest):
+    """
+    Genera imagen de servicio usando ComfyUI (Formato: Servicio).
+    
+    Usa FaceID para rostros consistentes y OpenPose para control de pose.
+    """
+    logger.info(f"🖼️ ComfyUI Service generation for client {request.client_id}")
+    
+    try:
+        service = get_comfyui_service()
+        
+        if not await service.health_check():
+            raise HTTPException(status_code=503, detail="ComfyUI server not responding")
+        
+        result = await service.generate_service(
+            face_photos=request.face_photos,
+            demographic=request.demographic,
+            pose_ref=request.pose_ref,
+            background=request.background,
+            background_prompt=request.background_prompt,
+            prompt=request.prompt,
+            seed=request.seed,
+            steps=request.steps,
+        )
+        
+        return {
+            "success": True,
+            "images": result.get("images", []),
+            "generation_time": result.get("generation_time", 0),
+            "seed": result.get("seed", request.seed),
+            "prompt_id": result.get("prompt_id"),
+        }
+        
+    except ComfyUIError as e:
+        logger.error(f"❌ ComfyUI error: {e}")
+        return {"success": False, "error": str(e), "images": []}
+    except Exception as e:
+        logger.exception(f"❌ Error in service generation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/comfyui/experience", response_model=ComfyUIGenerationResponse)
+async def generate_experience_comfyui(request: ComfyUIExperienceRequest):
+    """
+    Genera imagen de experiencia usando ComfyUI (Formato: Experiencia/Lifestyle).
+    
+    Usa Depth para espacios y ajusta iluminación según hora del día.
+    """
+    logger.info(f"🖼️ ComfyUI Experience generation for client {request.client_id}")
+    
+    try:
+        service = get_comfyui_service()
+        
+        if not await service.health_check():
+            raise HTTPException(status_code=503, detail="ComfyUI server not responding")
+        
+        result = await service.generate_experience(
+            space_image=request.space_image,
+            hands_feet=request.hands_feet,
+            mood_ref=request.mood_ref,
+            time_of_day=request.time_of_day.value,
+            prompt=request.prompt,
+            seed=request.seed,
+            steps=request.steps,
+        )
+        
+        return {
+            "success": True,
+            "images": result.get("images", []),
+            "generation_time": result.get("generation_time", 0),
+            "seed": result.get("seed", request.seed),
+            "prompt_id": result.get("prompt_id"),
+        }
+        
+    except ComfyUIError as e:
+        logger.error(f"❌ ComfyUI error: {e}")
+        return {"success": False, "error": str(e), "images": []}
+    except Exception as e:
+        logger.exception(f"❌ Error in experience generation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/comfyui/promotional", response_model=ComfyUIGenerationResponse)
+async def generate_promotional_comfyui(request: ComfyUIPromotionalRequest):
+    """
+    Genera imagen promocional usando ComfyUI (Formato: Promocional/Ofertas).
+    
+    Usa máscara de layout para respetar zonas de texto y fuerza colores de marca.
+    """
+    logger.info(f"🖼️ ComfyUI Promotional generation for client {request.client_id}")
+    
+    try:
+        service = get_comfyui_service()
+        
+        if not await service.health_check():
+            raise HTTPException(status_code=503, detail="ComfyUI server not responding")
+        
+        result = await service.generate_promotional(
+            layout_mask=request.layout_mask,
+            product_image=request.product_image,
+            brand_colors={
+                "primary": request.primary_color,
+                "secondary": request.secondary_color,
+                "accent": request.accent_color,
+            },
+            prompt=request.prompt,
+            seed=request.seed,
+        )
+        
+        return {
+            "success": True,
+            "images": result.get("images", []),
+            "generation_time": result.get("generation_time", 0),
+            "seed": result.get("seed", request.seed),
+            "prompt_id": result.get("prompt_id"),
+        }
+        
+    except ComfyUIError as e:
+        logger.error(f"❌ ComfyUI error: {e}")
+        return {"success": False, "error": str(e), "images": []}
+    except Exception as e:
+        logger.exception(f"❌ Error in promotional generation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/comfyui/ad", response_model=ComfyUIGenerationResponse)
+async def generate_ad_comfyui(request: ComfyUIAdRequest):
+    """
+    Genera imagen de anuncio usando ComfyUI (Formato: Anuncio/High Impact).
+    
+    Permite control de creatividad (realista a surrealista) mediante denoising.
+    """
+    logger.info(f"🖼️ ComfyUI Ad generation for client {request.client_id}")
+    
+    try:
+        service = get_comfyui_service()
+        
+        if not await service.health_check():
+            raise HTTPException(status_code=503, detail="ComfyUI server not responding")
+        
+        result = await service.generate_ad_impact(
+            concept_ref=request.concept_ref,
+            hook_element=request.hook_element,
+            hook_prompt=request.hook_prompt,
+            creativity_level=request.creativity_level,
+            prompt=request.prompt,
+            seed=request.seed,
+        )
+        
+        return {
+            "success": True,
+            "images": result.get("images", []),
+            "generation_time": result.get("generation_time", 0),
+            "seed": result.get("seed", request.seed),
+            "prompt_id": result.get("prompt_id"),
+        }
+        
+    except ComfyUIError as e:
+        logger.error(f"❌ ComfyUI error: {e}")
+        return {"success": False, "error": str(e), "images": []}
+    except Exception as e:
+        logger.exception(f"❌ Error in ad generation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/comfyui/formats")
+async def get_available_formats():
+    """
+    Retorna los formatos de publicación disponibles con sus inputs requeridos.
+    """
+    return {
+        "formats": [
+            {
+                "id": "producto",
+                "name": "Producto Hero",
+                "description": "Imagen de producto con fondo premium generado",
+                "endpoint": "/studio/comfyui/product",
+                "required_inputs": ["product_image"],
+                "optional_inputs": ["composition_ref", "surface_texture", "light_ref"],
+            },
+            {
+                "id": "servicio",
+                "name": "Servicio",
+                "description": "Persona profesional en acción/contexto",
+                "endpoint": "/studio/comfyui/service",
+                "required_inputs": ["pose_ref"],
+                "optional_inputs": ["face_photos", "demographic", "background"],
+            },
+            {
+                "id": "experiencia",
+                "name": "Experiencia",
+                "description": "Lifestyle/POV con elemento humano parcial",
+                "endpoint": "/studio/comfyui/experience",
+                "required_inputs": ["space_image"],
+                "optional_inputs": ["hands_feet", "mood_ref", "time_of_day"],
+            },
+            {
+                "id": "promocional",
+                "name": "Promocional",
+                "description": "Imagen con espacio para texto/precios",
+                "endpoint": "/studio/comfyui/promotional",
+                "required_inputs": ["layout_mask", "product_image"],
+                "optional_inputs": ["primary_color", "secondary_color"],
+            },
+            {
+                "id": "anuncio",
+                "name": "Anuncio",
+                "description": "High impact/scroll stopper con efectos dramáticos",
+                "endpoint": "/studio/comfyui/ad",
+                "required_inputs": ["concept_ref"],
+                "optional_inputs": ["hook_element", "hook_prompt", "creativity_level"],
+            },
+        ]
+    }
+

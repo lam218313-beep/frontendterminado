@@ -167,6 +167,14 @@ export interface StudioState {
     isGenerating: boolean;
     selectedImageId?: string;  // Image approved by user
 
+    // CREDITS
+    credits: {
+        total: number;
+        used: number;
+        available: number;
+        loaded: boolean;
+    };
+
     // LEGACY SUPPORT (for backwards compatibility)
     contextBlocks: ContextBlock[];
 }
@@ -208,6 +216,14 @@ const initialState: StudioState = {
     // Step 5
     generatedImages: [],
     isGenerating: false,
+
+    // Credits
+    credits: {
+        total: 0,
+        used: 0,
+        available: 0,
+        loaded: false,
+    },
 
     // Legacy
     contextBlocks: [],
@@ -267,6 +283,10 @@ type Action =
     | { type: 'SET_GENERATED_IMAGES'; payload: GeneratedImage[] }
     | { type: 'SELECT_IMAGE'; payload: string }
     | { type: 'APPROVE_IMAGE'; payload: string }
+    
+    // Credits
+    | { type: 'SET_CREDITS'; payload: { total: number; used: number; available: number } }
+    | { type: 'DEDUCT_CREDIT' }
     
     // Legacy support
     | { type: 'LOAD_CONTEXT_BLOCKS'; payload: ContextBlock[] }
@@ -506,6 +526,25 @@ const studioReducer = (state: StudioState, action: Action): StudioState => {
                 aspectRatio: getAspectRatioForFormat(action.payload.taskData?.format),
                 currentStep: 1
             };
+
+        // Credits
+        case 'SET_CREDITS':
+            return {
+                ...state,
+                credits: {
+                    ...action.payload,
+                    loaded: true,
+                }
+            };
+        case 'DEDUCT_CREDIT':
+            return {
+                ...state,
+                credits: {
+                    ...state.credits,
+                    used: state.credits.used + 1,
+                    available: Math.max(0, state.credits.available - 1),
+                }
+            };
         
         default:
             return state;
@@ -569,7 +608,9 @@ export const useStudioValidation = () => {
         canProceedToStep3: state.imageBankLoaded,
         canProceedToStep4: state.taskId !== '',  // Task is REQUIRED
         canProceedToStep5: state.taskId !== '' && state.selectedStyleReferences.length > 0,
-        canGenerate: state.taskId !== '' && !state.isGenerating,
+        canGenerate: state.taskId !== '' && !state.isGenerating && state.credits.available > 0,
+        hasCredits: state.credits.available > 0,
+        creditsLoaded: state.credits.loaded,
         isTaskRequired: true,  // Always true - generation requires a task
     };
 };

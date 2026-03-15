@@ -1329,6 +1329,7 @@ export interface CameraSettings {
 export interface NanoBananaGenerateRequest {
   client_id: string;
   task_id: string;  // REQUIRED - must be from planning
+  tenant_id?: string;  // For credit validation
   template_id?: string;  // Deprecated, use archetype
   archetype?: string;  // product_hero, lifestyle, promotional, minimalist, editorial
   style_reference_ids?: string[];  // IDs from image bank
@@ -1390,6 +1391,37 @@ export async function getTaskGeneratedImages(taskId: string): Promise<{
 }> {
   const response = await fetch(`${API_BASE_URL}/studio/task/${taskId}/images`, {
     headers: getAuthHeaders(),
+  });
+  return handleResponse(response);
+}
+
+// --- Studio Credits ---
+
+export interface StudioCredits {
+  tenant_id: string;
+  total_credits: number;
+  used_credits: number;
+  available_credits: number;
+}
+
+export async function getStudioCredits(tenantId: string): Promise<{ data: StudioCredits }> {
+  const response = await fetch(`${API_BASE_URL}/studio/credits/${tenantId}`, {
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(response);
+}
+
+export async function assignStudioCredits(
+  tenantId: string, 
+  credits: number
+): Promise<{ data: { tenant_id: string; total_credits: number; message: string } }> {
+  const response = await fetch(`${API_BASE_URL}/studio/credits/${tenantId}`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ credits })
   });
   return handleResponse(response);
 }

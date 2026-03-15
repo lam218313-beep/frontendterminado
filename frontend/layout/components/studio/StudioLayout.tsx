@@ -1,7 +1,7 @@
 import React from 'react';
 import { useStudio } from '../../contexts/StudioContext';
 import { motion } from 'framer-motion';
-import { Sparkles, Check, ChevronRight } from 'lucide-react';
+import { Sparkles, Check, ChevronRight, Coins } from 'lucide-react';
 
 interface StudioLayoutProps {
     children: React.ReactNode;
@@ -44,6 +44,20 @@ export const StudioLayout: React.FC<StudioLayoutProps> = ({ children }) => {
                                 <p className="text-sm text-gray-500 font-medium">Asistente de Generación IA v2.0</p>
                             </div>
                         </div>
+
+                        {/* Credits Badge */}
+                        {state.credits.loaded && (
+                            <div className={`flex items-center gap-2 px-4 py-2 rounded-2xl border text-sm font-bold transition-colors ${
+                                state.credits.available >= 10
+                                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                    : state.credits.available > 0
+                                        ? 'bg-amber-50 border-amber-200 text-amber-700'
+                                        : 'bg-red-50 border-red-200 text-red-600'
+                            }`}>
+                                <Coins size={16} />
+                                <span>{state.credits.available} crédito{state.credits.available !== 1 ? 's' : ''}</span>
+                            </div>
+                        )}
 
                         {/* STEPPER */}
                         <div className="flex items-center gap-1 md:gap-3 bg-white/50 px-4 py-2 rounded-2xl border border-white/50">

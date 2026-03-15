@@ -100,16 +100,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isExpanded, setIsExpanded, act
                     onClick={setActiveView}
                 />
 
-                {/* 8. Generador de Imágenes - Solo Admin */}
-                {user?.isAdmin && (
-                    <SidebarItem
-                        icon={Sparkles}
-                        label="Estudio IA"
-                        viewId="img-generator"
-                        isActive={activeView === 'img-generator'}
-                        onClick={setActiveView}
-                    />
-                )}
+                {/* 8. Estudio IA - Visible para todos los usuarios */}
+                <SidebarItem
+                    icon={Sparkles}
+                    label="Estudio IA"
+                    viewId="img-generator"
+                    isActive={activeView === 'img-generator'}
+                    onClick={setActiveView}
+                />
 
                 {/* 9. Wiki */}
                 <SidebarItem

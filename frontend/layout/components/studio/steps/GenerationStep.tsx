@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useStudio } from '../../../contexts/StudioContext';
+import { useStudio, useStudioValidation } from '../../../contexts/StudioContext';
+import { useAuth } from '../../../contexts/AuthContext';
 import { generateWithNanoBanana, approveGeneratedImage, NanoBananaGeneratedImage } from '../../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Sparkles, Loader2, Check, Download, RefreshCw, 
     ArrowLeft, Wand2, AlertCircle, Clock, Zap,
-    ThumbsUp, Image as ImageIcon, CheckCircle2
+    ThumbsUp, Image as ImageIcon, CheckCircle2, Coins
 } from 'lucide-react';
 
 export const GenerationStep: React.FC = () => {
     const { state, dispatch } = useStudio();
+    const { hasCredits } = useStudioValidation();
+    const { user } = useAuth();
     const [isGenerating, setIsGenerating] = useState(false);
     const [isApproving, setIsApproving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -20,6 +23,7 @@ export const GenerationStep: React.FC = () => {
 
     const handleGenerate = async () => {
         if (!state.clientId || !state.taskId) return;
+        if (!hasCredits) return;
 
         setIsGenerating(true);
         setError(null);
@@ -35,6 +39,7 @@ export const GenerationStep: React.FC = () => {
             const result = await generateWithNanoBanana({
                 client_id: state.clientId,
                 task_id: state.taskId,
+                tenant_id: user?.tenantId,
                 template_id: state.selectedTemplate?.id,
                 archetype: state.archetype || state.selectedTemplate?.category,
                 style_reference_ids: state.selectedStyleReferences,
@@ -53,6 +58,8 @@ export const GenerationStep: React.FC = () => {
             }
             
             dispatch({ type: 'ADD_GENERATED_IMAGE', payload: result.image });
+            // Deduct credit after successful generation
+            dispatch({ type: 'DEDUCT_CREDIT' });
         } catch (err: any) {
             console.error('Generation error:', err);
             setError(err.message || 'Error generando imagen');
@@ -96,12 +103,15 @@ export const GenerationStep: React.FC = () => {
         }
     };
 
-    // Auto-generate on mount if coming from previous step
+    // Auto-generate on mount if coming from previous step (only if credits available)
     useEffect(() => {
-        if (state.currentStep === 5 && !generationResult && !isGenerating && !error) {
+        if (state.currentStep === 5 && !generationResult && !isGenerating && !error && hasCredits) {
             handleGenerate();
         }
     }, [state.currentStep]);
+
+    // No credits warning
+    const noCreditsWarning = !hasCredits && !generationResult;
 
     return (
         <motion.div
@@ -130,6 +140,28 @@ export const GenerationStep: React.FC = () => {
                     </p>
                 </div>
             </div>
+
+            {/* NO CREDITS WARNING */}
+            {noCreditsWarning && (
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-8 text-center"
+                >
+                    <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <Coins size={32} className="text-amber-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-amber-800 mb-2">
+                        Sin créditos disponibles
+                    </h3>
+                    <p className="text-amber-700 mb-1">
+                        Necesitas créditos para generar imágenes con IA.
+                    </p>
+                    <p className="text-amber-600 text-sm">
+                        Contacta al administrador para obtener créditos de generación.
+                    </p>
+                </motion.div>
+            )}
 
             {/* GENERATION STATUS */}
             {isGenerating && (
@@ -318,11 +350,15 @@ export const GenerationStep: React.FC = () => {
                         <div className="flex flex-col sm:flex-row gap-4">
                             <button
                                 onClick={handleGenerate}
-                                disabled={isGenerating}
-                                className="flex-1 px-6 py-4 bg-gray-100 text-gray-700 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors"
+                                disabled={isGenerating || !hasCredits}
+                                className={`flex-1 px-6 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-colors ${
+                                    !hasCredits 
+                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
                             >
                                 <RefreshCw size={20} />
-                                Regenerar
+                                {!hasCredits ? 'Sin créditos' : 'Regenerar'}
                             </button>
                             <button
                                 onClick={handleApprove}

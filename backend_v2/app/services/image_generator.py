@@ -13,6 +13,7 @@ from datetime import datetime
 from openai import AsyncOpenAI
 
 from .database import db
+from .comfyui_service import get_comfyui_service
 from ..config import settings
 
 logger = logging.getLogger(__name__)
@@ -66,13 +67,47 @@ class ImageGenerationService:
                 aspect_ratio, mood_tone, color_suggestions
             )
             
-            # 3. Generate image with DALL-E 3
+            # 3. Generate image based on provider
             start_time = datetime.now()
-            image_data, revised_prompt = await self._call_dalle_api(
-                prompt=base_prompt,
-                aspect_ratio=aspect_ratio,
-                style_preset=style_preset
-            )
+            
+            if settings.IMAGE_PROVIDER == "comfyui":
+                logger.info(f"🎨 Starting ComfyUI generation (FLUX)...")
+                comfy_service = get_comfyui_service()
+                
+                # Determine steps/cfg based on style (basic mapping)
+                steps = 4 if "schnell" in settings.IMAGE_PROVIDER or True else 20 # Defaulting to schnell speed
+                
+                result = await comfy_service.generate_from_prompt(
+                    prompt=base_prompt,
+                    negative_prompt=negative_prompt,
+                    steps=steps,
+                    width=1024, # simplified logic, should resolve generic resolution
+                    height=1024
+                )
+                
+                # Extract first image
+                images = result.get("images", [])
+                if not images:
+                    raise Exception("ComfyUI returned no images")
+                    
+                # ComfyUI returns a URL accessible from the backend (proxy/direct)
+                # We need to download it to save to Supabase, OR usage direct URL if public
+                # For persistence, we download and upload to Supabase
+                image_url_source = images[0]
+                image_data = await comfy_service.download_image(image_url_source)
+                revised_prompt = base_prompt # FLUX doesn't revise prompts like DALL-E
+                
+                self.model_name = "flux-schnell" # Update model name for record
+                
+            else:
+                # Default to DALL-E 3
+                image_data, revised_prompt = await self._call_dalle_api(
+                    prompt=base_prompt,
+                    aspect_ratio=aspect_ratio,
+                    style_preset=style_preset
+                )
+                self.model_name = "dall-e-3"
+
             generation_time_ms = int((datetime.now() - start_time).total_seconds() * 1000)
             
             # 4. Save to Supabase Storage

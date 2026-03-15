@@ -25,6 +25,13 @@ class Settings(BaseSettings):
     # OpenAI
     OPENAI_API_KEY: str = ""
     
+    # ComfyUI / RunPod
+    COMFYUI_HOST: str = "localhost"
+    COMFYUI_PORT: int = 8188
+    RUNPOD_POD_ID: str = "" 
+    RUNPOD_API_KEY: str = ""
+    IMAGE_PROVIDER: str = "dalle"  # dalle, comfyui
+    
     # Server
     PORT: int = 8000
     
