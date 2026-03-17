@@ -91,14 +91,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isExpanded, setIsExpanded, act
                     onClick={setActiveView}
                 />
 
-                {/* 7. Beneficios */}
-                <SidebarItem
+                {/* 7. Beneficios - Temporalmente oculto */}
+                {/* <SidebarItem
                     icon={CheckCircle2}
                     label="Beneficios"
                     viewId="benefits"
                     isActive={activeView === 'benefits'}
                     onClick={setActiveView}
-                />
+                /> */}
 
                 {/* 8. Estudio IA - Visible para todos los usuarios */}
                 <SidebarItem

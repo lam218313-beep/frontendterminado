@@ -66,8 +66,9 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
                 "benefits": []
             }
             
-        # This returns a session if successful
-        auth_response = db.client.auth.sign_in_with_password({
+        # This returns a session if successful (use anon_client for auth flows)
+        auth_client = db.anon_client or db.client
+        auth_response = auth_client.auth.sign_in_with_password({
             "email": form_data.username,
             "password": form_data.password
         })

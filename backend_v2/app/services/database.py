@@ -17,14 +17,14 @@ logger.setLevel(logging.INFO)
 
 class SupabaseService:
     def __init__(self):
-        # Public Client (Anon)
+        # Public Client (Anon) - Used only for auth operations
         if settings.SUPABASE_URL and settings.SUPABASE_KEY:
-            self.client: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
+            self.anon_client: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
         else:
             logger.warning("Supabase credentials missing. Persistence disabled.")
-            self.client = None
+            self.anon_client = None
 
-        # Admin Client (Service Role) - For Password Resets / Deletions
+        # Admin Client (Service Role) - Bypasses RLS, used for ALL DB operations
         if settings.SUPABASE_URL and settings.SUPABASE_SERVICE_KEY:
             try:
                 self.admin_client: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
@@ -35,6 +35,13 @@ class SupabaseService:
         else:
             logger.warning("⚠️ SUPABASE_SERVICE_KEY not configured - admin operations will use public client")
             self.admin_client = None
+
+        # Primary DB client: prefer admin_client (bypasses RLS), fallback to anon
+        self.client: Client = self.admin_client or self.anon_client
+        if self.client == self.admin_client:
+            logger.info("✅ Using SERVICE_ROLE client for all DB operations (bypasses RLS)")
+        elif self.client == self.anon_client:
+            logger.warning("⚠️ Using ANON client for DB operations - RLS policies may block access!")
 
     # ============================================================================
     # Reports (Analysis)
