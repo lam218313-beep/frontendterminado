@@ -185,6 +185,45 @@ async def get_brand_detail(brand_id: str):
     }
 
 
+class PlanUpdateRequest(BaseModel):
+    plan: str
+
+
+@router.patch("/brands/{brand_id}/plan")
+async def update_brand_plan(brand_id: str, request: PlanUpdateRequest):
+    """Update a brand's plan and sync to all its users."""
+    if request.plan not in PLAN_MODULES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid plan. Must be one of: {list(PLAN_MODULES.keys())}"
+        )
+    
+    # 1. Update brand (clients table)
+    try:
+        db.update_client(brand_id, {"plan": request.plan})
+    except Exception as e:
+        logger.error(f"Failed to update brand plan: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
+    # 2. Sync plan to all users of this brand
+    try:
+        if db.client:
+            db.client.table("users")\
+                .update({"plan": request.plan})\
+                .eq("client_id", brand_id)\
+                .execute()
+            logger.info(f"✅ Plan synced to all users of brand {brand_id}")
+    except Exception as e:
+        logger.warning(f"⚠️ Failed to sync plan to users: {e}")
+    
+    return {
+        "status": "success",
+        "brand_id": brand_id,
+        "plan": request.plan,
+        "modules": PLAN_MODULES[request.plan]
+    }
+
+
 async def get_module_status(brand_id: str, module_id: str) -> dict:
     """Get status for a specific module."""
     
